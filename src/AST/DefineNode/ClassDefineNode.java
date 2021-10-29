@@ -9,8 +9,8 @@ import java.util.Objects;
 
 public class ClassDefineNode extends ProgramDefineNode {
     private IdentifierPrimaryNode className;
-    private ArrayList<VariableDefineNode> variables = new ArrayList<>();
-    private ArrayList<FunctionDefineNode> functions = new ArrayList<>();
+    private ArrayList<VariableDefineNode> members = new ArrayList<>();
+    private ArrayList<FunctionDefineNode> methods = new ArrayList<>();
     private ConstructorDefineNode constructor = null;
     private boolean invalid = false;
     private String message;
@@ -21,11 +21,11 @@ public class ClassDefineNode extends ProgramDefineNode {
     }
 
     public void addVariable(VariableDefineNode node) {
-        variables.add(node);
+        members.add(node);
     }
 
     public void addFunction(FunctionDefineNode node) {
-        functions.add(node);
+        methods.add(node);
     }
 
     public void setConstructor(ConstructorDefineNode node) {
@@ -50,12 +50,12 @@ public class ClassDefineNode extends ProgramDefineNode {
         return className.getIdentifier();
     }
 
-    public ArrayList<VariableDefineNode> getVariables() {
-        return variables;
+    public ArrayList<VariableDefineNode> getMembers() {
+        return members;
     }
 
-    public ArrayList<FunctionDefineNode> getFunctions() {
-        return functions;
+    public ArrayList<FunctionDefineNode> getMethods() {
+        return methods;
     }
 
     public ConstructorDefineNode getConstructor() {

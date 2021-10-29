@@ -48,19 +48,19 @@ public class ASTPrinter {
             printf("Invalid Class Define!!\nerror message: %s.\n", node.getMessage());
             return;
         }
-        if (node.getVariables().size() == 0) {
+        if (node.getMembers().size() == 0) {
             printf("class has no variable.\n");
         } else {
-            printf("class variables: (%d)\n", node.getVariables().size());
-            for (var variable : node.getVariables()) {
+            printf("class variables: (%d)\n", node.getMembers().size());
+            for (var variable : node.getMembers()) {
                 printNode(variable);
             }
         }
-        if (node.getFunctions().size() == 0) {
+        if (node.getMethods().size() == 0) {
             printf("class has no functions.\n");
         } else {
-            printf("class functions: (%d)\n", node.getFunctions().size());
-            for (var function : node.getFunctions()) {
+            printf("class functions: (%d)\n", node.getMethods().size());
+            for (var function : node.getMethods()) {
                 printNode(function);
             }
         }

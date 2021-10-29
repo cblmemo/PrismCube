@@ -4,14 +4,24 @@ import AST.ASTVisitor;
 import Utility.Cursor;
 
 public class ArrayTypeNode extends TypeNode {
+    private String rootTypeName;
     private TypeNode elementType;
     private final int dimension;
 
     public ArrayTypeNode(String typeName, TypeNode elementType, Cursor cursor) {
         super(typeName, cursor);
         this.elementType = elementType;
-        if (elementType instanceof ArrayTypeNode) dimension = ((ArrayTypeNode) elementType).getDimension() + 1;
-        else dimension = 1;
+        if (elementType instanceof ArrayTypeNode) {
+            dimension = ((ArrayTypeNode) elementType).getDimension() + 1;
+            rootTypeName = ((ArrayTypeNode) elementType).getRootTypeName();
+        } else {
+            dimension = 1;
+            rootTypeName = elementType.getTypeName();
+        }
+    }
+
+    public String getRootTypeName() {
+        return rootTypeName;
     }
 
     public TypeNode getElementType() {

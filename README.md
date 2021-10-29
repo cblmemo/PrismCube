@@ -2,8 +2,13 @@
 
 A toy Mx* compiler with java implementation.
 
-![](https://img.shields.io/badge/version-1.0.0-green.svg)[![](https://img.shields.io/badge/target_language-Mx*-yellow.svg)](https://github.com/ACMClassCourses/Compiler-Design-Implementation)![](https://img.shields.io/github/last-commit/Rainy-Memory/Compiler)
-![](https://img.shields.io/github/languages/top/Rainy-Memory/Compiler)![](https://img.shields.io/github/languages/code-size/Rainy-Memory/Compiler)![](https://img.shields.io/github/repo-size/Rainy-Memory/Compiler)
+![](https://img.shields.io/badge/version-1.0.0-green.svg)
+[![](https://img.shields.io/badge/source_language-Mx*-yellow.svg)](https://github.com/ACMClassCourses/Compiler-Design-Implementation)
+![](https://img.shields.io/github/last-commit/Rainy-Memory/Compiler)
+
+![](https://img.shields.io/github/languages/top/Rainy-Memory/Compiler)
+![](https://img.shields.io/github/languages/code-size/Rainy-Memory/Compiler)
+![](https://img.shields.io/github/repo-size/Rainy-Memory/Compiler)
 
 ## Mx* Language
 
@@ -14,7 +19,8 @@ Mx* is a simplified language from the mix of Standard C++ and Java. Details of M
  - [x] g4
  - [x] ASTBuilder
  - [x] ASTPrinter (inspired by [Masterball](https://github.com/SiriusNEO/Masterball))
- - [ ] SymbolCollector  **working...**
+ - [x] SymbolCollector
+ - [ ] ScopePrinter  **working...**
  - [ ] SemanticChecker
 
 ## File Structure
@@ -73,7 +79,8 @@ Mx* is a simplified language from the mix of Standard C++ and Java. Details of M
  ┃ ┗ 📜ProgramNode.java
  ┣ 📂Debug
  ┃ ┣ 📜ASTPrinter.java
- ┃ ┗ 📜MemoLog.java
+ ┃ ┣ 📜MemoLog.java
+ ┃ ┗ 📜ScopePrinter.java
  ┣ 📂FrontEnd
  ┃ ┣ 📜ASTBuilder.java
  ┃ ┣ 📜Memory.java
@@ -94,6 +101,8 @@ Mx* is a simplified language from the mix of Standard C++ and Java. Details of M
  ┃ ┗ 📜MxStarVisitor.java
  ┣ 📂Utility
  ┃ ┣ 📂Entity
+ ┃ ┃ ┣ 📜ClassEntity.java
+ ┃ ┃ ┣ 📜ConstructorEntity.java
  ┃ ┃ ┣ 📜Entity.java
  ┃ ┃ ┣ 📜FunctionEntity.java
  ┃ ┃ ┗ 📜VariableEntity.java
@@ -104,10 +113,13 @@ Mx* is a simplified language from the mix of Standard C++ and Java. Details of M
  ┃ ┃ ┣ 📜SemanticError.java
  ┃ ┃ ┗ 📜SyntaxError.java
  ┃ ┣ 📂Scope
+ ┃ ┃ ┣ 📜ClassScope.java
+ ┃ ┃ ┣ 📜ConstructorScope.java
  ┃ ┃ ┣ 📜FunctionScope.java
  ┃ ┃ ┣ 📜GlobalScope.java
  ┃ ┃ ┗ 📜Scope.java
  ┃ ┣ 📂Type
+ ┃ ┃ ┣ 📜ArrayType.java
  ┃ ┃ ┣ 📜ClassType.java
  ┃ ┃ ┗ 📜Type.java
  ┃ ┣ 📜Cursor.java

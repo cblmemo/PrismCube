@@ -1,5 +1,6 @@
 import Debug.ASTPrinter;
 import Debug.MemoLog;
+import Debug.ScopePrinter;
 import FrontEnd.Memory;
 import FrontEnd.Preprocessor;
 import FrontEnd.ASTBuilder;
@@ -24,6 +25,8 @@ public class PrismCube {
             new ASTPrinter().print(memory);
 
             new SymbolCollector().collect(memory);
+
+            new ScopePrinter().print(memory);
 
             new SemanticChecker().check(memory);
 

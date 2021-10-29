@@ -3,10 +3,14 @@ package AST;
 import Utility.Cursor;
 
 abstract public class ASTNode {
-    public Cursor cur;
+    private Cursor cursor;
 
     public ASTNode(Cursor cursor) {
-        this.cur = cursor;
+        this.cursor = cursor;
+    }
+
+    public Cursor getCursor() {
+        return cursor;
     }
 
     abstract public void accept(ASTVisitor visitor);
