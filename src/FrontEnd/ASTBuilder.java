@@ -28,10 +28,10 @@ public class ASTBuilder extends MxStarBaseVisitor<ASTNode> {
     @Override
     public ASTNode visitProgram(MxStarParser.ProgramContext ctx) {
         ProgramNode root = new ProgramNode(new Cursor(ctx));
-        for (var innerCtx : ctx.programDefine()) {
+        ctx.programDefine().forEach(innerCtx -> {
             ProgramDefineNode define = (ProgramDefineNode) visit(innerCtx);
             root.addDefine(define);
-        }
+        });
         return root;
     }
 
@@ -49,17 +49,17 @@ public class ASTBuilder extends MxStarBaseVisitor<ASTNode> {
         IdentifierPrimaryNode className = new IdentifierPrimaryNode(ctx.Identifier().getText(), new Cursor(ctx));
         ClassDefineNode ret = new ClassDefineNode(className, new Cursor(ctx));
         if (ctx.variableDefine() != null) {
-            for (var innerCtx : ctx.variableDefine()) {
+            ctx.variableDefine().forEach(innerCtx -> {
                 VariableDefineNode node = (VariableDefineNode) visit(innerCtx);
                 ret.addVariable(node);
-            }
+            });
         }
         if (ctx.methodDefine() != null) {
-            for (var innerCtx : ctx.methodDefine()) {
+            ctx.methodDefine().forEach(innerCtx -> {
                 ProgramDefineNode node = (ProgramDefineNode) visit(innerCtx);
                 if (node instanceof ConstructorDefineNode) ret.setConstructor((ConstructorDefineNode) node);
                 else ret.addFunction((FunctionDefineNode) node);
-            }
+            });
         }
         return ret;
     }
@@ -68,11 +68,11 @@ public class ASTBuilder extends MxStarBaseVisitor<ASTNode> {
     public ASTNode visitVariableDefine(MxStarParser.VariableDefineContext ctx) {
         TypeNode type = (TypeNode) visit(ctx.type());
         VariableDefineNode ret = new VariableDefineNode(type, new Cursor(ctx));
-        for (var innerCtx : ctx.singleVariableDefine()) {
+        ctx.singleVariableDefine().forEach(innerCtx -> {
             SingleVariableDefineNode singleDefine = (SingleVariableDefineNode) visit(innerCtx);
             singleDefine.setType(type);
             ret.addStatement(singleDefine);
-        }
+        });
         return ret;
     }
 
@@ -95,10 +95,10 @@ public class ASTBuilder extends MxStarBaseVisitor<ASTNode> {
         IdentifierPrimaryNode constructorName = new IdentifierPrimaryNode(ctx.Identifier().getText(), new Cursor(ctx));
         ConstructorDefineNode ret = new ConstructorDefineNode(constructorName, new Cursor(ctx));
         if (ctx.suite().statement() != null) {
-            for (var innerCtx : ctx.suite().statement()) {
+            ctx.suite().statement().forEach(innerCtx -> {
                 StatementNode statement = (StatementNode) visit(innerCtx);
                 ret.addStatement(statement);
-            }
+            });
         }
         return ret;
     }
@@ -109,16 +109,16 @@ public class ASTBuilder extends MxStarBaseVisitor<ASTNode> {
         IdentifierPrimaryNode functionName = new IdentifierPrimaryNode(ctx.Identifier().getText(), new Cursor(ctx));
         FunctionDefineNode ret = new FunctionDefineNode(functionName, returnType, new Cursor(ctx));
         if (ctx.parameterList() != null) {
-            for (var innerCtx : ctx.parameterList().parameterDefine()) {
+            ctx.parameterList().parameterDefine().forEach(innerCtx -> {
                 ParameterDefineNode parameter = (ParameterDefineNode) visit(innerCtx);
                 ret.addParameter(parameter);
-            }
+            });
         }
         if (ctx.suite().statement() != null) {
-            for (var innerCtx : ctx.suite().statement()) {
+            ctx.suite().statement().forEach(innerCtx -> {
                 StatementNode statement = (StatementNode) visit(innerCtx);
                 ret.addStatement(statement);
-            }
+            });
         }
         return ret;
     }
@@ -168,10 +168,10 @@ public class ASTBuilder extends MxStarBaseVisitor<ASTNode> {
     public ASTNode visitBlockStatement(MxStarParser.BlockStatementContext ctx) {
         BlockStatementNode ret = new BlockStatementNode(new Cursor(ctx));
         if (ctx.suite().statement() != null) {
-            for (var innerCtx : ctx.suite().statement()) {
+            ctx.suite().statement().forEach(innerCtx -> {
                 StatementNode node = (StatementNode) visit(innerCtx);
                 ret.addStatement(node);
-            }
+            });
         }
         return ret;
     }
@@ -258,22 +258,22 @@ public class ASTBuilder extends MxStarBaseVisitor<ASTNode> {
         LambdaExpressionNode ret = new LambdaExpressionNode(new Cursor(ctx));
         if (ctx.parameterList() != null) {
             ret.createParameterList();
-            for (var innerCtx : ctx.parameterList().parameterDefine()) {
+            ctx.parameterList().parameterDefine().forEach(innerCtx -> {
                 ParameterDefineNode parameter = (ParameterDefineNode) visit(innerCtx);
                 ret.addParameter(parameter);
-            }
+            });
         }
         if (ctx.suite().statement() != null) {
-            for (var innerCtx : ctx.suite().statement()) {
+            ctx.suite().statement().forEach(innerCtx -> {
                 StatementNode statement = (StatementNode) visit(innerCtx);
                 ret.addStatement(statement);
-            }
+            });
         }
         if (ctx.argumentList() != null) {
-            for (var innerCtx : ctx.argumentList().expression()) {
+            ctx.argumentList().expression().forEach(innerCtx -> {
                 ExpressionNode expression = (ExpressionNode) visit(innerCtx);
                 ret.addArgument(expression);
-            }
+            });
         }
         return ret;
     }
@@ -283,10 +283,10 @@ public class ASTBuilder extends MxStarBaseVisitor<ASTNode> {
         ExpressionNode function = (ExpressionNode) visit(ctx.expression());
         FunctionCallExpressionNode ret = new FunctionCallExpressionNode(function, new Cursor(ctx));
         if (ctx.argumentList() != null) {
-            for (var innerCtx : ctx.argumentList().expression()) {
+            ctx.argumentList().expression().forEach(innerCtx -> {
                 ExpressionNode argument = (ExpressionNode) visit(innerCtx);
                 ret.addArgument(argument);
-            }
+            });
         }
         return ret;
     }
@@ -354,11 +354,13 @@ public class ASTBuilder extends MxStarBaseVisitor<ASTNode> {
         TypeNode nonArrayType = (TypeNode) visit(ctx.nonArrayType());
         NewTypeExpressionNode ret = new NewTypeExpressionNode(nonArrayType, false, new Cursor(ctx));
         for (var c : ctx.getText().toCharArray()) {
-            if (c == '[') ret.increaseDimension();
+            if (c == '[') {
+                ret.increaseDimension();
+            }
         }
-        for (var innerCtx : ctx.expression()) {
+        ctx.expression().forEach(innerCtx -> {
             ret.addDimensionExpression((ExpressionNode) visit(innerCtx));
-        }
+        });
         return ret;
     }
 
