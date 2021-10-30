@@ -9,6 +9,7 @@ import AST.TypeNode.*;
 import Utility.Entity.ConstructorEntity;
 import Utility.Entity.FunctionEntity;
 import Utility.Entity.VariableEntity;
+import Utility.Memory;
 import Utility.Scope.*;
 import Utility.Type.ClassType;
 import Utility.error.SemanticError;
@@ -48,10 +49,18 @@ public class SymbolCollector implements ASTVisitor {
             throw new SemanticError("[collect] class name conflict with existed variable", node.getCursor());
         currentScope = new ClassScope(globalScope);
         ClassType currentClass = new ClassType(node.getClassName());
-        node.getConstructor().accept(this);
-        node.getMethods().forEach(function -> function.accept(this));
+        if (node.hasCustomConstructor()) {
+            node.getConstructor().accept(this);
+        }
+        node.getMethods().forEach(function -> {
+            function.accept(this);
+        });
         currentClass.setClassScope((ClassScope) currentScope);
-        node.getMembers().forEach(member -> member.getSingleDefines().forEach(singleDefine -> currentClass.addMember(new VariableEntity(singleDefine.getType().toType(), singleDefine.getVariableName(), singleDefine.getCursor()))));
+        node.getMembers().forEach(member -> {
+            member.getSingleDefines().forEach(singleDefine -> {
+                currentClass.addMember(new VariableEntity(singleDefine.getType().toType(), singleDefine.getVariableName(), singleDefine.getCursor()));
+            });
+        });
         currentScope = currentScope.getParentScope();
         globalScope.addClass(node.getClassName(), currentClass);
     }
@@ -77,9 +86,10 @@ public class SymbolCollector implements ASTVisitor {
 
     @Override
     public void visit(FunctionDefineNode node) {
-        FunctionEntity function = new FunctionEntity(node.getReturnType().toType(), node.getFunctionName(), node.getCursor());
-        function.setFunctionScope(new FunctionScope(currentScope));
-        node.getParameters().forEach(parameter -> function.addParameter(new VariableEntity(parameter.getType().toType(), parameter.getParameterName(), parameter.getCursor())));
+        FunctionEntity function = new FunctionEntity(new FunctionScope(currentScope), node.getReturnType().toType(), node.getFunctionName(), node.getCursor());
+        node.getParameters().forEach(parameter -> {
+            function.addParameter(new VariableEntity(parameter.getType().toType(), parameter.getParameterName(), parameter.getCursor()));
+        });
         currentScope.addFunction(function);
     }
 

@@ -6,13 +6,15 @@ import AST.ExpressionNode.*;
 import AST.PrimaryNode.*;
 import AST.StatementNode.*;
 import AST.TypeNode.*;
-import FrontEnd.Memory;
+import Utility.Memory;
 
 public class ASTPrinter {
     private int indentCnt = 0;
 
     public void print(Memory memory) {
+        printf("-----------------------------------------ASTPrinter-----------------------------------------\n");
         printNode(memory.getASTRoot());
+        printf("-----------------------------------------ASTPrinter-----------------------------------------\n");
     }
 
     private void printf(String format, Object... args) {

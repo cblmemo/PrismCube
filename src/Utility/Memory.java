@@ -1,4 +1,4 @@
-package FrontEnd;
+package Utility;
 
 import AST.ProgramNode;
 import Utility.Scope.GlobalScope;

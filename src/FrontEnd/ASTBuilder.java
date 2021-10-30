@@ -9,6 +9,7 @@ import AST.TypeNode.*;
 import Parser.MxStarBaseVisitor;
 import Parser.MxStarParser;
 import Utility.Cursor;
+import Utility.Memory;
 
 import static Debug.MemoLog.log;
 

@@ -9,7 +9,7 @@ import Utility.error.SyntaxError;
 import java.util.HashMap;
 
 public class GlobalScope extends Scope {
-    private HashMap<String, ClassType> classes;
+    private HashMap<String, ClassType> classes = new HashMap<>();
 
     public GlobalScope(Scope parentScope) {
         super(parentScope);
@@ -23,29 +23,29 @@ public class GlobalScope extends Scope {
         Cursor origin = new Cursor(-1, -1);
         FunctionEntity function;
 
-        function = new FunctionEntity(new ClassType("void"), "print", origin);
+        function = new FunctionEntity(new FunctionScope(null), new ClassType("void"), "print", origin);
         function.addParameter(new VariableEntity(new ClassType("string"), "str", origin));
         addFunction(function);
 
-        function = new FunctionEntity(new ClassType("void"), "println", origin);
+        function = new FunctionEntity(new FunctionScope(null), new ClassType("void"), "println", origin);
         function.addParameter(new VariableEntity(new ClassType("string"), "str", origin));
         addFunction(function);
 
-        function = new FunctionEntity(new ClassType("void"), "printInt", origin);
+        function = new FunctionEntity(new FunctionScope(null), new ClassType("void"), "printInt", origin);
         function.addParameter(new VariableEntity(new ClassType("int"), "n", origin));
         addFunction(function);
 
-        function = new FunctionEntity(new ClassType("void"), "printlnInt", origin);
+        function = new FunctionEntity(new FunctionScope(null), new ClassType("void"), "printlnInt", origin);
         function.addParameter(new VariableEntity(new ClassType("int"), "n", origin));
         addFunction(function);
 
-        function = new FunctionEntity(new ClassType("string"), "getString", origin);
+        function = new FunctionEntity(new FunctionScope(null), new ClassType("string"), "getString", origin);
         addFunction(function);
 
-        function = new FunctionEntity(new ClassType("int"), "getInt", origin);
+        function = new FunctionEntity(new FunctionScope(null), new ClassType("int"), "getInt", origin);
         addFunction(function);
 
-        function = new FunctionEntity(new ClassType("string"), "toString", origin);
+        function = new FunctionEntity(new FunctionScope(null), new ClassType("string"), "toString", origin);
         function.addParameter(new VariableEntity(new ClassType("int"), "i", origin));
         addFunction(function);
 
@@ -54,5 +54,9 @@ public class GlobalScope extends Scope {
     public void addClass(String typeName, ClassType type) {
         if (classes.containsKey(typeName)) throw new SyntaxError("repeated type name", new Cursor(-1, -1));
         classes.put(typeName, type);
+    }
+
+    public HashMap<String, ClassType> getClasses() {
+        return classes;
     }
 }

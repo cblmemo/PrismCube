@@ -6,6 +6,7 @@ import AST.ExpressionNode.*;
 import AST.PrimaryNode.*;
 import AST.StatementNode.*;
 import AST.TypeNode.*;
+import Utility.Memory;
 import Utility.Scope.*;
 
 public class SemanticChecker implements ASTVisitor {

@@ -17,4 +17,8 @@ public class FunctionScope extends Scope {
             throw new SemanticError("repeated parameter name", entity.getCursor());
         parameters.put(entity.getEntityName(), entity);
     }
+
+    public HashMap<String, VariableEntity> getParameters() {
+        return parameters;
+    }
 }

@@ -1,11 +1,11 @@
 import Debug.ASTPrinter;
 import Debug.MemoLog;
 import Debug.ScopePrinter;
-import FrontEnd.Memory;
 import FrontEnd.Preprocessor;
 import FrontEnd.ASTBuilder;
 import FrontEnd.SymbolCollector;
 import FrontEnd.SemanticChecker;
+import Utility.Memory;
 import Utility.error.error;
 
 import static Debug.MemoLog.log;

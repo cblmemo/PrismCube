@@ -10,4 +10,8 @@ public class VariableEntity extends Entity {
         super(entityName, cursor);
         this.variableType = variableType;
     }
+
+    public Type getVariableType() {
+        return variableType;
+    }
 }

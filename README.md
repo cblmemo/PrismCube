@@ -20,8 +20,8 @@ Mx* is a simplified language from the mix of Standard C++ and Java. Details of M
  - [x] ASTBuilder
  - [x] ASTPrinter (inspired by [Masterball](https://github.com/SiriusNEO/Masterball))
  - [x] SymbolCollector
- - [ ] ScopePrinter  **working...**
- - [ ] SemanticChecker
+ - [x] ScopePrinter
+ - [ ] SemanticChecker                    **working...**
 
 ## File Structure
 
@@ -83,7 +83,7 @@ Mx* is a simplified language from the mix of Standard C++ and Java. Details of M
  ┃ ┗ 📜ScopePrinter.java
  ┣ 📂FrontEnd
  ┃ ┣ 📜ASTBuilder.java
- ┃ ┣ 📜Memory.java
+ ┃ ┣ 📜Utility.Memory.java
  ┃ ┣ 📜Preprocessor.java
  ┃ ┣ 📜SemanticChecker.java
  ┃ ┗ 📜SymbolCollector.java

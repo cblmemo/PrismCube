@@ -38,6 +38,10 @@ public class ClassDefineNode extends ProgramDefineNode {
         } else constructor = node;
     }
 
+    public boolean hasCustomConstructor() {
+        return constructor != null;
+    }
+
     public boolean isInvalid() {
         return invalid;
     }

@@ -22,4 +22,12 @@ public class ClassType extends Type {
         if (entity instanceof ConstructorEntity) classScope.setConstructor((ConstructorEntity) entity);
         else classScope.addFunction((FunctionEntity) entity);
     }
+
+    public ClassScope getClassScope() {
+        return classScope;
+    }
+
+    public boolean isBuiltinType() {
+        return classScope == null;
+    }
 }

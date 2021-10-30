@@ -6,7 +6,7 @@ import Utility.error.SemanticError;
 
 import java.util.HashMap;
 
-public class Scope {
+abstract public class Scope {
     private HashMap<String, VariableEntity> variables = new HashMap<>();
     private HashMap<String, FunctionEntity> functions = new HashMap<>();
     private Scope parentScope;
@@ -29,6 +29,14 @@ public class Scope {
 
     public Scope getParentScope() {
         return parentScope;
+    }
+
+    public HashMap<String, VariableEntity> getVariables() {
+        return variables;
+    }
+
+    public HashMap<String, FunctionEntity> getFunctions() {
+        return functions;
     }
 
     public boolean hasVariable(String name) {
