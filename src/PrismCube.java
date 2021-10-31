@@ -16,7 +16,7 @@ public class PrismCube {
             log.SetLogLevel(MemoLog.LogLevel.InfoLevel);
             log.SetOutPutFile("log.txt");
 
-            Memory memory = new Memory("test.mx");
+            Memory memory = new Memory();
 
             new Preprocessor().preprocess(memory);
 
