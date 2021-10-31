@@ -5,10 +5,22 @@ import Utility.Cursor;
 
 public class IdentifierPrimaryNode extends PrimaryNode {
     private String identifier;
+    private boolean isVariable;
+    private boolean isFunction;
 
-    public IdentifierPrimaryNode(String identifier, Cursor cursor) {
-        super(cursor);
+    public IdentifierPrimaryNode(String identifier, boolean isVariable, boolean isFunction, Cursor cursor) {
+        super(isVariable, cursor);
         this.identifier = identifier;
+        this.isVariable = isVariable;
+        this.isFunction = isFunction;
+    }
+
+    public boolean isVariable() {
+        return isVariable;
+    }
+
+    public boolean isFunction() {
+        return isFunction;
     }
 
     public String getIdentifier() {

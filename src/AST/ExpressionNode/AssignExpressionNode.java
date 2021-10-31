@@ -8,7 +8,7 @@ public class AssignExpressionNode extends ExpressionNode {
     private String op;
 
     public AssignExpressionNode(ExpressionNode lhs, ExpressionNode rhs, String op, Cursor cursor) {
-        super(cursor);
+        super(true, cursor);
         this.lhs = lhs;
         this.rhs = rhs;
         this.op = op;

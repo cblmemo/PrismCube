@@ -8,7 +8,7 @@ public class BinaryExpressionNode extends ExpressionNode {
     private String op;
 
     public BinaryExpressionNode(ExpressionNode lhs, ExpressionNode rhs, String op, Cursor cursor) {
-        super(cursor);
+        super(false, cursor);
         this.lhs = lhs;
         this.rhs = rhs;
         this.op = op;

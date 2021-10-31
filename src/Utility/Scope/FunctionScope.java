@@ -1,24 +1,43 @@
 package Utility.Scope;
 
 import Utility.Entity.VariableEntity;
+import Utility.Type.Type;
 import Utility.error.SemanticError;
 
-import java.util.HashMap;
+import java.util.ArrayList;
+import java.util.Objects;
 
-public class FunctionScope extends Scope {
-    private HashMap<String, VariableEntity> parameters = new HashMap<>();
+public class FunctionScope extends MethodScope {
+    private ArrayList<VariableEntity> parameters = new ArrayList<>();
+    private Type returnType;
 
-    public FunctionScope(Scope parentScope) {
+    public FunctionScope(Type returnType, Scope parentScope) {
         super(parentScope);
+        this.returnType = returnType;
+    }
+
+    public Type getReturnType() {
+        return returnType;
+    }
+
+    public boolean hasParameter(String name) {
+        for (var parameter : parameters) {
+            if (Objects.equals(parameter.getEntityName(), name)) return true;
+        }
+        return false;
     }
 
     public void addParameter(VariableEntity entity) {
-        if (parameters.containsKey(entity.getEntityName()))
+        if (hasParameter(entity.getEntityName()))
             throw new SemanticError("repeated parameter name", entity.getCursor());
-        parameters.put(entity.getEntityName(), entity);
+        parameters.add(entity);
     }
 
-    public HashMap<String, VariableEntity> getParameters() {
+    public ArrayList<VariableEntity> getParameters() {
         return parameters;
+    }
+
+    public VariableEntity getParameter(int index) {
+        return parameters.get(index);
     }
 }

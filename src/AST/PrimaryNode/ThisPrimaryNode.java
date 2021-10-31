@@ -5,7 +5,7 @@ import Utility.Cursor;
 
 public class ThisPrimaryNode extends PrimaryNode {
     public ThisPrimaryNode(Cursor cursor) {
-        super(cursor);
+        super(false, cursor);
     }
 
     @Override

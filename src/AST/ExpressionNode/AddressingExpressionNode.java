@@ -7,7 +7,7 @@ public class AddressingExpressionNode extends ExpressionNode {
     private ExpressionNode array, index;
 
     public AddressingExpressionNode(ExpressionNode array, ExpressionNode index, Cursor cursor) {
-        super(cursor);
+        super(true, cursor);
         this.array = array;
         this.index = index;
     }

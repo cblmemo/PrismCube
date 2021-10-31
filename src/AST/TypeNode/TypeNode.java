@@ -20,7 +20,7 @@ abstract public class TypeNode extends ASTNode {
 
     public Type toType() {
         if (this instanceof ArrayTypeNode)
-            return new ArrayType(new ClassType(((ArrayTypeNode) this).getRootTypeName()), ((ArrayTypeNode) this).getDimension(), typeName);
+            return new ArrayType(new ClassType(((ArrayTypeNode) this).getRootTypeName()), ((ArrayTypeNode) this).getDimension());
         return new ClassType(typeName);
     }
 }

@@ -7,14 +7,14 @@ import Utility.Cursor;
 import java.util.ArrayList;
 
 public class NewTypeExpressionNode extends ExpressionNode {
-    private TypeNode nonArrayType;
+    private TypeNode rootElementType;
     private int dimension = 0;
     private ArrayList<ExpressionNode> dimensionExpressions = new ArrayList<>();
     private boolean invalid;
 
-    public NewTypeExpressionNode(TypeNode nonArrayType, boolean invalid, Cursor cursor) {
-        super(cursor);
-        this.nonArrayType = nonArrayType;
+    public NewTypeExpressionNode(TypeNode rootElementType, boolean invalid, Cursor cursor) {
+        super(false, cursor);
+        this.rootElementType = rootElementType;
         this.invalid = invalid;
     }
 
@@ -30,8 +30,8 @@ public class NewTypeExpressionNode extends ExpressionNode {
         return invalid;
     }
 
-    public TypeNode getNonArrayType() {
-        return nonArrayType;
+    public TypeNode getRootElementType() {
+        return rootElementType;
     }
 
     public int getDimension() {

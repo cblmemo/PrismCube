@@ -13,7 +13,7 @@ public class LambdaExpressionNode extends ExpressionNode {
     private ArrayList<ExpressionNode> arguments = new ArrayList<>();
 
     public LambdaExpressionNode(Cursor cursor) {
-        super(cursor);
+        super(false, cursor);
     }
 
     public void createParameterList() {

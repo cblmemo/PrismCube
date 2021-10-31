@@ -3,6 +3,8 @@ package Utility.Type;
 import Utility.Entity.*;
 import Utility.Scope.ClassScope;
 
+import java.util.Objects;
+
 public class ClassType extends Type {
     private ClassScope classScope;
 
@@ -12,6 +14,7 @@ public class ClassType extends Type {
 
     public void setClassScope(ClassScope classScope) {
         this.classScope = classScope;
+        this.classScope.setClassName(getTypeName());
     }
 
     public void addMember(VariableEntity entity) {
@@ -28,6 +31,6 @@ public class ClassType extends Type {
     }
 
     public boolean isBuiltinType() {
-        return classScope == null;
+        return classScope == null || Objects.equals(getTypeName(), "string");
     }
 }

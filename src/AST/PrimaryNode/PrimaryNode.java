@@ -4,7 +4,7 @@ import AST.ExpressionNode.ExpressionNode;
 import Utility.Cursor;
 
 public abstract class PrimaryNode extends ExpressionNode {
-    public PrimaryNode(Cursor cursor) {
-        super(cursor);
+    public PrimaryNode(boolean leftValue, Cursor cursor) {
+        super(leftValue, cursor);
     }
 }

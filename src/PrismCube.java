@@ -22,11 +22,11 @@ public class PrismCube {
 
             new ASTBuilder().build(memory);
 
-            new ASTPrinter().print(memory);
+//            new ASTPrinter().print(memory);
 
             new SymbolCollector().collect(memory);
 
-            new ScopePrinter().print(memory);
+//            new ScopePrinter().print(memory);
 
             new SemanticChecker().check(memory);
 

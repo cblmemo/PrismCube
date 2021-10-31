@@ -7,6 +7,7 @@ import AST.TypeNode.TypeNode;
 import Utility.Cursor;
 
 import java.util.ArrayList;
+import java.util.Objects;
 
 public class FunctionDefineNode extends ProgramDefineNode {
     private TypeNode returnType;
@@ -42,6 +43,10 @@ public class FunctionDefineNode extends ProgramDefineNode {
 
     public void addStatement(StatementNode node) {
         statements.add(node);
+    }
+
+    public boolean isMainFunction() {
+        return Objects.equals(getFunctionName(), "main") && Objects.equals(returnType.getTypeName(), "int") && parameters.size() == 0;
     }
 
     @Override

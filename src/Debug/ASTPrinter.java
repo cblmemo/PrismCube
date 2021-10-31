@@ -34,7 +34,12 @@ public class ASTPrinter {
 
     private void printNode(ProgramNode node) {
         enter("ProgramNode");
-        printf("program defines: (%d)\n", node.getDefines().size());
+        printf("program defines: (%d)\n", node.getDefines().size() + 1);
+        if (node.isInvalid()) printf("main function error!!!!!!!!!!!!!!!\n");
+        else {
+            printf("main function:\n");
+            printNode((FunctionDefineNode) node.getMainFunction());
+        }
         for (var innerNode : node.getDefines()) {
             if (innerNode instanceof ClassDefineNode) printNode((ClassDefineNode) innerNode);
             if (innerNode instanceof VariableDefineNode) printNode((VariableDefineNode) innerNode);
@@ -255,9 +260,9 @@ public class ASTPrinter {
             printf("rhs:\n");
             printNode(((AssignExpressionNode) node).getRhs());
         }
-        if (node instanceof AtomExpressionNode) {
-            printf("[AtomExpressionNode]\n");
-            printNode(((AtomExpressionNode) node).getPrimary());
+        if (node instanceof PrimaryNode) {
+            printf("[PrimaryNode]\n");
+            printNode((PrimaryNode) node);
         }
         if (node instanceof BinaryExpressionNode) {
             printf("[BinaryExpressionNode]\n");
@@ -323,7 +328,7 @@ public class ASTPrinter {
                 printf("ErrorNewArray!\n");
             } else {
                 printf("nonarray type:\n");
-                printNode(((NewTypeExpressionNode) node).getNonArrayType());
+                printNode(((NewTypeExpressionNode) node).getRootElementType());
                 printf("dimension: %d\n", ((NewTypeExpressionNode) node).getDimension());
                 if (((NewTypeExpressionNode) node).getDimensionExpressions().size() != 0) {
                     printf("dimension expressions: (%d)\n", ((NewTypeExpressionNode) node).getDimensionExpressions().size());

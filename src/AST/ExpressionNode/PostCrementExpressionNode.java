@@ -8,7 +8,7 @@ public class PostCrementExpressionNode extends ExpressionNode {
     private String op;
 
     public PostCrementExpressionNode(ExpressionNode lhs, String op, Cursor cursor) {
-        super(cursor);
+        super(false, cursor);
         this.lhs = lhs;
         this.op = op;
     }

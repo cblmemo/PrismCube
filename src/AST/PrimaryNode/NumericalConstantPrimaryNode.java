@@ -7,7 +7,7 @@ public class NumericalConstantPrimaryNode extends PrimaryNode {
     private int numericalConstant;
 
     public NumericalConstantPrimaryNode(String numericalConstantText, Cursor cursor) {
-        super(cursor);
+        super(false, cursor);
         this.numericalConstant = Integer.parseInt(numericalConstantText);
     }
 

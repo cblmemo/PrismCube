@@ -3,12 +3,13 @@
 A toy Mx* compiler with java implementation.
 
 ![](https://img.shields.io/badge/version-1.0.0-green.svg)
+![](https://img.shields.io/badge/JDK_version-17-orange.svg)
 [![](https://img.shields.io/badge/source_language-Mx*-yellow.svg)](https://github.com/ACMClassCourses/Compiler-Design-Implementation)
-![](https://img.shields.io/github/last-commit/Rainy-Memory/Compiler)
+![](https://img.shields.io/github/last-commit/Rainy-Memory/PrismCube)
 
-![](https://img.shields.io/github/languages/top/Rainy-Memory/Compiler)
-![](https://img.shields.io/github/languages/code-size/Rainy-Memory/Compiler)
-![](https://img.shields.io/github/repo-size/Rainy-Memory/Compiler)
+![](https://img.shields.io/github/languages/top/Rainy-Memory/PrismCube)
+![](https://img.shields.io/github/languages/code-size/Rainy-Memory/PrismCube)
+![](https://img.shields.io/github/repo-size/Rainy-Memory/PrismCube)
 
 ## Mx* Language
 
@@ -83,7 +84,6 @@ Mx* is a simplified language from the mix of Standard C++ and Java. Details of M
  ┃ ┗ 📜ScopePrinter.java
  ┣ 📂FrontEnd
  ┃ ┣ 📜ASTBuilder.java
- ┃ ┣ 📜Utility.Memory.java
  ┃ ┣ 📜Preprocessor.java
  ┃ ┣ 📜SemanticChecker.java
  ┃ ┗ 📜SymbolCollector.java
@@ -105,6 +105,7 @@ Mx* is a simplified language from the mix of Standard C++ and Java. Details of M
  ┃ ┃ ┣ 📜ConstructorEntity.java
  ┃ ┃ ┣ 📜Entity.java
  ┃ ┃ ┣ 📜FunctionEntity.java
+ ┃ ┃ ┣ 📜MethodEntity.java
  ┃ ┃ ┗ 📜VariableEntity.java
  ┃ ┣ 📂error
  ┃ ┃ ┣ 📜error.java
@@ -123,6 +124,7 @@ Mx* is a simplified language from the mix of Standard C++ and Java. Details of M
  ┃ ┃ ┣ 📜ClassType.java
  ┃ ┃ ┗ 📜Type.java
  ┃ ┣ 📜Cursor.java
+ ┃ ┣ 📜Memory.java
  ┃ ┗ 📜MxStarErrorListener.java
  ┗ 📜PrismCube.java
 ```

@@ -7,9 +7,10 @@ import Utility.Cursor;
 public class MemberAccessExpressionNode extends ExpressionNode {
     private ExpressionNode instance;
     private IdentifierPrimaryNode memberName;
+    private boolean accessMethod = false;
 
     public MemberAccessExpressionNode(ExpressionNode instance, IdentifierPrimaryNode memberName, Cursor cursor) {
-        super(cursor);
+        super(false, cursor);
         this.instance = instance;
         this.memberName = memberName;
     }
@@ -18,8 +19,17 @@ public class MemberAccessExpressionNode extends ExpressionNode {
         return instance;
     }
 
-    public IdentifierPrimaryNode getMemberName() {
-        return memberName;
+    public String getMemberName() {
+        return memberName.getIdentifier();
+    }
+
+    public void setAccessMethod(boolean accessMethod) {
+        this.accessMethod = accessMethod;
+        super.setLeftValue(!accessMethod);
+    }
+
+    public boolean isAccessMethod() {
+        return accessMethod;
     }
 
     @Override

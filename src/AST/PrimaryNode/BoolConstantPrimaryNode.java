@@ -9,7 +9,7 @@ public class BoolConstantPrimaryNode extends PrimaryNode {
     private boolean boolConstant;
 
     public BoolConstantPrimaryNode(String boolConstantText, Cursor cursor) {
-        super(cursor);
+        super(false, cursor);
         this.boolConstant = Objects.equals(boolConstantText, "true");
     }
 

@@ -7,7 +7,7 @@ public class StringConstantPrimaryNode extends PrimaryNode {
     private String stringConstant;
 
     public StringConstantPrimaryNode(String stringConstantText, Cursor cursor) {
-        super(cursor);
+        super(false, cursor);
         this.stringConstant = stringConstantText;
     }
 

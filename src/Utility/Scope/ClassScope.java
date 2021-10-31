@@ -4,6 +4,7 @@ import Utility.Entity.ConstructorEntity;
 
 public class ClassScope extends Scope {
     private ConstructorEntity constructor = null;
+    private String className;
 
     public ClassScope(Scope parentScope) {
         super(parentScope);
@@ -19,5 +20,13 @@ public class ClassScope extends Scope {
 
     public ConstructorEntity getConstructor() {
         return constructor;
+    }
+
+    public void setClassName(String className) {
+        this.className = className;
+    }
+
+    public String getClassName() {
+        return className;
     }
 }

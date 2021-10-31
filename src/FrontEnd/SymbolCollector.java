@@ -23,30 +23,36 @@ public class SymbolCollector implements ASTVisitor {
     public void collect(Memory memory) {
         log.Infof("Symbol collect started.\n");
 
-        globalScope = memory.getGlobalScope();
+        currentScope = globalScope = memory.getGlobalScope();
         visit(memory.getASTRoot());
 
         log.Infof("Symbol collect finished.\n");
     }
 
+    private void throwError(String message, ASTNode node) {
+        throw new SemanticError("[collect] " + message, node.getCursor());
+    }
+
     @Override
     public void visit(ProgramNode node) {
-        currentScope = globalScope;
-        for (var define : node.getDefines()) {
+        if (node.isInvalid())
+            throwError("main function error: " + node.getMessage(), node);
+        node.getMainFunction().accept(this);
+        node.getDefines().forEach(define -> {
             define.accept(this);
-        }
+        });
     }
 
     @Override
     public void visit(ClassDefineNode node) {
         if (node.isInvalid())
-            throw new SemanticError("[collect] error class with error message: " + node.getMessage(), node.getCursor());
+            throwError("error class with error message: " + node.getMessage(), node);
         if (currentScope != globalScope)
-            throw new SemanticError("[collect] class define not in global scope", node.getCursor());
+            throwError("class define not in global scope", node);
         if (globalScope.hasFunction(node.getClassName()))
-            throw new SemanticError("[collect] class name conflict with existed function", node.getCursor());
+            throwError("class name conflict with existed function", node);
         if (globalScope.hasVariable(node.getClassName()))
-            throw new SemanticError("[collect] class name conflict with existed variable", node.getCursor());
+            throwError("class name conflict with existed variable", node);
         currentScope = new ClassScope(globalScope);
         ClassType currentClass = new ClassType(node.getClassName());
         if (node.hasCustomConstructor()) {
@@ -78,7 +84,7 @@ public class SymbolCollector implements ASTVisitor {
     @Override
     public void visit(ConstructorDefineNode node) {
         if (!(currentScope instanceof ClassScope))
-            throw new SemanticError("[collect] constructor define outside class scope", node.getCursor());
+            throwError("constructor define outside class scope", node);
         ConstructorEntity constructor = new ConstructorEntity(node.getConstructorName(), node.getCursor());
         constructor.setConstructorScope(new ConstructorScope(currentScope));
         ((ClassScope) currentScope).setConstructor(constructor);
@@ -86,7 +92,7 @@ public class SymbolCollector implements ASTVisitor {
 
     @Override
     public void visit(FunctionDefineNode node) {
-        FunctionEntity function = new FunctionEntity(new FunctionScope(currentScope), node.getReturnType().toType(), node.getFunctionName(), node.getCursor());
+        FunctionEntity function = new FunctionEntity(new FunctionScope(node.getReturnType().toType(), currentScope), node.getFunctionName(), node.getCursor());
         node.getParameters().forEach(parameter -> {
             function.addParameter(new VariableEntity(parameter.getType().toType(), parameter.getParameterName(), parameter.getCursor()));
         });
@@ -140,11 +146,6 @@ public class SymbolCollector implements ASTVisitor {
 
     @Override
     public void visit(EmptyStatementNode node) {
-
-    }
-
-    @Override
-    public void visit(AtomExpressionNode node) {
 
     }
 

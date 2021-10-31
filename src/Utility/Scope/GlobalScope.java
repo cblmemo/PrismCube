@@ -2,6 +2,7 @@ package Utility.Scope;
 
 import Utility.Cursor;
 import Utility.Entity.FunctionEntity;
+import Utility.Entity.MethodEntity;
 import Utility.Entity.VariableEntity;
 import Utility.Type.ClassType;
 import Utility.error.SyntaxError;
@@ -14,41 +15,58 @@ public class GlobalScope extends Scope {
     public GlobalScope(Scope parentScope) {
         super(parentScope);
 
-        addClass("int", new ClassType("int"));
-        addClass("bool", new ClassType("bool"));
-        addClass("string", new ClassType("string"));
-        addClass("void", new ClassType("void"));
-        addClass("null", new ClassType("null"));
-
         Cursor origin = new Cursor(-1, -1);
         FunctionEntity function;
 
-        function = new FunctionEntity(new FunctionScope(null), new ClassType("void"), "print", origin);
-        function.addParameter(new VariableEntity(new ClassType("string"), "str", origin));
+        ClassType intType = new ClassType("int");
+        addClass("int", intType);
+        ClassType boolType = new ClassType("bool");
+        addClass("bool", boolType);
+        ClassType voidType = new ClassType("void");
+        addClass("void", voidType);
+        ClassType nullType = new ClassType("null");
+        addClass("null", nullType);
+
+        ClassType stringType = new ClassType("string");
+        stringType.setClassScope(new ClassScope(null));
+        function = new FunctionEntity(new FunctionScope(intType, null), "length", origin);
+        stringType.addMethod(function);
+        function = new FunctionEntity(new FunctionScope(stringType, null), "substring", origin);
+        function.addParameter(new VariableEntity(intType, "left", origin));
+        function.addParameter(new VariableEntity(intType, "right", origin));
+        stringType.addMethod(function);
+        function = new FunctionEntity(new FunctionScope(intType, null), "parseInt", origin);
+        stringType.addMethod(function);
+        function = new FunctionEntity(new FunctionScope(intType, null), "ord", origin);
+        function.addParameter(new VariableEntity(intType, "pos", origin));
+        stringType.addMethod(function);
+        addClass("string", stringType);
+
+        function = new FunctionEntity(new FunctionScope(voidType, null), "print", origin);
+        function.addParameter(new VariableEntity(stringType, "str", origin));
         addFunction(function);
 
-        function = new FunctionEntity(new FunctionScope(null), new ClassType("void"), "println", origin);
-        function.addParameter(new VariableEntity(new ClassType("string"), "str", origin));
+        function = new FunctionEntity(new FunctionScope(voidType, null), "println", origin);
+        function.addParameter(new VariableEntity(stringType, "str", origin));
         addFunction(function);
 
-        function = new FunctionEntity(new FunctionScope(null), new ClassType("void"), "printInt", origin);
-        function.addParameter(new VariableEntity(new ClassType("int"), "n", origin));
+        function = new FunctionEntity(new FunctionScope(voidType, null), "printInt", origin);
+        function.addParameter(new VariableEntity(intType, "n", origin));
         addFunction(function);
 
-        function = new FunctionEntity(new FunctionScope(null), new ClassType("void"), "printlnInt", origin);
-        function.addParameter(new VariableEntity(new ClassType("int"), "n", origin));
+        function = new FunctionEntity(new FunctionScope(voidType, null), "printlnInt", origin);
+        function.addParameter(new VariableEntity(intType, "n", origin));
         addFunction(function);
 
-        function = new FunctionEntity(new FunctionScope(null), new ClassType("string"), "getString", origin);
+        function = new FunctionEntity(new FunctionScope(stringType, null), "getString", origin);
         addFunction(function);
 
-        function = new FunctionEntity(new FunctionScope(null), new ClassType("int"), "getInt", origin);
+        function = new FunctionEntity(new FunctionScope(intType, null), "getInt", origin);
         addFunction(function);
 
-        function = new FunctionEntity(new FunctionScope(null), new ClassType("string"), "toString", origin);
-        function.addParameter(new VariableEntity(new ClassType("int"), "i", origin));
+        function = new FunctionEntity(new FunctionScope(stringType, null), "toString", origin);
+        function.addParameter(new VariableEntity(intType, "i", origin));
         addFunction(function);
-
     }
 
     public void addClass(String typeName, ClassType type) {
@@ -58,5 +76,13 @@ public class GlobalScope extends Scope {
 
     public HashMap<String, ClassType> getClasses() {
         return classes;
+    }
+
+    public ClassType getClass(String name) {
+        return classes.get(name);
+    }
+
+    public boolean hasThisClass(String name) {
+        return classes.containsKey(name);
     }
 }

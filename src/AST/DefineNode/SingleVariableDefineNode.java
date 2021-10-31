@@ -33,6 +33,10 @@ public class SingleVariableDefineNode extends ProgramDefineNode {
         return initializeValue;
     }
 
+    public boolean hasInitializeValue() {
+        return initializeValue != null;
+    }
+
     @Override
     public void accept(ASTVisitor visitor) {
         visitor.visit(this);

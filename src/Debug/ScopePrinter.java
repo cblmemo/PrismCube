@@ -118,8 +118,8 @@ public class ScopePrinter {
         } else {
             printf("parameters: (%d)\n", scope.getParameters().size());
             printf("%-" + (tabletLength - indentCnt * 4) + "s%s\n", "parameter type", "parameter name");
-            scope.getParameters().forEach((k, v) -> {
-                printf("%-" + (tabletLength - indentCnt * 4) + "s%s\n", v.getVariableType().getTypeName(), k);
+            scope.getParameters().forEach(parameter -> {
+                printf("%-" + (tabletLength - indentCnt * 4) + "s%s\n", parameter.getVariableType().getTypeName(), parameter.getEntityName());
             });
         }
         printDefaultScope(scope);

@@ -5,7 +5,7 @@ import Utility.Cursor;
 
 public class NullConstantPrimaryNode extends PrimaryNode {
     public NullConstantPrimaryNode(Cursor cursor) {
-        super(cursor);
+        super(false, cursor);
     }
 
     @Override

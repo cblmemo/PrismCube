@@ -26,7 +26,6 @@ public interface ASTVisitor {
     void visit(ExpressionStatementNode node);
     void visit(EmptyStatementNode node);
 
-    void visit(AtomExpressionNode node);
     void visit(NewTypeExpressionNode node);
     void visit(MemberAccessExpressionNode node);
     void visit(LambdaExpressionNode node);
