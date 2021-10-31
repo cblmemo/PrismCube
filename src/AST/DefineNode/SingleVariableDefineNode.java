@@ -25,8 +25,12 @@ public class SingleVariableDefineNode extends ProgramDefineNode {
         return type;
     }
 
-    public String getVariableName() {
+    public String getVariableNameStr() {
         return variableName.getIdentifier();
+    }
+
+    public IdentifierPrimaryNode getVariableName() {
+        return variableName;
     }
 
     public ExpressionNode getInitializeValue() {

@@ -12,6 +12,7 @@ import Utility.Memory;
 import Utility.Scope.*;
 import Utility.Type.ArrayType;
 import Utility.Type.ClassType;
+import Utility.Type.Type;
 import Utility.error.SemanticError;
 
 import java.util.Objects;
@@ -37,10 +38,10 @@ public class SemanticChecker implements ASTVisitor {
 
     @Override
     public void visit(ProgramNode node) {
-        node.getMainFunction().accept(this);
         node.getDefines().forEach(define -> {
             define.accept(this);
         });
+        node.getMainFunction().accept(this);
     }
 
     @Override
@@ -61,8 +62,8 @@ public class SemanticChecker implements ASTVisitor {
 
     @Override
     public void visit(VariableDefineNode node) {
-        if (node.getType().toType() instanceof ArrayType) {
-            if (!globalScope.hasThisClass(((ArrayType) node.getType().toType()).getRootElementType().getTypeName()))
+        if (node.getType().toType(globalScope) instanceof ArrayType) {
+            if (!globalScope.hasThisClass(((ArrayType) node.getType().toType(globalScope)).getRootElementType().getTypeName()))
                 throwError("undefined type", node);
         } else {
             if (!globalScope.hasThisClass(node.getType().getTypeName()))
@@ -76,9 +77,13 @@ public class SemanticChecker implements ASTVisitor {
     @Override
     public void visit(SingleVariableDefineNode node) {
         // already checked type at VariableDefineNode
-        if (currentScope.hasVariable(node.getVariableName()))
+        if (currentScope.hasVariable(node.getVariableNameStr()))
             throwError("repeated variable name", node);
-        if (!(currentScope instanceof ClassScope)) currentScope.addVariable(new VariableEntity(node.getType().toType(), node.getVariableName(), node.getCursor()));
+        if (!(currentScope instanceof ClassScope)) {
+            Type variableType = currentScope.getVariableTypeRecursively(node.getVariableNameStr());
+            currentScope.addVariable(new VariableEntity(variableType, node.getVariableNameStr(), node.getCursor()));
+            node.getVariableName().setExpressionType(variableType);
+        }
         if (node.hasInitializeValue()) {
             node.getInitializeValue().accept(this);
             if (node.getType() instanceof ArrayTypeNode) {
@@ -135,6 +140,8 @@ public class SemanticChecker implements ASTVisitor {
     @Override
     public void visit(IfStatementNode node) {
         node.getConditionExpression().accept(this);
+        if (!node.getConditionExpression().getExpressionType().isBool())
+            throwError("if statement with non-bool condition expression", node);
         currentScope = new BracesScope(currentScope);
         node.getTrueStatement().accept(this);
         currentScope = currentScope.getParentScope();
@@ -355,7 +362,7 @@ public class SemanticChecker implements ASTVisitor {
         node.getRhs().accept(this);
         if (!node.getLhs().isLeftValue())
             throwError("assign to nonassignable object", node);
-        if (node.getLhs().getExpressionType().getTypeName() != node.getRhs().getExpressionType().getTypeName())
+        if (!Objects.equals(node.getLhs().getExpressionType().getTypeName(), node.getRhs().getExpressionType().getTypeName()))
             throwError("assign one different type object to another", node);
         node.setExpressionType(node.getLhs().getExpressionType());
     }
@@ -371,9 +378,9 @@ public class SemanticChecker implements ASTVisitor {
     public void visit(IdentifierPrimaryNode node) {
         if (!currentScope.hasIdentifierRecursively(node.getIdentifier()))
             throwError("undefined identifier", node);
-        if (currentScope.hasVariableRecursively(node.getIdentifier()))
-            node.setExpressionType(currentScope.getVariableTypeRecursively(node.getIdentifier()));
-        else node.setExpressionType(currentScope.getFunctionReturnTypeRecursively(node.getIdentifier()));
+        if (node.isVariable()) node.setExpressionType(currentScope.getVariableTypeRecursively(node.getIdentifier()));
+        else if (node.isFunction()) node.setExpressionType(currentScope.getFunctionReturnTypeRecursively(node.getIdentifier()));
+        else throwError("identifier primary node " + node.getIdentifier() + "neither variable nor function. should not throw this.", node);
     }
 
     @Override

@@ -14,61 +14,77 @@ import Utility.Scope.*;
 import Utility.Type.ClassType;
 import Utility.error.SemanticError;
 
+import java.util.Objects;
+
 import static Debug.MemoLog.log;
 
 public class SymbolCollector implements ASTVisitor {
     private GlobalScope globalScope;
     private Scope currentScope;
-
-    public void collect(Memory memory) {
-        log.Infof("Symbol collect started.\n");
-
-        currentScope = globalScope = memory.getGlobalScope();
-        visit(memory.getASTRoot());
-
-        log.Infof("Symbol collect finished.\n");
-    }
+    private boolean firstTime;
 
     private void throwError(String message, ASTNode node) {
         throw new SemanticError("[collect] " + message, node.getCursor());
     }
 
+    public void collect(Memory memory) {
+        log.Infof("Symbol collect started.\n");
+
+        currentScope = globalScope = memory.getGlobalScope();
+
+        // The first time we collect every class define and function/method define.
+        firstTime = true;
+        visit(memory.getASTRoot());
+
+        // The second time we collect every class member variable and function parameter/return type.
+        firstTime = false;
+        visit(memory.getASTRoot());
+
+        log.Infof("Symbol collect finished.\n");
+    }
+
     @Override
     public void visit(ProgramNode node) {
-        if (node.isInvalid())
-            throwError("main function error: " + node.getMessage(), node);
-        node.getMainFunction().accept(this);
+        if (firstTime) {
+            if (node.isInvalid())
+                throwError("main function error: " + node.getMessage(), node);
+        }
         node.getDefines().forEach(define -> {
             define.accept(this);
         });
+        node.getMainFunction().accept(this);
     }
 
     @Override
     public void visit(ClassDefineNode node) {
-        if (node.isInvalid())
-            throwError("error class with error message: " + node.getMessage(), node);
-        if (currentScope != globalScope)
-            throwError("class define not in global scope", node);
-        if (globalScope.hasFunction(node.getClassName()))
-            throwError("class name conflict with existed function", node);
-        if (globalScope.hasVariable(node.getClassName()))
-            throwError("class name conflict with existed variable", node);
-        currentScope = new ClassScope(globalScope);
-        ClassType currentClass = new ClassType(node.getClassName());
-        if (node.hasCustomConstructor()) {
-            node.getConstructor().accept(this);
-        }
-        node.getMethods().forEach(function -> {
-            function.accept(this);
-        });
-        currentClass.setClassScope((ClassScope) currentScope);
-        node.getMembers().forEach(member -> {
-            member.getSingleDefines().forEach(singleDefine -> {
-                currentClass.addMember(new VariableEntity(singleDefine.getType().toType(), singleDefine.getVariableName(), singleDefine.getCursor()));
+        if (firstTime) {
+            if (node.isInvalid())
+                throwError("error class with error message: " + node.getMessage(), node);
+            if (currentScope != globalScope)
+                throwError("class define not in global scope", node);
+            if (globalScope.hasFunction(node.getClassName()))
+                throwError("class name conflict with existed function", node);
+            currentScope = new ClassScope(globalScope);
+            ClassType currentClass = new ClassType(node.getClassName());
+            if (node.hasCustomConstructor()) {
+                node.getConstructor().accept(this);
+            }
+            node.getMethods().forEach(function -> {
+                function.accept(this);
             });
-        });
-        currentScope = currentScope.getParentScope();
-        globalScope.addClass(node.getClassName(), currentClass);
+            currentClass.setClassScope((ClassScope) currentScope);
+            currentScope = currentScope.getParentScope();
+            globalScope.addClass(node.getClassName(), currentClass);
+        } else {
+            if (globalScope.hasVariable(node.getClassName()))
+                throwError("class name conflict with existed variable", node);
+            ClassType currentClass = globalScope.getClass(node.getClassName());
+            node.getMembers().forEach(member -> {
+                member.getSingleDefines().forEach(singleDefine -> {
+                    currentClass.addMember(new VariableEntity(singleDefine.getType().toType(globalScope), singleDefine.getVariableNameStr(), singleDefine.getCursor()));
+                });
+            });
+        }
     }
 
     @Override
@@ -83,20 +99,29 @@ public class SymbolCollector implements ASTVisitor {
 
     @Override
     public void visit(ConstructorDefineNode node) {
-        if (!(currentScope instanceof ClassScope))
-            throwError("constructor define outside class scope", node);
-        ConstructorEntity constructor = new ConstructorEntity(node.getConstructorName(), node.getCursor());
-        constructor.setConstructorScope(new ConstructorScope(currentScope));
-        ((ClassScope) currentScope).setConstructor(constructor);
+        if (firstTime) {
+            if (!(currentScope instanceof ClassScope))
+                throwError("constructor define outside class scope", node);
+            ConstructorEntity constructor = new ConstructorEntity(node.getConstructorName(), node.getCursor());
+            constructor.setConstructorScope(new ConstructorScope(currentScope));
+            ((ClassScope) currentScope).setConstructor(constructor);
+        }
     }
 
     @Override
     public void visit(FunctionDefineNode node) {
-        FunctionEntity function = new FunctionEntity(new FunctionScope(node.getReturnType().toType(), currentScope), node.getFunctionName(), node.getCursor());
-        node.getParameters().forEach(parameter -> {
-            function.addParameter(new VariableEntity(parameter.getType().toType(), parameter.getParameterName(), parameter.getCursor()));
-        });
-        currentScope.addFunction(function);
+        if (firstTime) {
+            FunctionEntity function = new FunctionEntity(new FunctionScope(null, currentScope), node.getFunctionName(), node.getCursor());
+            currentScope.addFunction(function);
+        } else {
+            FunctionEntity function = currentScope.getFunction(node.getFunctionName());
+            function.setReturnType(node.getReturnType().toType(globalScope));
+            node.getParameters().forEach(parameter -> {
+                if(Objects.equals(parameter.getType().getTypeName(), "void"))
+                    throwError("void type parameter",node);
+                function.addParameter(new VariableEntity(parameter.getType().toType(globalScope), parameter.getParameterName(), parameter.getCursor()));
+            });
+        }
     }
 
     @Override

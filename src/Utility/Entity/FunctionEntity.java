@@ -23,6 +23,10 @@ public class FunctionEntity extends MethodEntity {
         return functionScope.getParameter(index);
     }
 
+    public void setReturnType(Type returnType) {
+        this.returnType = returnType;
+    }
+
     public Type getReturnType() {
         return returnType;
     }

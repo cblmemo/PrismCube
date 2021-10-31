@@ -158,7 +158,7 @@ public class ASTPrinter {
 
     private void printNode(SingleVariableDefineNode node) {
         enter("SingleVariableDefineNode");
-        printf("variable name: %s\n", node.getVariableName());
+        printf("variable name: %s\n", node.getVariableNameStr());
         if (node.getInitializeValue() == null) {
             printf("single variable define has no initialize value.\n");
         } else {

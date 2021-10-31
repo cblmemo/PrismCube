@@ -257,7 +257,9 @@ public class ASTBuilder extends MxStarBaseVisitor<ASTNode> {
 
     @Override
     public ASTNode visitMemberAccessExpression(MxStarParser.MemberAccessExpressionContext ctx) {
+        stack.push(identifierType.variable);
         ExpressionNode instance = (ExpressionNode) visit(ctx.expression());
+        stack.pop();
         IdentifierPrimaryNode memberName;
         if (!stack.empty() && stack.peek() == identifierType.function) memberName = new IdentifierPrimaryNode(ctx.Identifier().getText(), false, true, new Cursor(ctx));
         else memberName = new IdentifierPrimaryNode(ctx.Identifier().getText(), true, false, new Cursor(ctx));
