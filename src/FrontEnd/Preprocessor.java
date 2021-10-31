@@ -15,7 +15,9 @@ public class Preprocessor {
     public void preprocess(Memory memory) throws IOException {
         log.Infof("Preprocess started.\n");
 
-        InputStream input = new FileInputStream(memory.getInputFileName());
+        InputStream input;
+        if (memory.receiveFromFile()) input = new FileInputStream(memory.getInputFileName());
+        else input = System.in;
 
         MxStarLexer lexer = new MxStarLexer(CharStreams.fromStream(input));
         lexer.removeErrorListeners();

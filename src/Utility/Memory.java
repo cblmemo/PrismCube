@@ -9,9 +9,19 @@ public class Memory {
     private ParseTree parseTreeRoot;
     private ProgramNode ASTRoot;
     private GlobalScope globalScope = new GlobalScope(null);
+    private boolean receiveFromFile;
 
     public Memory(String inputFileName) {
         this.inputFileName = inputFileName;
+        receiveFromFile = true;
+    }
+
+    public Memory() {
+        receiveFromFile = false;
+    }
+
+    public boolean receiveFromFile() {
+        return receiveFromFile;
     }
 
     public void setParseTreeRoot(ParseTree parseTreeRoot) {
