@@ -88,7 +88,7 @@ abstract public class Scope {
 
     public Type getFunctionReturnTypeRecursively(String name) {
         if (hasFunction(name)) return functions.get(name).getReturnType();
-        if (parentScope != null) return parentScope.getVariableTypeRecursively(name);
+        if (parentScope != null) return parentScope.getFunctionReturnTypeRecursively(name);
         return null;
     }
 
