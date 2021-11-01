@@ -32,11 +32,17 @@ public class SymbolCollector implements ASTVisitor {
 
         currentScope = globalScope = memory.getGlobalScope();
 
-        // The first time we collect every class define and function/method define.
+        // The first time we collect:
+        // (0) class define;
+        // (1) function define;
+        // (2) method define.
         firstTime = true;
         visit(memory.getASTRoot());
 
-        // The second time we collect every class member variable and function parameter/return type.
+        // The second time we collect:
+        // (0) member variable;
+        // (1) function parameter;
+        // (2) function return type.
         firstTime = false;
         visit(memory.getASTRoot());
 

@@ -16,6 +16,10 @@ public class FunctionScope extends MethodScope {
         this.returnType = returnType;
     }
 
+    public void setReturnType(Type returnType) {
+        this.returnType = returnType;
+    }
+
     public Type getReturnType() {
         return returnType;
     }

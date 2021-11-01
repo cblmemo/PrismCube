@@ -6,12 +6,10 @@ import Utility.Type.Type;
 
 
 public class FunctionEntity extends MethodEntity {
-    private Type returnType;
     private FunctionScope functionScope;
 
     public FunctionEntity(FunctionScope functionScope, String entityName, Cursor cursor) {
         super(entityName, cursor);
-        this.returnType = functionScope.getReturnType();
         this.functionScope = functionScope;
     }
 
@@ -24,11 +22,11 @@ public class FunctionEntity extends MethodEntity {
     }
 
     public void setReturnType(Type returnType) {
-        this.returnType = returnType;
+        functionScope.setReturnType(returnType);
     }
 
     public Type getReturnType() {
-        return returnType;
+        return functionScope.getReturnType();
     }
 
     public FunctionScope getFunctionScope() {

@@ -252,22 +252,19 @@ public class SemanticChecker implements ASTVisitor {
         if (node.isInvalid())
             throwError("function call with function expression neither member access nor identifier", node);
         node.getFunction().accept(this);
-        node.setExpressionType(currentScope.getFunctionReturnTypeRecursively(node.getFunctionName()));
         node.getArguments().forEach(argument -> {
             argument.accept(this);
         });
-//        if (node.isMethod()) {
-//            // todo
-//        } else {
-//
-//        }
-        FunctionEntity function = currentScope.getFunctionRecursively(node.getFunctionName());
-        if (function.getFunctionScope().getParameters().size() != node.getArguments().size())
-            throwError("function call with unmatched argument number", node);
-        for (int i = 0; i < node.getArguments().size(); i++) {
-            if (!function.getParameter(i).getVariableType().equal(node.getArgument(i).getExpressionType()))
-                throwError("function call " + i + "-th argument type unmatch", node);
-        }
+        if (!node.isMethod()) {
+            node.setExpressionType(currentScope.getFunctionReturnTypeRecursively(node.getFunctionName()));
+            FunctionEntity function = currentScope.getFunctionRecursively(node.getFunctionName());
+            if (function.getFunctionScope().getParameters().size() != node.getArguments().size())
+                throwError("function call with unmatched argument number", node);
+            for (int i = 0; i < node.getArguments().size(); i++) {
+                if (!function.getParameter(i).getVariableType().equal(node.getArgument(i).getExpressionType()))
+                    throwError("function call " + i + "-th argument type unmatch", node);
+            }
+        } else node.setExpressionType(globalScope.getClass("null"));
     }
 
     @Override
