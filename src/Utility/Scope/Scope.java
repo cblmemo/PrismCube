@@ -41,42 +41,46 @@ abstract public class Scope {
     }
 
     public boolean hasVariable(String name) {
+        if (this instanceof FunctionScope && ((FunctionScope) this).hasParameter(name)) return true;
         return variables.containsKey(name);
     }
 
-    public boolean hasVariableRecursively(String name) {
-        if (hasVariable(name)) return true;
-        if (parentScope != null) return parentScope.hasVariableRecursively(name);
-        return false;
-    }
+//    public boolean hasVariableRecursively(String name) {
+//        if (hasVariable(name)) return true;
+//        if (parentScope != null) return parentScope.hasVariableRecursively(name);
+//        return false;
+//    }
 
     public boolean hasFunction(String name) {
         return functions.containsKey(name);
     }
 
-    public boolean hasFunctionRecursively(String name) {
-        if (hasFunction(name)) return true;
-        if (parentScope != null) return parentScope.hasFunctionRecursively(name);
-        return false;
-    }
+//    public boolean hasFunctionRecursively(String name) {
+//        if (hasFunction(name)) return true;
+//        if (parentScope != null) return parentScope.hasFunctionRecursively(name);
+//        return false;
+//    }
 
     public boolean hasIdentifier(String name) {
         return hasVariable(name) || hasFunction(name);
     }
 
     public boolean hasIdentifierRecursively(String name) {
+        if (this instanceof FunctionScope && ((FunctionScope) this).hasParameter(name)) return true;
         if (hasIdentifier(name)) return true;
         if (parentScope != null) return parentScope.hasIdentifierRecursively(name);
         return false;
     }
 
     public Type getVariableType(String name) {
+        if (this instanceof FunctionScope && ((FunctionScope) this).hasParameter(name))
+            return ((FunctionScope) this).getParameterType(name);
         if (!hasVariable(name)) return null;
         return variables.get(name).getVariableType();
     }
 
     public Type getVariableTypeRecursively(String name) {
-        if (hasVariable(name)) return variables.get(name).getVariableType();
+        if (hasVariable(name)) return getVariableType(name);
         if (parentScope != null) return parentScope.getVariableTypeRecursively(name);
         return null;
     }
@@ -92,29 +96,38 @@ abstract public class Scope {
         return null;
     }
 
-    public VariableEntity getVariable(String name) {
-        return variables.get(name);
-    }
-
-    public VariableEntity getVariableRecursively(String name) {
-        if (variables.containsKey(name)) return variables.get(name);
-        if (parentScope != null) return parentScope.getVariableRecursively(name);
-        return null;
-    }
-
     public FunctionEntity getFunction(String name) {
         return functions.get(name);
     }
 
     public FunctionEntity getFunctionRecursively(String name) {
-        if (functions.containsKey(name)) return functions.get(name);
+        if (functions.containsKey(name)) return getFunction(name);
         if (parentScope != null) return parentScope.getFunctionRecursively(name);
         return null;
     }
 
-    public boolean insideMethod() {
+    public boolean insideClassMethod() {
         if (parentScope == null) return false;
         if (this instanceof MethodScope && parentScope instanceof ClassScope) return true;
-        return parentScope.insideMethod();
+        return parentScope.insideClassMethod();
+    }
+
+    public ClassScope getUpperClassScope() {
+        if (parentScope == null) return null;
+        if (this instanceof MethodScope && parentScope instanceof ClassScope) return (ClassScope) parentScope;
+        return parentScope.getUpperClassScope();
+    }
+
+    public boolean insideMethod() {
+        if (this instanceof MethodScope) return true;
+        if (parentScope != null) return parentScope.insideMethod();
+        return false;
+    }
+
+    public MethodScope getMethodScope() {
+        if (!insideMethod()) return null;
+        if (this instanceof MethodScope) return (MethodScope) this;
+        if (parentScope != null) return parentScope.getMethodScope();
+        return null;
     }
 }

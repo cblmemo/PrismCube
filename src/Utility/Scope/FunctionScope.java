@@ -44,4 +44,11 @@ public class FunctionScope extends MethodScope {
     public VariableEntity getParameter(int index) {
         return parameters.get(index);
     }
+
+    public Type getParameterType(String name) {
+        for (var parameter : parameters) {
+            if (Objects.equals(parameter.getEntityName(), name)) return parameter.getVariableType();
+        }
+        return null;
+    }
 }

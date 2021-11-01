@@ -50,7 +50,7 @@ public class FunctionCallExpressionNode extends ExpressionNode {
         return instance;
     }
 
-    public boolean isMethod() {
+    public boolean isClassMethod() {
         return getInstance() != null;
     }
 

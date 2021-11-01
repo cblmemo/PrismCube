@@ -90,6 +90,11 @@ public class SymbolCollector implements ASTVisitor {
                     currentClass.addMember(new VariableEntity(singleDefine.getType().toType(globalScope), singleDefine.getVariableNameStr(), singleDefine.getCursor()));
                 });
             });
+            currentScope = globalScope.getClass(node.getClassName()).getClassScope();
+            node.getMethods().forEach(function -> {
+                function.accept(this);
+            });
+            currentScope = currentScope.getParentScope();
         }
     }
 
@@ -123,8 +128,8 @@ public class SymbolCollector implements ASTVisitor {
             FunctionEntity function = currentScope.getFunction(node.getFunctionName());
             function.setReturnType(node.getReturnType().toType(globalScope));
             node.getParameters().forEach(parameter -> {
-                if(Objects.equals(parameter.getType().getTypeName(), "void"))
-                    throwError("void type parameter",node);
+                if (Objects.equals(parameter.getType().getTypeName(), "void"))
+                    throwError("void type parameter", node);
                 function.addParameter(new VariableEntity(parameter.getType().toType(globalScope), parameter.getParameterName(), parameter.getCursor()));
             });
         }

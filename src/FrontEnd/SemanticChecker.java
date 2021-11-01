@@ -77,9 +77,9 @@ public class SemanticChecker implements ASTVisitor {
     @Override
     public void visit(SingleVariableDefineNode node) {
         // already checked type at VariableDefineNode
-        if (currentScope.hasVariable(node.getVariableNameStr()))
-            throwError("repeated variable name", node);
         if (!(currentScope instanceof ClassScope)) {
+            if (currentScope.hasVariable(node.getVariableNameStr()))
+                throwError("repeated variable name", node);
             Type variableType = node.getType().toType(globalScope);
             currentScope.addVariable(new VariableEntity(variableType, node.getVariableNameStr(), node.getCursor()));
             node.getVariableName().setExpressionType(variableType);
@@ -172,17 +172,18 @@ public class SemanticChecker implements ASTVisitor {
 
     @Override
     public void visit(ReturnStatementNode node) {
-        if (!(currentScope instanceof FunctionScope || currentScope instanceof ConstructorScope))
+        if (!currentScope.insideMethod())
             throwError("return statement not in method scope", node);
+        MethodScope methodScope = currentScope.getMethodScope();
         if (node.hasReturnValue()) {
             node.getReturnValue().accept(this);
-            if (currentScope instanceof ConstructorScope)
+            if (methodScope instanceof ConstructorScope)
                 throwError("return statement in constructor has a return value", node);
-            if (!Objects.equals(node.getReturnValue().getExpressionType().getTypeName(), ((FunctionScope) currentScope).getReturnType().getTypeName()))
+            if (!Objects.equals(node.getReturnValue().getExpressionType().getTypeName(), ((FunctionScope) methodScope).getReturnType().getTypeName()))
                 throwError("return value unmatch with return type", node);
         } else {
-            if (currentScope instanceof FunctionScope) {
-                if (!((FunctionScope) currentScope).getReturnType().isVoid())
+            if (methodScope instanceof FunctionScope) {
+                if (!((FunctionScope) methodScope).getReturnType().isVoid())
                     throwError("return statement has no return value in non-void function", node);
             }
         }
@@ -255,16 +256,33 @@ public class SemanticChecker implements ASTVisitor {
         node.getArguments().forEach(argument -> {
             argument.accept(this);
         });
-        if (!node.isMethod()) {
-            node.setExpressionType(currentScope.getFunctionReturnTypeRecursively(node.getFunctionName()));
-            FunctionEntity function = currentScope.getFunctionRecursively(node.getFunctionName());
-            if (function.getFunctionScope().getParameters().size() != node.getArguments().size())
-                throwError("function call with unmatched argument number", node);
-            for (int i = 0; i < node.getArguments().size(); i++) {
-                if (!function.getParameter(i).getVariableType().equal(node.getArgument(i).getExpressionType()))
-                    throwError("function call " + i + "-th argument type unmatch", node);
+        FunctionEntity function;
+        if (node.isClassMethod()) {
+            if (node.getInstance().getExpressionType() instanceof ClassType methodClass) {
+                node.setExpressionType(methodClass.getClassScope().getFunctionReturnType(node.getFunctionName()));
+                function = methodClass.getClassScope().getFunction(node.getFunctionName());
+            } else {
+                if (!Objects.equals(node.getFunctionName(), "size"))
+                    throwError("call non-size function " + node.getFunctionName() + " to array type", node);
+                if (node.getArguments().size() != 0)
+                    throwError("call size function with argument(s)", node);
+                node.setExpressionType(globalScope.getClass("int"));
+                return;
             }
-        } else node.setExpressionType(globalScope.getClass("null"));
+        } else {
+            node.setExpressionType(currentScope.getFunctionReturnTypeRecursively(node.getFunctionName()));
+            function = currentScope.getFunctionRecursively(node.getFunctionName());
+        }
+        if (function == null)
+            throwError("undefined function " + node.getFunctionName(), node);
+        if (function.getFunctionScope().getParameters().size() != node.getArguments().size())
+            throwError("function call with unmatched argument number", node);
+        for (int i = 0; i < node.getArguments().size(); i++) {
+            if (node.getArgument(i).getExpressionType() == null)
+                throwError("aaa", node);
+            if (!function.getParameter(i).getVariableType().equal(node.getArgument(i).getExpressionType()))
+                throwError("function call " + i + "-th argument type unmatch", node);
+        }
     }
 
     @Override
@@ -315,23 +333,25 @@ public class SemanticChecker implements ASTVisitor {
     public void visit(BinaryExpressionNode node) {
         node.getLhs().accept(this);
         node.getRhs().accept(this);
+        Type lhsType = node.getLhs().getExpressionType();
+        Type rhsType = node.getRhs().getExpressionType();
         switch (node.getOp()) {
             case "*", "/", "%", "-", "<<", ">>", "&", "^", "|" -> {
-                if (!node.getLhs().getExpressionType().isInt() || !node.getRhs().getExpressionType().isInt())
+                if (!lhsType.isInt() || !rhsType.isInt())
                     throwError("binary op " + node.getOp() + " has non-int operate object", node);
-                node.setExpressionType(node.getLhs().getExpressionType());
+                node.setExpressionType(lhsType);
             }
             case "+" -> {
-                if (!Objects.equals(node.getLhs().getExpressionType().getTypeName(), node.getRhs().getExpressionType().getTypeName()))
-                    throwError("binary op " + node.getOp() + " has two unmatch operate object", node);
-                if (!node.getLhs().getExpressionType().isInt() && !node.getLhs().getExpressionType().isString())
+                if (!Objects.equals(lhsType.getTypeName(), rhsType.getTypeName()))
+                    throwError("binary op " + node.getOp() + " has two unmatch operate object " + lhsType.getTypeName() + " and " + rhsType.getTypeName(), node);
+                if (!lhsType.isInt() && !rhsType.isString())
                     throwError("binary op " + node.getOp() + " has non-int and non-string operate object", node);
-                node.setExpressionType(node.getLhs().getExpressionType());
+                node.setExpressionType(lhsType);
             }
             case "<", "<=", ">", ">=" -> {
-                if (!Objects.equals(node.getLhs().getExpressionType().getTypeName(), node.getRhs().getExpressionType().getTypeName()))
-                    throwError("binary op " + node.getOp() + " has two unmatch operate object", node);
-                if (!node.getLhs().getExpressionType().isInt() && !node.getLhs().getExpressionType().isString())
+                if (!Objects.equals(lhsType.getTypeName(), rhsType.getTypeName()))
+                    throwError("binary op " + node.getOp() + " has two unmatch operate object " + lhsType.getTypeName() + " and " + rhsType.getTypeName(), node);
+                if (!lhsType.isInt() && !lhsType.isString())
                     throwError("binary op " + node.getOp() + " has non-int and non-string operate object", node);
                 node.setExpressionType(globalScope.getClass("bool"));
             }
@@ -368,15 +388,15 @@ public class SemanticChecker implements ASTVisitor {
 
     @Override
     public void visit(ThisPrimaryNode node) {
-        if (!currentScope.insideMethod())
+        if (!currentScope.insideClassMethod())
             throwError("this expression outside method scope", node);
-        node.setExpressionType(globalScope.getClass(((ClassScope) currentScope).getClassName()));
+        node.setExpressionType(globalScope.getClass(currentScope.getUpperClassScope().getClassName()));
     }
 
     @Override
     public void visit(IdentifierPrimaryNode node) {
         if (!currentScope.hasIdentifierRecursively(node.getIdentifier()))
-            throwError("undefined identifier", node);
+            throwError("undefined identifier " + node.getIdentifier(), node);
         if (node.isVariable()) node.setExpressionType(currentScope.getVariableTypeRecursively(node.getIdentifier()));
         else if (node.isFunction()) node.setExpressionType(currentScope.getFunctionReturnTypeRecursively(node.getIdentifier()));
         else throwError("identifier primary node " + node.getIdentifier() + "neither variable nor function. should not throw this.", node);
