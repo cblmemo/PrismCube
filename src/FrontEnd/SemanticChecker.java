@@ -76,26 +76,29 @@ public class SemanticChecker implements ASTVisitor {
     @Override
     public void visit(SingleVariableDefineNode node) {
         // already checked type at VariableDefineNode
+        if (node.hasInitializeValue()) {
+            node.getInitializeValue().accept(this);
+            if (node.getType() instanceof ArrayTypeNode) {
+                Type initializeValueType = node.getInitializeValue().getExpressionType();
+                if (initializeValueType instanceof ArrayType) {
+                    if (((ArrayTypeNode) node.getType()).getDimension() != ((ArrayType) node.getInitializeValue().getExpressionType()).getDimension())
+                        throwError("array variable define with unmatched dimension", node);
+                    if (!Objects.equals(((ArrayTypeNode) node.getType()).getRootTypeName(), ((ArrayType) node.getInitializeValue().getExpressionType()).getRootElementType().getTypeName()))
+                        throwError("array variable define with unmatched root element type", node);
+                } else if (!initializeValueType.isNull()) throwError("array variable define with non-array initialize value", node);
+            } else {
+                if (!Objects.equals(node.getType().getTypeName(), node.getInitializeValue().getExpressionType().getTypeName())) {
+                    if (!(node.getType().toType(globalScope).isNonBuiltinClassType() && node.getInitializeValue().getExpressionType().isNull()))
+                        throwError("variable define with unmatched type", node);
+                }
+            }
+        }
         if (!(currentScope instanceof ClassScope)) {
             if (currentScope.hasVariable(node.getVariableNameStr()))
                 throwError("repeated variable name", node);
             Type variableType = node.getType().toType(globalScope);
             currentScope.addVariable(new VariableEntity(variableType, node.getVariableNameStr(), node.getCursor()));
             node.getVariableName().setExpressionType(variableType);
-        }
-        if (node.hasInitializeValue()) {
-            node.getInitializeValue().accept(this);
-            if (node.getType() instanceof ArrayTypeNode) {
-                if (node.getInitializeValue().getExpressionType() instanceof ArrayType) {
-                    if (((ArrayTypeNode) node.getType()).getDimension() != ((ArrayType) node.getInitializeValue().getExpressionType()).getDimension())
-                        throwError("array variable define with unmatched dimension", node);
-                    if (!Objects.equals(((ArrayTypeNode) node.getType()).getRootTypeName(), ((ArrayType) node.getInitializeValue().getExpressionType()).getRootElementType().getTypeName()))
-                        throwError("array variable define with unmatched root element type", node);
-                } else throwError("array variable define with non-array initialize value", node);
-            } else {
-                if (!Objects.equals(node.getType().getTypeName(), node.getInitializeValue().getExpressionType().getTypeName()))
-                    throwError("variable define with unmatched type", node);
-            }
         }
     }
 
@@ -310,19 +313,20 @@ public class SemanticChecker implements ASTVisitor {
     @Override
     public void visit(UnaryExpressionNode node) {
         node.getRhs().accept(this);
+        Type rhsType = node.getRhs().getExpressionType();
         switch (node.getOp()) {
             case "++", "--" -> {
-                if (!node.getRhs().getExpressionType().isInt())
+                if (!rhsType.isInt())
                     throwError("unary op " + node.getOp() + " has a non-int operate object", node);
                 if (!node.getRhs().isLeftValue())
                     throwError("unary op " + node.getOp() + " has a non-assignable operate object", node);
             }
             case "+", "-", "~" -> {
-                if (!node.getRhs().getExpressionType().isInt())
+                if (!rhsType.isInt())
                     throwError("unary op " + node.getOp() + " has a non-int operate object", node);
             }
             case "!" -> {
-                if (!node.getRhs().getExpressionType().isBool())
+                if (!rhsType.isBool())
                     throwError("unary op " + node.getOp() + " has a non-bool operate object", node);
             }
         }
@@ -356,19 +360,18 @@ public class SemanticChecker implements ASTVisitor {
                 node.setExpressionType(globalScope.getClass("bool"));
             }
             case "==", "!=" -> {
-                if (!(node.getLhs().getExpressionType().isNull() && node.getRhs().getExpressionType().isArrayType())
-                        || !(node.getLhs().getExpressionType().isArrayType() && node.getRhs().getExpressionType().isNull())) {
-                    if (!Objects.equals(node.getLhs().getExpressionType().getTypeName(), node.getRhs().getExpressionType().getTypeName()))
+                if (!(lhsType.isNull() || rhsType.isNull())) {
+                    if (!Objects.equals(lhsType.getTypeName(), rhsType.getTypeName()))
                         throwError("binary op " + node.getOp() + " has two unmatch operate object", node);
-                    if (!node.getLhs().getExpressionType().isInt() && !node.getLhs().getExpressionType().isString())
-                        throwError("binary op " + node.getOp() + " has non-int and non-string operate object", node);
+                    if (!(lhsType.isInt() || lhsType.isString() || lhsType.isBool()))
+                        throwError("binary op " + node.getOp() + " has non-int, non-string, non-bool and non-null operate object", node);
                 }
                 node.setExpressionType(globalScope.getClass("bool"));
             }
             case "&&", "||" -> {
-                if (!Objects.equals(node.getLhs().getExpressionType().getTypeName(), node.getRhs().getExpressionType().getTypeName()))
+                if (!Objects.equals(lhsType.getTypeName(), rhsType.getTypeName()))
                     throwError("binary op " + node.getOp() + " has two unmatch operate object", node);
-                if (!node.getLhs().getExpressionType().isBool())
+                if (!lhsType.isBool())
                     throwError("binary op " + node.getOp() + " has non-bool operate object", node);
                 node.setExpressionType(globalScope.getClass("bool"));
             }

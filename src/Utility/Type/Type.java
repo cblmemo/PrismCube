@@ -33,6 +33,15 @@ abstract public class Type {
         return this instanceof ArrayType;
     }
 
+    public boolean isNonBuiltinClassType() {
+        return !isArrayType()
+                && !Objects.equals(typeName, "int")
+                && !Objects.equals(typeName, "bool")
+                && !Objects.equals(typeName, "string")
+                && !Objects.equals(typeName, "void")
+                && !Objects.equals(typeName, "null");
+    }
+
     public boolean isInt() {
         return !isArrayType() && Objects.equals(typeName, "int");
     }

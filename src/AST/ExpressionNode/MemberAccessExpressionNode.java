@@ -10,7 +10,7 @@ public class MemberAccessExpressionNode extends ExpressionNode {
     private boolean accessMethod = false;
 
     public MemberAccessExpressionNode(ExpressionNode instance, IdentifierPrimaryNode memberName, Cursor cursor) {
-        super(false, cursor);
+        super(true, cursor);
         this.instance = instance;
         this.memberName = memberName;
     }

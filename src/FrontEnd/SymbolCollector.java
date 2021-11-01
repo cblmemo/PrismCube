@@ -121,6 +121,8 @@ public class SymbolCollector implements ASTVisitor {
     @Override
     public void visit(FunctionDefineNode node) {
         if (firstTime) {
+            if (globalScope.hasThisClass(node.getFunctionName()))
+                throwError("function name "+node.getFunctionName()+" conflict with existed class", node);
             FunctionEntity function = new FunctionEntity(new FunctionScope(null, currentScope), node.getFunctionName(), node.getCursor());
             currentScope.addFunction(function);
         } else {
