@@ -100,6 +100,12 @@ abstract public class Scope {
         return parentScope.insideClassMethod();
     }
 
+    public boolean insideLoop() {
+        if (this instanceof LoopScope) return true;
+        if (parentScope != null && (this instanceof BracesScope || this instanceof BranchScope)) return parentScope.insideLoop();
+        return false;
+    }
+
     public ClassScope getUpperClassScope() {
         if (parentScope == null) return null;
         if (this instanceof MethodScope && parentScope instanceof ClassScope) return (ClassScope) parentScope;
