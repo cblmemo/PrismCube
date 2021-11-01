@@ -40,6 +40,7 @@ public class ASTBuilder extends MxStarBaseVisitor<ASTNode> {
             ProgramDefineNode define = (ProgramDefineNode) visit(innerCtx);
             root.addDefine(define);
         });
+        root.finishBuild();
         return root;
     }
 

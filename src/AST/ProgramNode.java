@@ -30,12 +30,19 @@ public class ProgramNode extends ASTNode {
         return defines;
     }
 
+    public void finishBuild() {
+        if (!hasMainFunction) {
+            invalid = true;
+            message = "no main function";
+        }
+    }
+
     public boolean isInvalid() {
-        return invalid || !hasMainFunction;
+        return invalid;
     }
 
     public String getMessage() {
-        return message == null ? "no main function" : message;
+        return message;
     }
 
     @Override

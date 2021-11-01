@@ -27,7 +27,7 @@ public class ScopePrinter {
 
     private void leave(String name) {
         indentCnt--;
-        printf("[end] %s.\n", name);
+        printf("[ end ] %s.\n", name);
     }
 
     private void printDefaultScope(Scope scope) {

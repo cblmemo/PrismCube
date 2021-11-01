@@ -29,12 +29,12 @@ public class ASTPrinter {
 
     private void leave(String name) {
         indentCnt--;
-        printf("[end] %s.\n", name);
+        printf("[ end ] %s.\n", name);
     }
 
     private void printNode(ProgramNode node) {
         enter("ProgramNode");
-        printf("program defines: (%d)\n", node.getDefines().size() + 1);
+        printf("program defines: (%d)\n", node.getDefines().size());
         if (node.isInvalid()) printf("main function error!!!!!!!!!!!!!!!\n");
         for (var innerNode : node.getDefines()) {
             if (innerNode instanceof ClassDefineNode) printNode((ClassDefineNode) innerNode);

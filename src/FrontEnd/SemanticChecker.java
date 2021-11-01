@@ -383,7 +383,7 @@ public class SemanticChecker implements ASTVisitor {
             throwError("assign to nonassignable object", node);
         Type lhsType = node.getLhs().getExpressionType();
         Type rhsType = node.getRhs().getExpressionType();
-        if (!(lhsType.isArrayType()) && rhsType.isNull() || lhsType.isNull() && rhsType.isArrayType()) {
+        if (!(lhsType.isArrayType() && rhsType.isNull() || lhsType.isNull() && rhsType.isArrayType())) {
             if (!Objects.equals(lhsType.getTypeName(), rhsType.getTypeName()))
                 throwError("assign one different type object to another", node);
         }
