@@ -258,7 +258,8 @@ public class SemanticChecker implements ASTVisitor {
         });
         FunctionEntity function;
         if (node.isClassMethod()) {
-            if (node.getInstance().getExpressionType() instanceof ClassType methodClass) {
+            if (node.getInstance().getExpressionType() instanceof ClassType) {
+                ClassType methodClass = (ClassType) node.getInstance().getExpressionType();
                 node.setExpressionType(methodClass.getClassScope().getFunctionReturnType(node.getFunctionName()));
                 function = methodClass.getClassScope().getFunction(node.getFunctionName());
             } else {
