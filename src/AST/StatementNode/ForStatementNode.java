@@ -4,8 +4,8 @@ import AST.ASTVisitor;
 import AST.ExpressionNode.ExpressionNode;
 import Utility.Cursor;
 
-public class ForStatementNode extends StatementNode {
-    private ExpressionNode initializeExpression, conditionExpression, stepExpression;
+public class ForStatementNode extends StatementNode { // todo check whether have
+    private ExpressionNode initializeExpression = null, conditionExpression = null, stepExpression = null;
     private StatementNode loopBody;
 
     public ForStatementNode(StatementNode loopBody, Cursor cursor) {
@@ -23,6 +23,18 @@ public class ForStatementNode extends StatementNode {
 
     public void setStepExpression(ExpressionNode stepExpression) {
         this.stepExpression = stepExpression;
+    }
+
+    public boolean hasInitializeExpression() {
+        return initializeExpression != null;
+    }
+
+    public boolean hasConditionExpression() {
+        return conditionExpression != null;
+    }
+
+    public boolean hasStepExpression() {
+        return stepExpression != null;
     }
 
     public ExpressionNode getInitializeExpression() {

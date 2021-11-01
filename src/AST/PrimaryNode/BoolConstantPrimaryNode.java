@@ -19,6 +19,6 @@ public class BoolConstantPrimaryNode extends PrimaryNode {
 
     @Override
     public void accept(ASTVisitor visitor) {
-
+        visitor.visit(this);
     }
 }

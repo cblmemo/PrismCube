@@ -154,9 +154,9 @@ public class SemanticChecker implements ASTVisitor {
 
     @Override
     public void visit(ForStatementNode node) {
-        node.getInitializeExpression().accept(this);
-        node.getConditionExpression().accept(this);
-        node.getStepExpression().accept(this);
+        if (node.hasInitializeExpression()) node.getInitializeExpression().accept(this);
+        if (node.hasConditionExpression()) node.getConditionExpression().accept(this);
+        if (node.hasStepExpression()) node.getStepExpression().accept(this);
         currentScope = new LoopScope(currentScope);
         node.getLoopBody().accept(this);
         currentScope = currentScope.getParentScope();
@@ -223,7 +223,7 @@ public class SemanticChecker implements ASTVisitor {
         String rootElementType = node.getRootElementType().getTypeName();
         if (!globalScope.hasThisClass(rootElementType))
             throwError("undefined root type of new array expression", node);
-        node.setExpressionType(new ArrayType(globalScope.getClass(rootElementType), node.getDimension()));
+        node.setExpressionType(node.getRootElementType().toType(globalScope));
     }
 
     @Override
