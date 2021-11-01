@@ -10,6 +10,7 @@ import java.util.Objects;
 public class FunctionScope extends MethodScope {
     private ArrayList<VariableEntity> parameters = new ArrayList<>();
     private Type returnType;
+    private boolean isLambdaScope = false;
 
     public FunctionScope(Type returnType, Scope parentScope) {
         super(parentScope);
@@ -50,5 +51,13 @@ public class FunctionScope extends MethodScope {
             if (Objects.equals(parameter.getEntityName(), name)) return parameter.getVariableType();
         }
         return null;
+    }
+
+    public void setLambdaScope() {
+        isLambdaScope = true;
+    }
+
+    public boolean isLambdaScope() {
+        return isLambdaScope;
     }
 }

@@ -88,7 +88,7 @@ public class SemanticChecker implements ASTVisitor {
                 } else if (!initializeValueType.isNull()) throwError("array variable define with non-array initialize value", node);
             } else {
                 if (!Objects.equals(node.getType().getTypeName(), node.getInitializeValue().getExpressionType().getTypeName()))
-                    if (!(node.getType().toType(globalScope).isNonBuiltinClassType() && node.getInitializeValue().getExpressionType().isNull()))
+                    if (!(node.getType().toType(globalScope).isNullAssignable() && node.getInitializeValue().getExpressionType().isNull()))
                         throwError("variable define with unmatched type", node);
             }
         }
@@ -183,17 +183,24 @@ public class SemanticChecker implements ASTVisitor {
         if (!currentScope.insideMethod())
             throwError("return statement not in method scope", node);
         MethodScope methodScope = currentScope.getMethodScope();
-        if (node.hasReturnValue()) {
-            node.getReturnValue().accept(this);
-            if (methodScope instanceof ConstructorScope)
-                throwError("return statement in constructor has a return value", node);
-            if (!(node.getReturnValue().getExpressionType().isNull() && ((FunctionScope) methodScope).getReturnType().isNonBuiltinClassType()))
-                if (!Objects.equals(node.getReturnValue().getExpressionType().getTypeName(), ((FunctionScope) methodScope).getReturnType().getTypeName()))
-                    throwError("return value of (" + node.getReturnValue().getExpressionType().getTypeName() + ") unmatch with return type (" + ((FunctionScope) methodScope).getReturnType().getTypeName() + ")", node);
+        if (methodScope instanceof FunctionScope && ((FunctionScope) methodScope).isLambdaScope()) {
+            if (node.hasReturnValue()) {
+                node.getReturnValue().accept(this);
+                ((FunctionScope) methodScope).setReturnType(node.getReturnValue().getExpressionType());
+            } else ((FunctionScope) methodScope).setReturnType(globalScope.getClass("void"));
         } else {
-            if (methodScope instanceof FunctionScope)
-                if (!((FunctionScope) methodScope).getReturnType().isVoid())
-                    throwError("return statement has no return value in non-void function", node);
+            if (node.hasReturnValue()) {
+                node.getReturnValue().accept(this);
+                if (methodScope instanceof ConstructorScope)
+                    throwError("return statement in constructor has a return value", node);
+                if (!(node.getReturnValue().getExpressionType().isNull() && ((FunctionScope) methodScope).getReturnType().isNullAssignable()))
+                    if (!Objects.equals(node.getReturnValue().getExpressionType().getTypeName(), ((FunctionScope) methodScope).getReturnType().getTypeName()))
+                        throwError("return value of (" + node.getReturnValue().getExpressionType().getTypeName() + ") unmatch with return type (" + ((FunctionScope) methodScope).getReturnType().getTypeName() + ")", node);
+            } else {
+                if (methodScope instanceof FunctionScope)
+                    if (!((FunctionScope) methodScope).getReturnType().isVoid())
+                        throwError("return statement has no return value in non-void function", node);
+            }
         }
     }
 
@@ -254,7 +261,33 @@ public class SemanticChecker implements ASTVisitor {
 
     @Override
     public void visit(LambdaExpressionNode node) {
-        // todo
+        currentScope = new FunctionScope(null, currentScope);
+        ((FunctionScope) currentScope).setLambdaScope();
+        if (node.hasParameters()) {
+            if (node.getParameters().size() != node.getArguments().size())
+                throwError("lambda function call with unmatched argument number", node);
+            node.getParameters().forEach(parameter -> {
+                if (Objects.equals(parameter.getType().getTypeName(), "void"))
+                    throwError("void type parameter", node);
+                ((FunctionScope) currentScope).addParameter(new VariableEntity(parameter.getType().toType(globalScope), parameter.getParameterName(), parameter.getCursor()));
+            });
+            node.getArguments().forEach(argument -> {
+                argument.accept(this);
+            });
+            for (int i = 0; i < node.getParameters().size(); i++) {
+                if (!(node.getArgument(i).getExpressionType().isNull() && ((FunctionScope) currentScope).getParameter(i).getVariableType().isNullAssignable()))
+                    if (!((FunctionScope) currentScope).getParameter(i).getVariableType().equal(node.getArgument(i).getExpressionType()))
+                        throwError("function call " + i + "-th argument has (" + node.getArgument(i).getExpressionType().getTypeName() + ") type, unmatched with (" + ((FunctionScope) currentScope).getParameter(i).getVariableType().getTypeName() + ")", node);
+            }
+        } else {
+            if (node.getArguments().size() != 0)
+                throwError("call non-parameter lambda function with arguments", node);
+        }
+        node.getStatements().forEach(statement -> {
+            statement.accept(this);
+        });
+        node.setExpressionType(((FunctionScope) currentScope).getReturnType());
+        currentScope = currentScope.getParentScope();
     }
 
     @Override
@@ -287,10 +320,8 @@ public class SemanticChecker implements ASTVisitor {
             throwError("undefined function " + node.getFunctionName(), node);
         if (function.getFunctionScope().getParameters().size() != node.getArguments().size())
             throwError("function call with unmatched argument number", node);
-        for (int i = 0; i < node.getArguments().size(); i++) {
-            if (node.getArgument(i).getExpressionType() == null)
-                throwError("aaa", node);
-            if (!(node.getArgument(i).getExpressionType().isNull() && function.getParameter(i).getVariableType().isNonBuiltinClassType()))
+        for (int i = 0; i < function.getFunctionScope().getParameters().size(); i++) {
+            if (!(node.getArgument(i).getExpressionType().isNull() && function.getParameter(i).getVariableType().isNullAssignable()))
                 if (!function.getParameter(i).getVariableType().equal(node.getArgument(i).getExpressionType()))
                     throwError("function call " + i + "-th argument has (" + node.getArgument(i).getExpressionType().getTypeName() + ") type, unmatched with (" + function.getParameter(i).getVariableType().getTypeName() + ")", node);
         }
@@ -395,7 +426,7 @@ public class SemanticChecker implements ASTVisitor {
             throwError("assign to nonassignable object", node);
         Type lhsType = node.getLhs().getExpressionType();
         Type rhsType = node.getRhs().getExpressionType();
-        if (!(rhsType.isNull()))
+        if (!(rhsType.isNull() && (lhsType.isNullAssignable())))
             if (!Objects.equals(lhsType.getTypeName(), rhsType.getTypeName()))
                 throwError("assign (" + rhsType.getTypeName() + ") type object to (" + lhsType.getTypeName() + ") variable", node);
         node.setExpressionType(node.getLhs().getExpressionType());

@@ -32,6 +32,10 @@ public class LambdaExpressionNode extends ExpressionNode {
         arguments.add(node);
     }
 
+    public boolean hasParameters() {
+        return parameters != null;
+    }
+
     public ArrayList<ParameterDefineNode> getParameters() {
         return parameters;
     }
@@ -42,6 +46,10 @@ public class LambdaExpressionNode extends ExpressionNode {
 
     public ArrayList<ExpressionNode> getArguments() {
         return arguments;
+    }
+
+    public ExpressionNode getArgument(int index) {
+        return arguments.get(index);
     }
 
     @Override

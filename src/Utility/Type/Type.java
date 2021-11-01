@@ -42,6 +42,10 @@ abstract public class Type {
                 && !Objects.equals(typeName, "null");
     }
 
+    public boolean isNullAssignable() {
+        return isArrayType() || isNonBuiltinClassType();
+    }
+
     public boolean isInt() {
         return !isArrayType() && Objects.equals(typeName, "int");
     }
