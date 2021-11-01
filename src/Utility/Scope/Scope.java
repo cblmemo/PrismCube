@@ -45,21 +45,9 @@ abstract public class Scope {
         return variables.containsKey(name);
     }
 
-//    public boolean hasVariableRecursively(String name) {
-//        if (hasVariable(name)) return true;
-//        if (parentScope != null) return parentScope.hasVariableRecursively(name);
-//        return false;
-//    }
-
     public boolean hasFunction(String name) {
         return functions.containsKey(name);
     }
-
-//    public boolean hasFunctionRecursively(String name) {
-//        if (hasFunction(name)) return true;
-//        if (parentScope != null) return parentScope.hasFunctionRecursively(name);
-//        return false;
-//    }
 
     public boolean hasIdentifier(String name) {
         return hasVariable(name) || hasFunction(name);

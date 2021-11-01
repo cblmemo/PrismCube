@@ -58,7 +58,6 @@ public class SymbolCollector implements ASTVisitor {
         node.getDefines().forEach(define -> {
             define.accept(this);
         });
-        node.getMainFunction().accept(this);
     }
 
     @Override

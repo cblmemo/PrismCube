@@ -1,6 +1,7 @@
 package AST.ExpressionNode;
 
 import AST.ASTVisitor;
+import AST.TypeNode.ArrayTypeNode;
 import AST.TypeNode.TypeNode;
 import Utility.Cursor;
 

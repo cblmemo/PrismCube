@@ -1,5 +1,6 @@
 package AST;
 
+import AST.DefineNode.FunctionDefineNode;
 import AST.DefineNode.ProgramDefineNode;
 import Utility.Cursor;
 
@@ -7,8 +8,9 @@ import java.util.ArrayList;
 
 public class ProgramNode extends ASTNode {
     private ArrayList<ProgramDefineNode> defines = new ArrayList<>();
-    private ProgramDefineNode mainFunction = null;
     private boolean invalid = false;
+    private boolean hasMainFunction = false;
+    private String message;
 
     public ProgramNode(Cursor cursor) {
         super(cursor);
@@ -16,28 +18,24 @@ public class ProgramNode extends ASTNode {
 
     public void addDefine(ProgramDefineNode node) {
         defines.add(node);
+        if (node instanceof FunctionDefineNode && ((FunctionDefineNode) node).isMainFunction()) {
+            if (hasMainFunction) {
+                invalid = true;
+                message = "multiple main function";
+            } else hasMainFunction = true;
+        }
     }
 
     public ArrayList<ProgramDefineNode> getDefines() {
         return defines;
     }
 
-    public void setMainFunction(ProgramDefineNode mainFunction) {
-        if (this.mainFunction == null) this.mainFunction = mainFunction;
-        else invalid = true;
-    }
-
-    public ProgramDefineNode getMainFunction() {
-        return mainFunction;
-    }
-
     public boolean isInvalid() {
-        return invalid || mainFunction == null;
+        return invalid || !hasMainFunction;
     }
 
     public String getMessage() {
-        if (invalid) return "multiple main function";
-        else return "no main function";
+        return message == null ? "no main function" : message;
     }
 
     @Override

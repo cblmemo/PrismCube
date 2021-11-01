@@ -36,10 +36,6 @@ public class ASTPrinter {
         enter("ProgramNode");
         printf("program defines: (%d)\n", node.getDefines().size() + 1);
         if (node.isInvalid()) printf("main function error!!!!!!!!!!!!!!!\n");
-        else {
-            printf("main function:\n");
-            printNode((FunctionDefineNode) node.getMainFunction());
-        }
         for (var innerNode : node.getDefines()) {
             if (innerNode instanceof ClassDefineNode) printNode((ClassDefineNode) innerNode);
             if (innerNode instanceof VariableDefineNode) printNode((VariableDefineNode) innerNode);

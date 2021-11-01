@@ -1,7 +1,11 @@
 package Utility.Type;
 
+import AST.TypeNode.ArrayTypeNode;
+import Utility.Cursor;
 import Utility.Entity.*;
 import Utility.Scope.ClassScope;
+import Utility.Scope.GlobalScope;
+import Utility.error.SemanticError;
 
 import java.util.Objects;
 
@@ -32,5 +36,11 @@ public class ClassType extends Type {
 
     public boolean isBuiltinType() {
         return classScope == null || Objects.equals(getTypeName(), "string");
+    }
+
+    public ArrayType toArrayType(int dimension, GlobalScope globalScope) {
+        ClassType rootElementType = globalScope.getClass(getTypeName());
+        if (rootElementType == null) throw new SemanticError("root element type doesn't exist in global scope", new Cursor(-100, -100));
+        return new ArrayType(rootElementType, dimension);
     }
 }

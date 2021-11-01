@@ -41,7 +41,6 @@ public class SemanticChecker implements ASTVisitor {
         node.getDefines().forEach(define -> {
             define.accept(this);
         });
-        node.getMainFunction().accept(this);
     }
 
     @Override
@@ -223,7 +222,7 @@ public class SemanticChecker implements ASTVisitor {
         String rootElementType = node.getRootElementType().getTypeName();
         if (!globalScope.hasThisClass(rootElementType))
             throwError("undefined root type of new array expression", node);
-        node.setExpressionType(node.getRootElementType().toType(globalScope));
+        node.setExpressionType(((ClassType) node.getRootElementType().toType(globalScope)).toArrayType(node.getDimension(), globalScope));
     }
 
     @Override
@@ -382,8 +381,12 @@ public class SemanticChecker implements ASTVisitor {
         node.getRhs().accept(this);
         if (!node.getLhs().isLeftValue())
             throwError("assign to nonassignable object", node);
-        if (!Objects.equals(node.getLhs().getExpressionType().getTypeName(), node.getRhs().getExpressionType().getTypeName()))
-            throwError("assign one different type object to another", node);
+        Type lhsType = node.getLhs().getExpressionType();
+        Type rhsType = node.getRhs().getExpressionType();
+        if (!(lhsType.isArrayType()) && rhsType.isNull() || lhsType.isNull() && rhsType.isArrayType()) {
+            if (!Objects.equals(lhsType.getTypeName(), rhsType.getTypeName()))
+                throwError("assign one different type object to another", node);
+        }
         node.setExpressionType(node.getLhs().getExpressionType());
     }
 

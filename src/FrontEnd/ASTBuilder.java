@@ -38,8 +38,7 @@ public class ASTBuilder extends MxStarBaseVisitor<ASTNode> {
         ProgramNode root = new ProgramNode(new Cursor(ctx));
         ctx.programDefine().forEach(innerCtx -> {
             ProgramDefineNode define = (ProgramDefineNode) visit(innerCtx);
-            if (define instanceof FunctionDefineNode && ((FunctionDefineNode) define).isMainFunction()) root.setMainFunction(define);
-            else root.addDefine(define);
+            root.addDefine(define);
         });
         return root;
     }
