@@ -1,6 +1,8 @@
 # PrismCube
 
-A toy Mx* compiler with java implementation.
+![PrismCube](assets/PrismCube.png)
+
+PrismCube, a toy Mx* compiler with java implementation.
 
 ![](https://img.shields.io/badge/version-1.0.0-green.svg)
 ![](https://img.shields.io/badge/JDK_version-17-orange.svg)
@@ -22,7 +24,7 @@ Mx* is a simplified language from the mix of Standard C++ and Java. Details of M
  - [x] ASTPrinter (inspired by [Masterball](https://github.com/SiriusNEO/Masterball))
  - [x] SymbolCollector
  - [x] ScopePrinter
- - [ ] SemanticChecker                    **working...**
+ - [x] SemanticChecker
 
 ## File Structure
 
@@ -40,7 +42,6 @@ Mx* is a simplified language from the mix of Standard C++ and Java. Details of M
  ┃ ┣ 📂ExpressionNode
  ┃ ┃ ┣ 📜AddressingExpressionNode.java
  ┃ ┃ ┣ 📜AssignExpressionNode.java
- ┃ ┃ ┣ 📜AtomExpressionNode.java
  ┃ ┃ ┣ 📜BinaryExpressionNode.java
  ┃ ┃ ┣ 📜ExpressionNode.java
  ┃ ┃ ┣ 📜FunctionCallExpressionNode.java
@@ -87,6 +88,8 @@ Mx* is a simplified language from the mix of Standard C++ and Java. Details of M
  ┃ ┣ 📜Preprocessor.java
  ┃ ┣ 📜SemanticChecker.java
  ┃ ┗ 📜SymbolCollector.java
+ ┣ 📂Memory
+ ┃ ┗ 📜Memory.java
  ┣ 📂Parser
  ┃ ┣ 📜MxStar.g4
  ┃ ┣ 📜MxStar.interp
@@ -101,7 +104,6 @@ Mx* is a simplified language from the mix of Standard C++ and Java. Details of M
  ┃ ┗ 📜MxStarVisitor.java
  ┣ 📂Utility
  ┃ ┣ 📂Entity
- ┃ ┃ ┣ 📜ClassEntity.java
  ┃ ┃ ┣ 📜ConstructorEntity.java
  ┃ ┃ ┣ 📜Entity.java
  ┃ ┃ ┣ 📜FunctionEntity.java
@@ -109,22 +111,24 @@ Mx* is a simplified language from the mix of Standard C++ and Java. Details of M
  ┃ ┃ ┗ 📜VariableEntity.java
  ┃ ┣ 📂error
  ┃ ┃ ┣ 📜error.java
- ┃ ┃ ┣ 📜InternalError.java
  ┃ ┃ ┣ 📜LogError.java
  ┃ ┃ ┣ 📜SemanticError.java
  ┃ ┃ ┗ 📜SyntaxError.java
  ┃ ┣ 📂Scope
+ ┃ ┃ ┣ 📜BracesScope.java
+ ┃ ┃ ┣ 📜BranchScope.java
  ┃ ┃ ┣ 📜ClassScope.java
  ┃ ┃ ┣ 📜ConstructorScope.java
  ┃ ┃ ┣ 📜FunctionScope.java
  ┃ ┃ ┣ 📜GlobalScope.java
+ ┃ ┃ ┣ 📜LoopScope.java
+ ┃ ┃ ┣ 📜MethodScope.java
  ┃ ┃ ┗ 📜Scope.java
  ┃ ┣ 📂Type
  ┃ ┃ ┣ 📜ArrayType.java
  ┃ ┃ ┣ 📜ClassType.java
  ┃ ┃ ┗ 📜Type.java
  ┃ ┣ 📜Cursor.java
- ┃ ┣ 📜Memory.java
  ┃ ┗ 📜MxStarErrorListener.java
  ┗ 📜PrismCube.java
 ```
