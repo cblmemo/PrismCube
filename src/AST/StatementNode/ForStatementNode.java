@@ -4,9 +4,9 @@ import AST.ASTVisitor;
 import AST.ExpressionNode.ExpressionNode;
 import Utility.Cursor;
 
-public class ForStatementNode extends StatementNode { // todo check whether have
+public class ForStatementNode extends StatementNode {
     private ExpressionNode initializeExpression = null, conditionExpression = null, stepExpression = null;
-    private StatementNode loopBody;
+    private final StatementNode loopBody;
 
     public ForStatementNode(StatementNode loopBody, Cursor cursor) {
         super(cursor);

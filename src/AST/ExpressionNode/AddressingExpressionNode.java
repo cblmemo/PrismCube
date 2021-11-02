@@ -4,7 +4,8 @@ import AST.ASTVisitor;
 import Utility.Cursor;
 
 public class AddressingExpressionNode extends ExpressionNode {
-    private ExpressionNode array, index;
+    private final ExpressionNode array;
+    private final ExpressionNode index;
 
     public AddressingExpressionNode(ExpressionNode array, ExpressionNode index, Cursor cursor) {
         super(true, cursor);

@@ -7,8 +7,8 @@ import Utility.Cursor;
 import java.util.ArrayList;
 
 public class VariableDefineNode extends ProgramDefineNode {
-    private TypeNode type;
-    private ArrayList<SingleVariableDefineNode> singleDefines = new ArrayList<>();
+    private final TypeNode type;
+    private final ArrayList<SingleVariableDefineNode> singleDefines = new ArrayList<>();
 
     public VariableDefineNode(TypeNode type, Cursor cursor) {
         super(cursor);

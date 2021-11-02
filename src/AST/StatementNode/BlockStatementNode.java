@@ -6,7 +6,7 @@ import Utility.Cursor;
 import java.util.ArrayList;
 
 public class BlockStatementNode extends StatementNode {
-    private ArrayList<StatementNode> statements = new ArrayList<>();
+    private final ArrayList<StatementNode> statements = new ArrayList<>();
 
     public BlockStatementNode(Cursor cursor) {
         super(cursor);

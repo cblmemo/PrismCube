@@ -2,7 +2,17 @@ package Debug;
 
 import Utility.error.LogError;
 
-import java.io.*;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.PrintStream;
+
+/**
+ * This class implements a simple log
+ * with level.
+ *
+ * @author rainy memory
+ * @version 1.0.0
+ */
 
 public class MemoLog {
     public static MemoLog log = new MemoLog();

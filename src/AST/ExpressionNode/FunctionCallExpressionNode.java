@@ -1,14 +1,13 @@
 package AST.ExpressionNode;
 
 import AST.ASTVisitor;
-import AST.TypeNode.ClassTypeNode;
 import Utility.Cursor;
 
 import java.util.ArrayList;
 
 public class FunctionCallExpressionNode extends ExpressionNode {
-    private ExpressionNode function;
-    private ArrayList<ExpressionNode> arguments = new ArrayList<>();
+    private final ExpressionNode function;
+    private final ArrayList<ExpressionNode> arguments = new ArrayList<>();
     private String functionName;
     private ExpressionNode instance = null;
     private boolean invalid = false;

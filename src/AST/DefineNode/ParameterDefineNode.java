@@ -6,8 +6,8 @@ import AST.TypeNode.TypeNode;
 import Utility.Cursor;
 
 public class ParameterDefineNode extends ProgramDefineNode {
-    private TypeNode type;
-    private IdentifierPrimaryNode parameterName;
+    private final TypeNode type;
+    private final IdentifierPrimaryNode parameterName;
 
     public ParameterDefineNode(TypeNode type, IdentifierPrimaryNode parameterName, Cursor cursor) {
         super(cursor);

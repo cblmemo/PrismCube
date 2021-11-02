@@ -8,9 +8,9 @@ import Utility.error.SemanticError;
 import java.util.HashMap;
 
 abstract public class Scope {
-    private HashMap<String, VariableEntity> variables = new HashMap<>();
-    private HashMap<String, FunctionEntity> functions = new HashMap<>();
-    private Scope parentScope;
+    private final HashMap<String, VariableEntity> variables = new HashMap<>();
+    private final HashMap<String, FunctionEntity> functions = new HashMap<>();
+    private final Scope parentScope;
 
     public Scope(Scope parentScope) {
         this.parentScope = parentScope;

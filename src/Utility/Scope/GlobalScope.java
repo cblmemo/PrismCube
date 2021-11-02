@@ -2,7 +2,6 @@ package Utility.Scope;
 
 import Utility.Cursor;
 import Utility.Entity.FunctionEntity;
-import Utility.Entity.MethodEntity;
 import Utility.Entity.VariableEntity;
 import Utility.Type.ClassType;
 import Utility.error.SyntaxError;
@@ -10,7 +9,7 @@ import Utility.error.SyntaxError;
 import java.util.HashMap;
 
 public class GlobalScope extends Scope {
-    private HashMap<String, ClassType> classes = new HashMap<>();
+    private final HashMap<String, ClassType> classes = new HashMap<>();
 
     public GlobalScope(Scope parentScope) {
         super(parentScope);

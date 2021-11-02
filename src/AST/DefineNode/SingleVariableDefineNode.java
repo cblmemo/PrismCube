@@ -8,8 +8,8 @@ import Utility.Cursor;
 
 public class SingleVariableDefineNode extends ProgramDefineNode {
     private TypeNode type;
-    private IdentifierPrimaryNode variableName;
-    private ExpressionNode initializeValue;
+    private final IdentifierPrimaryNode variableName;
+    private final ExpressionNode initializeValue;
 
     public SingleVariableDefineNode(IdentifierPrimaryNode variableName, ExpressionNode initializeValue, Cursor cursor) {
         super(cursor);

@@ -1,8 +1,8 @@
 package Utility.Type;
 
 public class ArrayType extends Type {
-    private ClassType rootElementType;
-    private int dimension;
+    private final ClassType rootElementType;
+    private final int dimension;
 
     public ArrayType(ClassType rootElementType, int dimension) {
         super(rootElementType.getTypeName() + "[]".repeat(Math.max(0, dimension)));

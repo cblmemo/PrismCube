@@ -3,7 +3,7 @@ package AST;
 import Utility.Cursor;
 
 abstract public class ASTNode {
-    private Cursor cursor;
+    private final Cursor cursor;
 
     public ASTNode(Cursor cursor) {
         this.cursor = cursor;

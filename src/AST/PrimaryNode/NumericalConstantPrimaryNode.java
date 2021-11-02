@@ -4,7 +4,7 @@ import AST.ASTVisitor;
 import Utility.Cursor;
 
 public class NumericalConstantPrimaryNode extends PrimaryNode {
-    private int numericalConstant;
+    private final int numericalConstant;
 
     public NumericalConstantPrimaryNode(String numericalConstantText, Cursor cursor) {
         super(false, cursor);

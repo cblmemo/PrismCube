@@ -4,8 +4,9 @@ import AST.ASTVisitor;
 import Utility.Cursor;
 
 public class BinaryExpressionNode extends ExpressionNode {
-    private ExpressionNode lhs, rhs;
-    private String op;
+    private final ExpressionNode lhs;
+    private final ExpressionNode rhs;
+    private final String op;
 
     public BinaryExpressionNode(ExpressionNode lhs, ExpressionNode rhs, String op, Cursor cursor) {
         super(false, cursor);

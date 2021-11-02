@@ -3,7 +3,7 @@ package Utility.Type;
 import java.util.Objects;
 
 abstract public class Type {
-    private String typeName;
+    private final String typeName;
 
     public Type(String typeName) {
         this.typeName = typeName;

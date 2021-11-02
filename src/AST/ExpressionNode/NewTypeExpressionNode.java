@@ -1,17 +1,16 @@
 package AST.ExpressionNode;
 
 import AST.ASTVisitor;
-import AST.TypeNode.ArrayTypeNode;
 import AST.TypeNode.TypeNode;
 import Utility.Cursor;
 
 import java.util.ArrayList;
 
 public class NewTypeExpressionNode extends ExpressionNode {
-    private TypeNode rootElementType;
+    private final TypeNode rootElementType;
     private int dimension = 0;
-    private ArrayList<ExpressionNode> dimensionExpressions = new ArrayList<>();
-    private boolean invalid;
+    private final ArrayList<ExpressionNode> dimensionExpressions = new ArrayList<>();
+    private final boolean invalid;
 
     public NewTypeExpressionNode(TypeNode rootElementType, boolean invalid, Cursor cursor) {
         super(false, cursor);

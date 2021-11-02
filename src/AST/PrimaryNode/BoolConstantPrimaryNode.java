@@ -6,7 +6,7 @@ import Utility.Cursor;
 import java.util.Objects;
 
 public class BoolConstantPrimaryNode extends PrimaryNode {
-    private boolean boolConstant;
+    private final boolean boolConstant;
 
     public BoolConstantPrimaryNode(String boolConstantText, Cursor cursor) {
         super(false, cursor);

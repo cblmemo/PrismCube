@@ -9,7 +9,7 @@ import Utility.Type.Type;
 import Utility.error.SemanticError;
 
 abstract public class TypeNode extends ASTNode {
-    private String typeName;
+    private final String typeName;
 
     public TypeNode(String typeName, Cursor cursor) {
         super(cursor);

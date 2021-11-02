@@ -4,9 +4,9 @@ import AST.ASTVisitor;
 import Utility.Cursor;
 
 public class IdentifierPrimaryNode extends PrimaryNode {
-    private String identifier;
-    private boolean isVariable;
-    private boolean isFunction;
+    private final String identifier;
+    private final boolean isVariable;
+    private final boolean isFunction;
 
     public IdentifierPrimaryNode(String identifier, boolean isVariable, boolean isFunction, Cursor cursor) {
         super(isVariable, cursor);

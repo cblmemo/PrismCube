@@ -5,8 +5,8 @@ import AST.ExpressionNode.ExpressionNode;
 import Utility.Cursor;
 
 public class WhileStatementNode extends StatementNode {
-    private ExpressionNode conditionExpression;
-    private StatementNode loopBody;
+    private final ExpressionNode conditionExpression;
+    private final StatementNode loopBody;
 
     public WhileStatementNode(ExpressionNode conditionExpression, StatementNode loopBody, Cursor cursor) {
         super(cursor);

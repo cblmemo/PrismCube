@@ -5,7 +5,7 @@ import AST.ExpressionNode.ExpressionNode;
 import Utility.Cursor;
 
 public class ExpressionStatementNode extends StatementNode {
-    private ExpressionNode expression;
+    private final ExpressionNode expression;
 
     public ExpressionStatementNode(ExpressionNode expression, Cursor cursor) {
         super(cursor);

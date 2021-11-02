@@ -1,6 +1,5 @@
 package AST.DefineNode;
 
-import AST.ASTNode;
 import AST.StatementNode.StatementNode;
 import Utility.Cursor;
 

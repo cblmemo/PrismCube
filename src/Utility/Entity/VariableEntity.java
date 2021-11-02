@@ -4,7 +4,7 @@ import Utility.Cursor;
 import Utility.Type.Type;
 
 public class VariableEntity extends Entity {
-    private Type variableType;
+    private final Type variableType;
 
     public VariableEntity(Type variableType, String entityName, Cursor cursor) {
         super(entityName, cursor);

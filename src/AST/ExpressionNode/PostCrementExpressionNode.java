@@ -4,8 +4,8 @@ import AST.ASTVisitor;
 import Utility.Cursor;
 
 public class PostCrementExpressionNode extends ExpressionNode {
-    private ExpressionNode lhs;
-    private String op;
+    private final ExpressionNode lhs;
+    private final String op;
 
     public PostCrementExpressionNode(ExpressionNode lhs, String op, Cursor cursor) {
         super(false, cursor);

@@ -5,7 +5,7 @@ import AST.ExpressionNode.ExpressionNode;
 import Utility.Cursor;
 
 public class IfStatementNode extends StatementNode {
-    private ExpressionNode conditionExpression;
+    private final ExpressionNode conditionExpression;
     private StatementNode trueStatement, falseStatement;
     private boolean hasFalseStatement = false;
 

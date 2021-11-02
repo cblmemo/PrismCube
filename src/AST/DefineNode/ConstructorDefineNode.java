@@ -8,8 +8,8 @@ import Utility.Cursor;
 import java.util.ArrayList;
 
 public class ConstructorDefineNode extends ProgramDefineNode {
-    private IdentifierPrimaryNode constructorName;
-    private ArrayList<StatementNode> statements = new ArrayList<>();
+    private final IdentifierPrimaryNode constructorName;
+    private final ArrayList<StatementNode> statements = new ArrayList<>();
 
     public ConstructorDefineNode(IdentifierPrimaryNode constructorName, Cursor cursor) {
         super(cursor);

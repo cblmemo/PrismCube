@@ -1,14 +1,22 @@
 import Debug.ASTPrinter;
 import Debug.MemoLog;
 import Debug.ScopePrinter;
-import FrontEnd.Preprocessor;
 import FrontEnd.ASTBuilder;
-import FrontEnd.SymbolCollector;
+import FrontEnd.Preprocessor;
 import FrontEnd.SemanticChecker;
-import Utility.Memory;
+import FrontEnd.SymbolCollector;
+import Memory.Memory;
 import Utility.error.error;
 
 import static Debug.MemoLog.log;
+
+/**
+ * This class compiles source code.
+ * Now support semantic check.
+ *
+ * @author rainy memory
+ * @version 1.0.0
+ */
 
 public class PrismCube {
     public static void main(String[] args) throws Exception {

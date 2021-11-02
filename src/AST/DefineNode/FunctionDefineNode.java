@@ -10,10 +10,10 @@ import java.util.ArrayList;
 import java.util.Objects;
 
 public class FunctionDefineNode extends ProgramDefineNode {
-    private TypeNode returnType;
-    private IdentifierPrimaryNode functionName;
-    private ArrayList<ParameterDefineNode> parameters = new ArrayList<>();
-    private ArrayList<StatementNode> statements = new ArrayList<>();
+    private final TypeNode returnType;
+    private final IdentifierPrimaryNode functionName;
+    private final ArrayList<ParameterDefineNode> parameters = new ArrayList<>();
+    private final ArrayList<StatementNode> statements = new ArrayList<>();
 
     public FunctionDefineNode(IdentifierPrimaryNode functionName, TypeNode returnType, Cursor cursor) {
         super(cursor);

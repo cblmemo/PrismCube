@@ -4,8 +4,8 @@ import AST.ASTVisitor;
 import Utility.Cursor;
 
 public class ArrayTypeNode extends TypeNode {
-    private String rootTypeName;
-    private TypeNode elementType;
+    private final String rootTypeName;
+    private final TypeNode elementType;
     private final int dimension;
 
     public ArrayTypeNode(String typeName, TypeNode elementType, Cursor cursor) {

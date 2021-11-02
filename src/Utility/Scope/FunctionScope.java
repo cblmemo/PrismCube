@@ -8,7 +8,7 @@ import java.util.ArrayList;
 import java.util.Objects;
 
 public class FunctionScope extends MethodScope {
-    private ArrayList<VariableEntity> parameters = new ArrayList<>();
+    private final ArrayList<VariableEntity> parameters = new ArrayList<>();
     private Type returnType;
     private boolean isLambdaScope = false;
 

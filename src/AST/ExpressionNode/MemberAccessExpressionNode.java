@@ -5,8 +5,8 @@ import AST.PrimaryNode.IdentifierPrimaryNode;
 import Utility.Cursor;
 
 public class MemberAccessExpressionNode extends ExpressionNode {
-    private ExpressionNode instance;
-    private IdentifierPrimaryNode memberName;
+    private final ExpressionNode instance;
+    private final IdentifierPrimaryNode memberName;
     private boolean accessMethod = false;
 
     public MemberAccessExpressionNode(ExpressionNode instance, IdentifierPrimaryNode memberName, Cursor cursor) {

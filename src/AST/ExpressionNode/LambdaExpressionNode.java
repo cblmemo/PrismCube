@@ -9,8 +9,8 @@ import java.util.ArrayList;
 
 public class LambdaExpressionNode extends ExpressionNode {
     private ArrayList<ParameterDefineNode> parameters = null;
-    private ArrayList<StatementNode> statements = new ArrayList<>();
-    private ArrayList<ExpressionNode> arguments = new ArrayList<>();
+    private final ArrayList<StatementNode> statements = new ArrayList<>();
+    private final ArrayList<ExpressionNode> arguments = new ArrayList<>();
 
     public LambdaExpressionNode(Cursor cursor) {
         super(false, cursor);

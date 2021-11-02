@@ -3,11 +3,12 @@ package Utility;
 import org.antlr.v4.runtime.ParserRuleContext;
 
 public class Cursor {
-    private final int row, col;
+    private final int row;
+    private final int column;
 
     public Cursor(int row, int column) {
         this.row = row;
-        this.col = column;
+        this.column = column;
     }
 
     public Cursor(ParserRuleContext ctx) {
@@ -15,8 +16,8 @@ public class Cursor {
     }
 
     public String toString() {
-        if (row == -1 && col == -1) return "origin";
-        if (row == -2 && col == -2) return "log";
-        return "(" + row + ", " + col + ")";
+        if (row == -1 && column == -1) return "origin";
+        if (row == -2 && column == -2) return "log";
+        return "(" + row + ", " + column + ")";
     }
 }

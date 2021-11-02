@@ -1,12 +1,23 @@
 package Debug;
 
-import AST.*;
 import AST.DefineNode.*;
 import AST.ExpressionNode.*;
 import AST.PrimaryNode.*;
+import AST.ProgramNode;
 import AST.StatementNode.*;
 import AST.TypeNode.*;
-import Utility.Memory;
+import Memory.Memory;
+
+/**
+ * This class prints abstract syntax tree generated
+ * by AST builder to the screen. Using idents, it is
+ * easy to read.
+ * This class is inspired by MasterBall.
+ *
+ * @author rainy memory
+ * @version 1.0.0
+ * @see FrontEnd.ASTBuilder
+ */
 
 public class ASTPrinter {
     private int indentCnt = 0;
@@ -17,6 +28,12 @@ public class ASTPrinter {
         printf("-----------------------------------------ASTPrinter-----------------------------------------\n");
     }
 
+    /**
+     * This method implements printf in c++
+     * with auto-indent.
+     *
+     * @see java.io.PrintStream
+     */
     private void printf(String format, Object... args) {
         for (int i = 0; i < indentCnt; i++) System.out.print("\t");
         System.out.printf(format, args);

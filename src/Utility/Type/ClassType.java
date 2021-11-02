@@ -1,8 +1,10 @@
 package Utility.Type;
 
-import AST.TypeNode.ArrayTypeNode;
 import Utility.Cursor;
-import Utility.Entity.*;
+import Utility.Entity.ConstructorEntity;
+import Utility.Entity.FunctionEntity;
+import Utility.Entity.MethodEntity;
+import Utility.Entity.VariableEntity;
 import Utility.Scope.ClassScope;
 import Utility.Scope.GlobalScope;
 import Utility.error.SemanticError;

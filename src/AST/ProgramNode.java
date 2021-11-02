@@ -7,7 +7,7 @@ import Utility.Cursor;
 import java.util.ArrayList;
 
 public class ProgramNode extends ASTNode {
-    private ArrayList<ProgramDefineNode> defines = new ArrayList<>();
+    private final ArrayList<ProgramDefineNode> defines = new ArrayList<>();
     private boolean invalid = false;
     private boolean hasMainFunction = false;
     private String message;

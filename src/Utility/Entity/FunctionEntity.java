@@ -6,7 +6,7 @@ import Utility.Type.Type;
 
 
 public class FunctionEntity extends MethodEntity {
-    private FunctionScope functionScope;
+    private final FunctionScope functionScope;
 
     public FunctionEntity(FunctionScope functionScope, String entityName, Cursor cursor) {
         super(entityName, cursor);

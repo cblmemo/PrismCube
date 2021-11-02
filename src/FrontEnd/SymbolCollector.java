@@ -1,15 +1,17 @@
 package FrontEnd;
 
-import AST.*;
+import AST.ASTNode;
+import AST.ASTVisitor;
 import AST.DefineNode.*;
 import AST.ExpressionNode.*;
 import AST.PrimaryNode.*;
+import AST.ProgramNode;
 import AST.StatementNode.*;
 import AST.TypeNode.*;
+import Memory.Memory;
 import Utility.Entity.ConstructorEntity;
 import Utility.Entity.FunctionEntity;
 import Utility.Entity.VariableEntity;
-import Utility.Memory;
 import Utility.Scope.*;
 import Utility.Type.ClassType;
 import Utility.error.SemanticError;
@@ -17,6 +19,14 @@ import Utility.error.SemanticError;
 import java.util.Objects;
 
 import static Debug.MemoLog.log;
+
+/**
+ * This class collects all symbols that support forward
+ * reference, as well as function parameters.
+ *
+ * @author rainy memory
+ * @version 1.0.0
+ */
 
 public class SymbolCollector implements ASTVisitor {
     private GlobalScope globalScope;
@@ -27,22 +37,31 @@ public class SymbolCollector implements ASTVisitor {
         throw new SemanticError("[collect] " + message, node.getCursor());
     }
 
+    /**
+     * This method collects symbols and store them
+     * in global scope inside memory.
+     *
+     * @see Memory
+     */
     public void collect(Memory memory) {
         log.Infof("Symbol collect started.\n");
 
         currentScope = globalScope = memory.getGlobalScope();
 
-        // The first time we collect:
+        // the first time we collect:
         // (0) class define;
         // (1) function define;
         // (2) method define.
         firstTime = true;
         visit(memory.getASTRoot());
 
-        // The second time we collect:
+        // the second time we collect:
         // (0) member variable;
         // (1) function parameter;
-        // (2) function return type.
+        // (2) function return type,
+        // since symbols above have type attribute,
+        // and that type maybe some classes defined
+        // under those symbols.
         firstTime = false;
         visit(memory.getASTRoot());
 
@@ -52,6 +71,7 @@ public class SymbolCollector implements ASTVisitor {
     @Override
     public void visit(ProgramNode node) {
         if (firstTime) {
+            // avoid repeat judge
             if (node.isInvalid())
                 throwError("main function error: " + node.getMessage(), node);
         }
@@ -89,6 +109,7 @@ public class SymbolCollector implements ASTVisitor {
                     currentClass.addMember(new VariableEntity(singleDefine.getType().toType(globalScope), singleDefine.getVariableNameStr(), singleDefine.getCursor()));
                 });
             });
+            // enter new scope helps define member variables and methods inside class scope.
             currentScope = globalScope.getClass(node.getClassName()).getClassScope();
             node.getMethods().forEach(function -> {
                 function.accept(this);
@@ -122,7 +143,7 @@ public class SymbolCollector implements ASTVisitor {
     public void visit(FunctionDefineNode node) {
         if (firstTime) {
             if (globalScope.hasThisClass(node.getFunctionName()))
-                throwError("function name "+node.getFunctionName()+" conflict with existed class", node);
+                throwError("function name " + node.getFunctionName() + " conflict with existed class", node);
             FunctionEntity function = new FunctionEntity(new FunctionScope(null, currentScope), node.getFunctionName(), node.getCursor());
             currentScope.addFunction(function);
         } else {

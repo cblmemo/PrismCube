@@ -8,9 +8,9 @@ import java.util.ArrayList;
 import java.util.Objects;
 
 public class ClassDefineNode extends ProgramDefineNode {
-    private IdentifierPrimaryNode className;
-    private ArrayList<VariableDefineNode> members = new ArrayList<>();
-    private ArrayList<FunctionDefineNode> methods = new ArrayList<>();
+    private final IdentifierPrimaryNode className;
+    private final ArrayList<VariableDefineNode> members = new ArrayList<>();
+    private final ArrayList<FunctionDefineNode> methods = new ArrayList<>();
     private ConstructorDefineNode constructor = null;
     private boolean invalid = false;
     private String message;

@@ -3,8 +3,8 @@ package Utility.Entity;
 import Utility.Cursor;
 
 abstract public class Entity {
-    private Cursor cursor;
-    private String entityName;
+    private final Cursor cursor;
+    private final String entityName;
 
     public Entity(String entityName, Cursor cursor) {
         this.entityName = entityName;

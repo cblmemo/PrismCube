@@ -1,14 +1,16 @@
 package FrontEnd;
 
-import AST.*;
+import AST.ASTNode;
+import AST.ASTVisitor;
 import AST.DefineNode.*;
 import AST.ExpressionNode.*;
 import AST.PrimaryNode.*;
+import AST.ProgramNode;
 import AST.StatementNode.*;
 import AST.TypeNode.*;
+import Memory.Memory;
 import Utility.Entity.FunctionEntity;
 import Utility.Entity.VariableEntity;
-import Utility.Memory;
 import Utility.Scope.*;
 import Utility.Type.ArrayType;
 import Utility.Type.ClassType;
@@ -18,6 +20,14 @@ import Utility.error.SemanticError;
 import java.util.Objects;
 
 import static Debug.MemoLog.log;
+
+/**
+ * This class checks semantic for source code,
+ * and throw an error if checks failed.
+ *
+ * @author rainy memory
+ * @version 1.0.0
+ */
 
 public class SemanticChecker implements ASTVisitor {
     private GlobalScope globalScope;
@@ -92,6 +102,7 @@ public class SemanticChecker implements ASTVisitor {
                         throwError("variable define with unmatched type", node);
             }
         }
+        // add variable at current scope in the end to avoid int x = f(x); passed check (x is an undefined variable)
         if (!(currentScope instanceof ClassScope)) {
             if (currentScope.hasVariable(node.getVariableNameStr()))
                 throwError("repeated variable name", node);
@@ -134,6 +145,7 @@ public class SemanticChecker implements ASTVisitor {
     @Override
     public void visit(BlockStatementNode node) {
         boolean insideNewScope = currentScope instanceof BranchScope || currentScope instanceof LoopScope;
+        // avoid if (...) {} and while (...) {} creates two layer of scope
         if (!insideNewScope) currentScope = new BracesScope(currentScope);
         node.getStatements().forEach(statement -> {
             statement.accept(this);
@@ -184,18 +196,21 @@ public class SemanticChecker implements ASTVisitor {
             throwError("return statement not in method scope", node);
         MethodScope methodScope = currentScope.getMethodScope();
         if (methodScope instanceof FunctionScope && ((FunctionScope) methodScope).isLambdaScope()) {
+            // lambda function need to infer expression type from return type.
             if (node.hasReturnValue()) {
                 node.getReturnValue().accept(this);
                 ((FunctionScope) methodScope).setReturnType(node.getReturnValue().getExpressionType());
             } else ((FunctionScope) methodScope).setReturnType(globalScope.getClass("void"));
         } else {
+            // normal function need to check whether return value type matched with function return type.
             if (node.hasReturnValue()) {
                 node.getReturnValue().accept(this);
-                if (methodScope instanceof ConstructorScope)
-                    throwError("return statement in constructor has a return value", node);
-                if (!(node.getReturnValue().getExpressionType().isNull() && ((FunctionScope) methodScope).getReturnType().isNullAssignable()))
-                    if (!Objects.equals(node.getReturnValue().getExpressionType().getTypeName(), ((FunctionScope) methodScope).getReturnType().getTypeName()))
-                        throwError("return value of (" + node.getReturnValue().getExpressionType().getTypeName() + ") unmatch with return type (" + ((FunctionScope) methodScope).getReturnType().getTypeName() + ")", node);
+                if (methodScope instanceof FunctionScope) {
+                    if (!(node.getReturnValue().getExpressionType().isNull() && ((FunctionScope) methodScope).getReturnType().isNullAssignable()))
+                        if (!Objects.equals(node.getReturnValue().getExpressionType().getTypeName(), ((FunctionScope) methodScope).getReturnType().getTypeName()))
+                            throwError("return value of (" + node.getReturnValue().getExpressionType().getTypeName() + ") unmatch with return type (" + ((FunctionScope) methodScope).getReturnType().getTypeName() + ")", node);
+                } else throwError("return statement in constructor has a return value", node);
+
             } else {
                 if (methodScope instanceof FunctionScope)
                     if (!((FunctionScope) methodScope).getReturnType().isVoid())
@@ -238,6 +253,7 @@ public class SemanticChecker implements ASTVisitor {
         String rootElementType = node.getRootElementType().getTypeName();
         if (!globalScope.hasThisClass(rootElementType))
             throwError("undefined root type of new array expression", node);
+        // root element type must instanceof ClassType.
         if (node.getDimension() != 0) node.setExpressionType(((ClassType) node.getRootElementType().toType(globalScope)).toArrayType(node.getDimension(), globalScope));
         else node.setExpressionType(node.getRootElementType().toType(globalScope));
     }
@@ -253,6 +269,7 @@ public class SemanticChecker implements ASTVisitor {
                 else node.setExpressionType(((ClassType) node.getInstance().getExpressionType()).getClassScope().getVariableType(node.getMemberName()));
             }
         } else {
+            // array type can only access to method .size()
             if (!Objects.equals(node.getMemberName(), "size"))
                 throwError("member access to array type and member name is not \"size\"", node);
             node.setExpressionType(globalScope.getClass("int"));
@@ -286,6 +303,7 @@ public class SemanticChecker implements ASTVisitor {
         node.getStatements().forEach(statement -> {
             statement.accept(this);
         });
+        // infer expression type from return statement inside
         node.setExpressionType(((FunctionScope) currentScope).getReturnType());
         currentScope = currentScope.getParentScope();
     }
@@ -299,6 +317,7 @@ public class SemanticChecker implements ASTVisitor {
             argument.accept(this);
         });
         FunctionEntity function;
+        // get function entity
         if (node.isClassMethod()) {
             if (node.getInstance().getExpressionType() instanceof ClassType) {
                 ClassType methodClass = (ClassType) node.getInstance().getExpressionType();
@@ -316,6 +335,7 @@ public class SemanticChecker implements ASTVisitor {
             node.setExpressionType(currentScope.getFunctionReturnTypeRecursively(node.getFunctionName()));
             function = currentScope.getFunctionRecursively(node.getFunctionName());
         }
+        // check function existence and parameters
         if (function == null)
             throwError("undefined function " + node.getFunctionName(), node);
         if (function.getFunctionScope().getParameters().size() != node.getArguments().size())
@@ -336,6 +356,7 @@ public class SemanticChecker implements ASTVisitor {
         if (!node.getIndex().getExpressionType().isInt())
             throwError("addressing with non-int index", node);
         ClassType rootElementType = ((ArrayType) node.getArray().getExpressionType()).getRootElementType();
+        // addressing decrease dimension
         if (((ArrayType) node.getArray().getExpressionType()).getDimension() == 1) node.setExpressionType(rootElementType);
         else node.setExpressionType(new ArrayType(rootElementType, ((ArrayType) node.getArray().getExpressionType()).getDimension() - 1));
     }
@@ -400,6 +421,7 @@ public class SemanticChecker implements ASTVisitor {
                 node.setExpressionType(globalScope.getClass("bool"));
             }
             case "==", "!=" -> {
+                // array == null || class == null
                 if (!(lhsType.isNull() || rhsType.isNull())) {
                     if (!Objects.equals(lhsType.getTypeName(), rhsType.getTypeName()))
                         throwError("binary op (" + node.getOp() + ") has two unmatch operate object", node);
