@@ -35,11 +35,9 @@ public class SemanticChecker implements ASTVisitor {
 
     public void check(Memory memory) {
         log.Infof("Check started.\n");
-
         currentScope = globalScope = memory.getGlobalScope();
         visit(memory.getASTRoot());
-
-        log.Infof("Check started.\n");
+        log.Infof("Check finished.\n");
     }
 
     private void throwError(String message, ASTNode node) {
@@ -146,7 +144,7 @@ public class SemanticChecker implements ASTVisitor {
     public void visit(BlockStatementNode node) {
         boolean insideNewScope = currentScope instanceof BranchScope || currentScope instanceof LoopScope;
         // avoid if (...) {} and while (...) {} creates two layer of scope
-        if (!insideNewScope) currentScope = new BracesScope(currentScope);
+        if (!insideNewScope) currentScope = currentScope.createBracesScope(node);
         node.getStatements().forEach(statement -> {
             statement.accept(this);
         });
@@ -158,11 +156,11 @@ public class SemanticChecker implements ASTVisitor {
         node.getConditionExpression().accept(this);
         if (!node.getConditionExpression().getExpressionType().isBool())
             throwError("if statement with non-bool condition expression", node);
-        currentScope = new BracesScope(currentScope);
+        currentScope = currentScope.createBranchScope(node);
         node.getTrueStatement().accept(this);
         currentScope = currentScope.getParentScope();
         if (node.hasElse()) {
-            currentScope = new BranchScope(currentScope);
+            currentScope = currentScope.createBranchScope(node);
             node.getFalseStatement().accept(this);
             currentScope = currentScope.getParentScope();
         }
@@ -177,7 +175,7 @@ public class SemanticChecker implements ASTVisitor {
                 throwError("non-bool for condition expression", node);
         }
         if (node.hasStepExpression()) node.getStepExpression().accept(this);
-        currentScope = new LoopScope(currentScope);
+        currentScope = currentScope.createLoopScope(node);
         node.getLoopBody().accept(this);
         currentScope = currentScope.getParentScope();
     }
@@ -185,7 +183,7 @@ public class SemanticChecker implements ASTVisitor {
     @Override
     public void visit(WhileStatementNode node) {
         node.getConditionExpression().accept(this);
-        currentScope = new LoopScope(currentScope);
+        currentScope = currentScope.createLoopScope(node);
         node.getLoopBody().accept(this);
         currentScope = currentScope.getParentScope();
     }
@@ -278,6 +276,7 @@ public class SemanticChecker implements ASTVisitor {
 
     @Override
     public void visit(LambdaExpressionNode node) {
+        // don't need to store FunctionScope since lambda only appear in semantic phase
         currentScope = new FunctionScope(null, currentScope);
         ((FunctionScope) currentScope).setLambdaScope();
         if (node.hasParameters()) {

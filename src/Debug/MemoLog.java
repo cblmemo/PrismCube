@@ -19,16 +19,17 @@ public class MemoLog {
 
     public enum LogLevel {
         TraceLevel,
+        DebugLevel,
         InfoLevel,
-        ErrorLevel
+        ErrorLevel,
+        FatalLevel
     }
 
     private PrintStream ps = System.out;
     private LogLevel level = LogLevel.InfoLevel;
 
-    public void SetPrintStream(PrintStream ps) {
-        this.ps = ps;
-    }
+    private static final String redPrefix = "\033[30m";
+    private static final String suffix = "\033[0m";
 
     public void SetOutPutFile(String fileName) {
         try {
@@ -44,20 +45,32 @@ public class MemoLog {
 
     public void Tracef(String format, Object... args) {
         if (level.ordinal() <= LogLevel.TraceLevel.ordinal()) {
-            ps.printf(format, args);
+            ps.printf("[trace] " + format, args);
+        }
+    }
+
+    public void Debugf(String format, Object... args) {
+        if (level.ordinal() <= LogLevel.DebugLevel.ordinal()) {
+            ps.printf("[debug] " + format, args);
         }
     }
 
     public void Infof(String format, Object... args) {
         if (level.ordinal() <= LogLevel.InfoLevel.ordinal()) {
-            ps.printf(format, args);
+            ps.printf("[info] " + format, args);
         }
     }
 
     public void Errorf(String format, Object... args) {
         if (level.ordinal() <= LogLevel.ErrorLevel.ordinal()) {
+            ps.printf(redPrefix + "[error] " + format + suffix, args);
+        }
+    }
+
+    public void Fatalf(String format, Object... args) {
+        if (level.ordinal() <= LogLevel.ErrorLevel.ordinal()) {
             String message = String.format(format, args);
-            ps.print(message);
+            ps.print(redPrefix + "[fatal] " + message + suffix);
             throw new LogError(message);
         }
     }

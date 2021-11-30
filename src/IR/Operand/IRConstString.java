@@ -1,0 +1,63 @@
+package IR.Operand;
+
+import IR.IRVisitor;
+import IR.TypeSystem.IRTypeSystem;
+
+public class IRConstString extends IROperand {
+    private final String value;
+    private final int id;
+    private final int length;
+
+    public IRConstString(IRTypeSystem irType, String value, int id) {
+        super(irType);
+        String converted = convert(value);
+        this.length = converted.length();
+        this.value = convertToPlain(converted);
+        this.id = id;
+    }
+
+    public String getValue() {
+        return value;
+    }
+
+    public int getId() {
+        return id;
+    }
+
+    private String getConstStringIdentifier() {
+        return "@.str." + id;
+    }
+
+    private int getTrueLength() {
+        // \0 at the end of string
+        return length + 1;
+    }
+
+    private String convertToPlain(String src) {
+        // avoid hard wrap in *.ll
+        return src.replace("\\", "\\5C")
+                .replace("\n", "\\0A")
+                .replace("\t", "\\09")
+                .replace("\"", "\\22");
+    }
+
+    private String convert(String src) {
+        return src.replace("\\\\", "\\")
+                .replace("\\n", "\n")
+                .replace("\\t", "\t")
+                .replace("\\\"", "\"");
+    }
+
+    public String toInitValueStr() {
+        return getConstStringIdentifier() + " = private unnamed_addr constant [" + getTrueLength() + " x i8] c\"" + value + "\\00\"";
+    }
+
+    @Override
+    public String toString() {
+        return "getelementptr inbounds ([" + getTrueLength() + " x i8], [" + getTrueLength() + " x i8]* " + getConstStringIdentifier() + ", i32 0, i32 0)";
+    }
+
+    public void accept(IRVisitor visitor) {
+        visitor.visit(this);
+    }
+}

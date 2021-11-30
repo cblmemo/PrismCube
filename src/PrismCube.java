@@ -1,14 +1,8 @@
 import Debug.ASTPrinter;
-import Debug.MemoLog;
 import Debug.ScopePrinter;
-import FrontEnd.ASTBuilder;
-import FrontEnd.Preprocessor;
-import FrontEnd.SemanticChecker;
-import FrontEnd.SymbolCollector;
+import FrontEnd.*;
 import Memory.Memory;
 import Utility.error.error;
-
-import static Debug.MemoLog.log;
 
 /**
  * This class compiles source code.
@@ -21,22 +15,22 @@ import static Debug.MemoLog.log;
 public class PrismCube {
     public static void main(String[] args) throws Exception {
         try {
-            log.SetLogLevel(MemoLog.LogLevel.InfoLevel);
-            log.SetOutPutFile("log.txt");
+            Memory memory = new Memory(args);
+            memory.useDefaultSetup();
 
-            Memory memory = new Memory();
-
+            new ArgumentParser().parse(memory);
             new Preprocessor().preprocess(memory);
-
             new ASTBuilder().build(memory);
-
-//            new ASTPrinter().print(memory);
+            new ASTPrinter().print(memory);
 
             new SymbolCollector().collect(memory);
-
-//            new ScopePrinter().print(memory);
-
+            new ScopePrinter().print(memory);
             new SemanticChecker().check(memory);
+
+            new ConstStringCollector().collect(memory);
+            new ConstExprCalculator().calculate(memory);
+            new IRBuilder().build(memory);
+            new IRPrinter().print(memory);
 
         } catch (error err) {
             System.err.println(err.toString());

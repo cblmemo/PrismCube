@@ -1,5 +1,10 @@
 package Utility.Type;
 
+import IR.IRModule;
+import IR.TypeSystem.IRPointerType;
+import IR.TypeSystem.IRTypeSystem;
+import Utility.error.IRError;
+
 import java.util.Objects;
 
 abstract public class Type {
@@ -64,5 +69,22 @@ abstract public class Type {
 
     public boolean isNull() {
         return !isArrayType() && Objects.equals(typeName, "null");
+    }
+
+    public IRTypeSystem toIRType(IRModule module) {
+        if (this instanceof ArrayType) {
+            IRTypeSystem temp = ((ArrayType) this).getRootElementType().toIRType(module);
+            for (int i = 0; i < ((ArrayType) this).getDimension(); i++) {
+                temp = new IRPointerType(temp);
+            }
+            return temp;
+        }
+        if (isInt()) return module.getIRType("int");
+        if (isBool()) return module.getIRType("bool");
+        if (isString()) return module.getIRType("string");
+        if (isVoid()) return module.getIRType("void");
+        // todo what if null?
+        // todo implement class type
+        throw new IRError("[Type::toIRType] cannot handle it correctly now.");
     }
 }

@@ -23,9 +23,11 @@ public class ASTPrinter {
     private int indentCnt = 0;
 
     public void print(Memory memory) {
-        printf("-----------------------------------------ASTPrinter-----------------------------------------\n");
-        printNode(memory.getASTRoot());
-        printf("-----------------------------------------ASTPrinter-----------------------------------------\n");
+        if (memory.printAST()) {
+            printf("-----------------------------------------ASTPrinter-----------------------------------------\n");
+            printNode(memory.getASTRoot());
+            printf("-----------------------------------------ASTPrinter-----------------------------------------\n");
+        }
     }
 
     /**

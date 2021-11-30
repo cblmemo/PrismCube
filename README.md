@@ -20,11 +20,17 @@ Mx* is a simplified language from the mix of Standard C++ and Java. Details of M
 ## Progress
 
  - [x] g4
+ - [ ] ArgumentProcessor (developing...)
+ - [x] Preprocessor
  - [x] ASTBuilder
  - [x] ASTPrinter (inspired by [Masterball](https://github.com/SiriusNEO/Masterball))
  - [x] SymbolCollector
  - [x] ScopePrinter
  - [x] SemanticChecker
+ - [x] ConstStringCollector
+ - [x] ConstExprCalculator
+ - [ ] IRBuilder (developing...)
+ - [ ] IRPrinter (developing...)
 
 ## File Structure
 
@@ -84,10 +90,45 @@ Mx* is a simplified language from the mix of Standard C++ and Java. Details of M
  ┃ ┣ 📜MemoLog.java
  ┃ ┗ 📜ScopePrinter.java
  ┣ 📂FrontEnd
+ ┃ ┣ 📜ArgumentParser.java
  ┃ ┣ 📜ASTBuilder.java
+ ┃ ┣ 📜ConstExprCalculator.java
+ ┃ ┣ 📜ConstStringCollector.java
+ ┃ ┣ 📜IRBuilder.java
+ ┃ ┣ 📜IRPrinter.java
  ┃ ┣ 📜Preprocessor.java
  ┃ ┣ 📜SemanticChecker.java
  ┃ ┗ 📜SymbolCollector.java
+ ┣ 📂IR
+ ┃ ┣ 📂Instruction
+ ┃ ┃ ┣ 📜IRAllocaInstruction.java
+ ┃ ┃ ┣ 📜IRBrInstruction.java
+ ┃ ┃ ┣ 📜IRCallInstruction.java
+ ┃ ┃ ┣ 📜IRInstruction.java
+ ┃ ┃ ┣ 📜IRLoadInstruction.java
+ ┃ ┃ ┣ 📜IRReturnInstruction.java
+ ┃ ┃ ┗ 📜IRStoreInstruction.java
+ ┃ ┣ 📂Operand
+ ┃ ┃ ┣ 📜IRConstBool.java
+ ┃ ┃ ┣ 📜IRConstInt.java
+ ┃ ┃ ┣ 📜IRConstString.java
+ ┃ ┃ ┣ 📜IRGlobalVariableRegister.java
+ ┃ ┃ ┣ 📜IRLabel.java
+ ┃ ┃ ┣ 📜IRNull.java
+ ┃ ┃ ┣ 📜IROperand.java
+ ┃ ┃ ┗ 📜IRRegister.java
+ ┃ ┣ 📂TypeSystem
+ ┃ ┃ ┣ 📜IRArrayType.java
+ ┃ ┃ ┣ 📜IRIntType.java
+ ┃ ┃ ┣ 📜IRPointerType.java
+ ┃ ┃ ┣ 📜IRStructureType.java
+ ┃ ┃ ┣ 📜IRTypeSystem.java
+ ┃ ┃ ┗ 📜IRVoidType.java
+ ┃ ┣ 📜IRBasicBlock.java
+ ┃ ┣ 📜IRFunction.java
+ ┃ ┣ 📜IRGlobalDefine.java
+ ┃ ┣ 📜IRModule.java
+ ┃ ┗ 📜IRVisitor.java
  ┣ 📂Memory
  ┃ ┗ 📜Memory.java
  ┣ 📂Parser
@@ -103,6 +144,9 @@ Mx* is a simplified language from the mix of Standard C++ and Java. Details of M
  ┃ ┣ 📜MxStarParser.java
  ┃ ┗ 📜MxStarVisitor.java
  ┣ 📂Utility
+ ┃ ┣ 📂ConstExpr
+ ┃ ┃ ┣ 📜ConstExprEntry.java
+ ┃ ┃ ┗ 📜NullConstExpr.java
  ┃ ┣ 📂Entity
  ┃ ┃ ┣ 📜ConstructorEntity.java
  ┃ ┃ ┣ 📜Entity.java
@@ -111,10 +155,12 @@ Mx* is a simplified language from the mix of Standard C++ and Java. Details of M
  ┃ ┃ ┗ 📜VariableEntity.java
  ┃ ┣ 📂error
  ┃ ┃ ┣ 📜error.java
+ ┃ ┃ ┣ 📜IRError.java
  ┃ ┃ ┣ 📜LogError.java
  ┃ ┃ ┣ 📜SemanticError.java
  ┃ ┃ ┗ 📜SyntaxError.java
  ┃ ┣ 📂Scope
+ ┃ ┃ ┣ 📜BlockScope.java
  ┃ ┃ ┣ 📜BracesScope.java
  ┃ ┃ ┣ 📜BranchScope.java
  ┃ ┃ ┣ 📜ClassScope.java

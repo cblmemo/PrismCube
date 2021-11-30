@@ -10,6 +10,7 @@ public class MemberAccessExpressionNode extends ExpressionNode {
     private boolean accessMethod = false;
 
     public MemberAccessExpressionNode(ExpressionNode instance, IdentifierPrimaryNode memberName, Cursor cursor) {
+        // todo member access to function is not left value?
         super(true, cursor);
         this.instance = instance;
         this.memberName = memberName;

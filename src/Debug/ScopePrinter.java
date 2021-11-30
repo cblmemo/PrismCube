@@ -15,9 +15,11 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 public class ScopePrinter {
     public void print(Memory memory) {
-        printf("----------------------------------------ScopePrinter----------------------------------------\n");
-        printScope(memory.getGlobalScope());
-        printf("----------------------------------------ScopePrinter----------------------------------------\n");
+        if (memory.printScope()) {
+            printf("----------------------------------------ScopePrinter----------------------------------------\n");
+            printScope(memory.getGlobalScope());
+            printf("----------------------------------------ScopePrinter----------------------------------------\n");
+        }
     }
 
     private int indentCnt = 0;

@@ -1,8 +1,11 @@
 package Utility.Scope;
 
+import AST.StatementNode.StatementNode;
+import IR.Operand.IRRegister;
 import Utility.Entity.FunctionEntity;
 import Utility.Entity.VariableEntity;
 import Utility.Type.Type;
+import Utility.error.IRError;
 import Utility.error.SemanticError;
 
 import java.util.HashMap;
@@ -11,6 +14,8 @@ abstract public class Scope {
     private final HashMap<String, VariableEntity> variables = new HashMap<>();
     private final HashMap<String, FunctionEntity> functions = new HashMap<>();
     private final Scope parentScope;
+    private int blockScopeCnt = 0;
+    private final HashMap<Integer, BlockScope> blockScopes = new HashMap<>();
 
     public Scope(Scope parentScope) {
         this.parentScope = parentScope;
@@ -26,6 +31,32 @@ abstract public class Scope {
         if (functions.containsKey(entity.getEntityName()))
             throw new SemanticError("repeated function name", entity.getCursor());
         functions.put(entity.getEntityName(), entity);
+    }
+
+    public BlockScope getBlockScope(int scopeId) {
+        assert blockScopes.containsKey(scopeId);
+        return blockScopes.get(scopeId);
+    }
+
+    public BracesScope createBracesScope(StatementNode node) {
+        node.setScopeId(++blockScopeCnt);
+        BracesScope scope = new BracesScope(this);
+        blockScopes.put(blockScopeCnt, scope);
+        return scope;
+    }
+
+    public BranchScope createBranchScope(StatementNode node) {
+        node.setScopeId(++blockScopeCnt);
+        BranchScope scope = new BranchScope(this);
+        blockScopes.put(blockScopeCnt, scope);
+        return scope;
+    }
+
+    public LoopScope createLoopScope(StatementNode node) {
+        node.setScopeId(++blockScopeCnt);
+        LoopScope scope = new LoopScope(this);
+        blockScopes.put(blockScopeCnt, scope);
+        return scope;
     }
 
     public Scope getParentScope() {
@@ -123,5 +154,33 @@ abstract public class Scope {
         if (this instanceof MethodScope) return (MethodScope) this;
         if (parentScope != null) return parentScope.getMethodScope();
         return null;
+    }
+
+    // for ir
+
+    public VariableEntity getVariableEntity(String name) {
+        if (this instanceof FunctionScope && ((FunctionScope) this).hasParameter(name))
+            return ((FunctionScope) this).getParameter(name);
+        if (!hasVariable(name)) return null;
+        return variables.get(name);
+    }
+
+    public VariableEntity getVariableEntityRecursively(String name) {
+        if (hasVariable(name)) return getVariableEntity(name);
+        if (parentScope != null) return parentScope.getVariableEntityRecursively(name);
+        return null;
+    }
+
+    public boolean isGlobalVariable(String name) {
+        if (hasVariable(name)) return this instanceof GlobalScope;
+        if (parentScope == null) throw new IRError("[Scope::isGlobalVariable] identifier " + name + " not found");
+        return parentScope.isGlobalVariable(name);
+    }
+
+    public IRRegister getReturnValuePtr() {
+        if (this instanceof FunctionScope)
+            return this.getReturnValuePtr();
+        assert parentScope != null;
+        return parentScope.getReturnValuePtr();
     }
 }

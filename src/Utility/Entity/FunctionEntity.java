@@ -1,5 +1,6 @@
 package Utility.Entity;
 
+import IR.IRFunction;
 import Utility.Cursor;
 import Utility.Scope.FunctionScope;
 import Utility.Type.Type;
@@ -8,13 +9,17 @@ import Utility.Type.Type;
 public class FunctionEntity extends MethodEntity {
     private final FunctionScope functionScope;
 
+    // for ir
+    private IRFunction irFunction;
+
     public FunctionEntity(FunctionScope functionScope, String entityName, Cursor cursor) {
         super(entityName, cursor);
         this.functionScope = functionScope;
     }
 
-    public void addParameter(VariableEntity entity) {
+    public FunctionEntity addParameter(VariableEntity entity) {
         functionScope.addParameter(entity);
+        return this;
     }
 
     public VariableEntity getParameter(int index) {
@@ -31,5 +36,15 @@ public class FunctionEntity extends MethodEntity {
 
     public FunctionScope getFunctionScope() {
         return functionScope;
+    }
+
+    // for ir
+
+    public void setIRFunction(IRFunction irFunction) {
+        this.irFunction = irFunction;
+    }
+
+    public IRFunction getIRFunction() {
+        return irFunction;
     }
 }

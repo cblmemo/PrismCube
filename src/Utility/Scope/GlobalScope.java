@@ -31,8 +31,7 @@ public class GlobalScope extends Scope {
         function = new FunctionEntity(new FunctionScope(intType, null), "length", origin);
         stringType.addMethod(function);
         function = new FunctionEntity(new FunctionScope(stringType, null), "substring", origin);
-        function.addParameter(new VariableEntity(intType, "left", origin));
-        function.addParameter(new VariableEntity(intType, "right", origin));
+        function.addParameter(new VariableEntity(intType, "left", origin)).addParameter(new VariableEntity(intType, "right", origin));
         stringType.addMethod(function);
         function = new FunctionEntity(new FunctionScope(intType, null), "parseInt", origin);
         stringType.addMethod(function);

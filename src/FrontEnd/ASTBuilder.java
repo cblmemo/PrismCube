@@ -43,10 +43,8 @@ public class ASTBuilder extends MxStarBaseVisitor<ASTNode> {
      */
     public void build(Memory memory) {
         log.Infof("Build started.\n");
-
         ProgramNode ASTRoot = (ProgramNode) visit(memory.getParseTreeRoot());
         memory.setASTRoot(ASTRoot);
-
         log.Infof("Build finished.\n");
     }
 
@@ -360,7 +358,7 @@ public class ASTBuilder extends MxStarBaseVisitor<ASTNode> {
     public ASTNode visitBinaryExpression(MxStarParser.BinaryExpressionContext ctx) {
         ExpressionNode lhs = (ExpressionNode) visit(ctx.leftExpression);
         ExpressionNode rhs = (ExpressionNode) visit(ctx.rightExpression);
-        return new BinaryExpressionNode(lhs, rhs, ctx.op.getText(), new Cursor(ctx));
+        return new BinaryExpressionNode(lhs, rhs, ctx.op.getText(), ctx.getText(), new Cursor(ctx));
     }
 
     @Override
@@ -386,7 +384,7 @@ public class ASTBuilder extends MxStarBaseVisitor<ASTNode> {
     public ASTNode visitLiteral(MxStarParser.LiteralContext ctx) {
         if (ctx.NumericalConstant() != null) return new NumericalConstantPrimaryNode(ctx.NumericalConstant().getText(), new Cursor(ctx));
         if (ctx.BoolConstant() != null) return new BoolConstantPrimaryNode(ctx.BoolConstant().getText(), new Cursor(ctx));
-        if (ctx.StringConstant() != null) return new StringConstantPrimaryNode(ctx.StringConstant().getText(), new Cursor(ctx));
+        if (ctx.StringConstant() != null) return new StringConstantPrimaryNode(ctx.StringConstant().getText().substring(1, ctx.StringConstant().getText().length() - 1), new Cursor(ctx));
         return new NullConstantPrimaryNode(new Cursor(ctx));
     }
 

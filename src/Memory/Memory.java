@@ -1,12 +1,14 @@
 package Memory;
 
 import AST.ProgramNode;
+import Debug.MemoLog;
+import IR.IRModule;
 import Utility.Scope.GlobalScope;
 import org.antlr.v4.runtime.tree.ParseTree;
 
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.InputStream;
+
+import static Debug.MemoLog.log;
 
 /**
  * This class stores every variable needed in compiler.
@@ -16,19 +18,66 @@ import java.io.InputStream;
  */
 
 public class Memory {
+    private final String[] commandlineArguments;
     private ParseTree parseTreeRoot;
-    private ProgramNode ASTRoot;
+    private ProgramNode astRoot;
+    private IRModule irModule;
     private final GlobalScope globalScope = new GlobalScope(null);
-    private final InputStream inputStream;
+    private InputStream inputStream;
 
-    // receive source code from file
-    public Memory(String inputFileName) throws FileNotFoundException {
-        inputStream = new FileInputStream(inputFileName);
+    // flags
+    private boolean AST = true;
+    private boolean Scope = true;
+    private boolean IR = true;
+    private boolean constexpr = true;
+
+    public Memory(String[] commandlineArguments) {
+        this.commandlineArguments = commandlineArguments;
     }
 
-    // receive source code from stdin
-    public Memory() {
+    public void useDefaultSetup() {
+        log.SetLogLevel(MemoLog.LogLevel.DebugLevel);
+        log.SetOutPutFile("bin/log.txt");
+
+        // receive source code from stdin by default
         inputStream = System.in;
+
+        // disable printer for debug and constexpr optimize
+        disableASTPrinter();
+        disableScopePrinter();
+        disableConstExprCalculate();
+    }
+
+    public void disableASTPrinter() {
+        AST = false;
+    }
+
+    public boolean printAST() {
+        return AST;
+    }
+
+    public void disableScopePrinter() {
+        Scope = false;
+    }
+
+    public boolean printScope() {
+        return Scope;
+    }
+
+    public void disableIRPrinter() {
+        IR = false;
+    }
+
+    public boolean printIR() {
+        return IR;
+    }
+
+    public void disableConstExprCalculate() {
+        constexpr = false;
+    }
+
+    public boolean calculateConstexpr() {
+        return constexpr;
     }
 
     public void setParseTreeRoot(ParseTree parseTreeRoot) {
@@ -39,12 +88,22 @@ public class Memory {
         return parseTreeRoot;
     }
 
-    public void setASTRoot(ProgramNode ASTRoot) {
-        this.ASTRoot = ASTRoot;
+    public void setASTRoot(ProgramNode astRoot) {
+        this.astRoot = astRoot;
     }
 
     public ProgramNode getASTRoot() {
-        return ASTRoot;
+        return astRoot;
+    }
+
+    public void setIRModule(IRModule irModule) {
+        this.irModule = irModule;
+    }
+
+    public IRModule getIRModule() {
+        // construct when first access
+        if (irModule == null) irModule = new IRModule();
+        return irModule;
     }
 
     public GlobalScope getGlobalScope() {
