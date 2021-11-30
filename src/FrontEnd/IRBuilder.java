@@ -39,10 +39,17 @@ public class IRBuilder implements ASTVisitor {
     private Scope currentScope;
     private IRModule module;
     private IRFunction currentFunction;
+    // [[--NOTICE--]] current basic block need to be appended when overlapped
     private IRBasicBlock currentBasicBlock;
 
+    private int returnCnt = 0;
+    private int labelCnt = 0;
+
     private enum status {
-        idle, allocaParameter, storeParameter,
+        idle, // no special status, just to make sure Stack.peak() won't RE
+        stall, // all statements after return shouldn't be visited
+        allocaParameter, // alloca registers to store function parameter
+        storeParameter, // store parameters' value in register
     }
 
     private final Stack<status> currentStatus = new Stack<>();
@@ -80,9 +87,9 @@ public class IRBuilder implements ASTVisitor {
         IRFunction globalConstructor = module.getGlobalConstructor();
         IRBasicBlock entryBlock = globalConstructor.getEntryBlock();
         module.getSingleInitializeFunctions().forEach(initFunc -> entryBlock.appendInstruction(new IRCallInstruction(module.getIRType("void"), initFunc)));
-        entryBlock.setEscapeInstruction(new IRBrInstruction(null, globalConstructor.getReturnBlock(), null, module));
+        entryBlock.setEscapeInstruction(new IRBrInstruction(null, globalConstructor.getReturnBlock(), null, entryBlock));
         entryBlock.finishBlock();
-        globalConstructor.getReturnBlock().appendInstruction(new IRReturnInstruction(module.getIRType("void"), null));
+        globalConstructor.getReturnBlock().setEscapeInstruction(new IRReturnInstruction(module.getIRType("void"), null));
         globalConstructor.finishFunction();
 
         // todo step into classes
@@ -129,7 +136,7 @@ public class IRBuilder implements ASTVisitor {
                     // similar to ReturnStatementNode
                     IROperand returnValue = node.getInitializeValue().getIRResultValue();
                     currentBasicBlock.appendInstruction(new IRStoreInstruction(variableIRType, new IRGlobalVariableRegister(variableIRType, node.getVariableNameStr()), returnValue));
-                    currentBasicBlock.setEscapeInstruction(new IRBrInstruction(null, currentFunction.getReturnBlock(), null, module));
+                    currentBasicBlock.setEscapeInstruction(new IRBrInstruction(null, currentFunction.getReturnBlock(), null, currentBasicBlock));
                     currentFunction.getReturnBlock().appendInstruction(new IRReturnInstruction(module.getIRType("void"), null));
                     currentBasicBlock.finishBlock();
                     currentFunction.finishFunction();
@@ -176,18 +183,22 @@ public class IRBuilder implements ASTVisitor {
         IRRegister returnValuePtr = new IRRegister(new IRPointerType(returnIRType));
         currentBasicBlock.appendInstruction(new IRAllocaInstruction(returnIRType, returnValuePtr));
         ((FunctionScope) currentScope).setReturnValuePtr(returnValuePtr);
-        node.getStatements().forEach(statement -> statement.accept(this));
+        node.getStatements().forEach(statement -> {
+            statement.accept(this);
+        });
+        if (!currentBasicBlock.hasEscapeInstruction()) currentBasicBlock.setEscapeInstruction(new IRBrInstruction(null, currentFunction.getReturnBlock(), null, currentBasicBlock));
         // void function or main could have no return statement
         if (!((FunctionScope) currentScope).hasReturnStatement()) {
-            currentBasicBlock.setEscapeInstruction(new IRBrInstruction(null, currentFunction.getReturnBlock(), null, module));
-            currentFunction.getReturnBlock().appendInstruction(new IRReturnInstruction(returnIRType, returnIRType.getDefaultValue()));
+            currentBasicBlock.setEscapeInstruction(new IRBrInstruction(null, currentFunction.getReturnBlock(), null, currentBasicBlock));
+            currentFunction.getReturnBlock().setEscapeInstruction(new IRReturnInstruction(returnIRType, returnIRType.getDefaultValue()));
         } else {
             IRRegister returnValue = new IRRegister(returnIRType);
             currentFunction.getReturnBlock().appendInstruction(new IRLoadInstruction(returnIRType, returnValue, returnValuePtr));
-            currentFunction.getReturnBlock().appendInstruction(new IRReturnInstruction(returnIRType, returnValue));
+            currentFunction.getReturnBlock().setEscapeInstruction(new IRReturnInstruction(returnIRType, returnValue));
         }
         currentScope = currentScope.getParentScope();
         currentBasicBlock.finishBlock();
+        currentFunction.appendBasicBlock(currentBasicBlock);
         currentFunction.finishFunction();
         currentBasicBlock = null;
         currentFunction = null;
@@ -214,12 +225,37 @@ public class IRBuilder implements ASTVisitor {
 
     @Override
     public void visit(BlockStatementNode node) {
-
+        if (node.getScopeId() != -1) currentScope = currentScope.getBlockScope(node.getScopeId());
+        node.getStatements().forEach(statement -> statement.accept(this));
+        if (node.getScopeId() != -1) currentScope = currentScope.getParentScope();
     }
 
     @Override
     public void visit(IfStatementNode node) {
-
+        // current block has already added to function
+        node.getConditionExpression().accept(this);
+        int id = labelCnt++;
+        IRBasicBlock thenBlock = new IRBasicBlock(currentFunction, id + "_if_then");
+        IRBasicBlock elseBlock = new IRBasicBlock(currentFunction, id + "_if_else");
+        IRBasicBlock terminateBlock = new IRBasicBlock(currentFunction, id + "_if_terminate");
+        currentBasicBlock.setEscapeInstruction(new IRBrInstruction(node.getConditionExpression().getIRResultValue(), thenBlock, node.hasElse() ? elseBlock : terminateBlock, currentBasicBlock));
+        currentBasicBlock.finishBlock();
+        currentFunction.appendBasicBlock(currentBasicBlock);
+        currentBasicBlock = thenBlock;
+        node.getTrueStatement().accept(this);
+        if (!currentBasicBlock.hasEscapeInstruction()) // return statement might generate an escape instruction
+            currentBasicBlock.setEscapeInstruction(new IRBrInstruction(null, terminateBlock, null, currentBasicBlock));
+        currentBasicBlock.finishBlock();
+        currentFunction.appendBasicBlock(currentBasicBlock);
+        if (node.hasElse()) {
+            currentBasicBlock = elseBlock;
+            node.getFalseStatement().accept(this);
+            if (!currentBasicBlock.hasEscapeInstruction()) // return statement might always generate an escape instruction
+                currentBasicBlock.setEscapeInstruction(new IRBrInstruction(null, terminateBlock, null, currentBasicBlock));
+            currentBasicBlock.finishBlock();
+            currentFunction.appendBasicBlock(currentBasicBlock);
+        }
+        currentBasicBlock = terminateBlock;
     }
 
     @Override
@@ -240,7 +276,7 @@ public class IRBuilder implements ASTVisitor {
         // entry block, i.e., the first time visit FunctionDefineNode, and escape block return that register.
         currentBasicBlock.appendInstruction(new IRStoreInstruction(currentFunction.getReturnType(), currentScope.getReturnValuePtr(), returnValueRegister));
         // return statement should create an escape (i.e., branch) instruction to returnBlock.
-        currentBasicBlock.setEscapeInstruction(new IRBrInstruction(null, currentFunction.getReturnBlock(), null, module));
+        currentBasicBlock.setEscapeInstruction(new IRBrInstruction(null, currentFunction.getReturnBlock(), null, currentBasicBlock));
     }
 
     @Override
@@ -342,7 +378,7 @@ public class IRBuilder implements ASTVisitor {
         if (!node.isVariable()) throw new IRError("visit FunctionIdentifier in IRBuilder");
         VariableEntity entity = currentScope.getVariableEntityRecursively(node.getIdentifier());
         IRTypeSystem loadType = entity.getVariableType().toIRType(module);
-        IRRegister loadTarget = new IRRegister(new IRPointerType(loadType));
+        IRRegister loadTarget = new IRRegister(loadType);
         // global variables always use @identifier to store value, therefore
         // local variable value is stored in registers, and might change when updated
         // so load target need update to VariableEntity

@@ -15,6 +15,7 @@ public class IRStoreInstruction extends IRInstruction {
     public IRStoreInstruction(IRTypeSystem storeType, IROperand storeTarget, IROperand storeValue) {
         assert storeTarget.getIRType() instanceof IRPointerType;
         assert Objects.equals(storeType, ((IRPointerType) storeTarget.getIRType()).getBaseType());
+        assert Objects.equals(storeType, storeValue.getIRType());
         this.storeType = storeType;
         this.storeTarget = storeTarget;
         this.storeValue = storeValue;

@@ -104,6 +104,7 @@ public class IRModule {
     public IRFunction generateSingleInitializeFunction() {
         String initFuncName = globalInitializeFunctionName + "." + singleInitializeFunctions.size();
         IRFunction initFunc = new IRFunction(initFuncName);
+        initFunc.appendBasicBlock(initFunc.getEntryBlock());
         initFunc.setReturnType(getIRType("void"));
         singleInitializeFunctions.add(initFunc);
         return initFunc;

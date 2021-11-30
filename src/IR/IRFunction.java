@@ -26,7 +26,7 @@ public class IRFunction {
         this.functionName = functionName;
         this.declare = false;
         entryBlock = new IRBasicBlock(this, "entry");
-        blocks.add(entryBlock);
+//        blocks.add(entryBlock);
         returnBlock = new IRBasicBlock(this, "return");
         returnBlock.markAsReturnBlock();
     }
@@ -35,13 +35,28 @@ public class IRFunction {
         this.functionName = functionName;
         this.declare = declare;
         entryBlock = new IRBasicBlock(this, "entry");
-        blocks.add(entryBlock);
+//        blocks.add(entryBlock);
         returnBlock = new IRBasicBlock(this, "return");
         returnBlock.markAsReturnBlock();
     }
 
+    public void appendBasicBlock(IRBasicBlock block) {
+        blocks.add(block);
+    }
+
+    private void deleteEmptyBlock() {
+        for (int i = 0; i < blocks.size(); i++) {
+            if (blocks.get(i).isEmptyBasicBlock()) {
+                blocks.remove(i);
+                i--;
+            }
+        }
+    }
+
     public void finishFunction() {
+        returnBlock.finishBlock();
         blocks.add(returnBlock);
+//        deleteEmptyBlock();
     }
 
     //   \/ --- after a day and a half I discover it is useless since Mx* doesn't support override :( --- \/

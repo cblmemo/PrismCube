@@ -112,7 +112,7 @@ public class ConstExprCalculator implements ASTVisitor {
         node.getTrueStatement().accept(this);
         currentScope = currentScope.getParentScope();
         if (node.hasElse()) {
-            currentScope = currentScope.getBlockScope(node.getScopeId());
+            currentScope = currentScope.getBlockScope(node.getIfElseId());
             assert currentScope instanceof BranchScope;
             node.getFalseStatement().accept(this);
             currentScope = currentScope.getParentScope();
