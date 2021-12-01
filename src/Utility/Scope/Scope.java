@@ -17,6 +17,9 @@ abstract public class Scope {
     private int blockScopeCnt = 0;
     private final HashMap<Integer, BlockScope> blockScopes = new HashMap<>();
 
+    // for ir
+    private boolean hasReturned = false;
+
     public Scope(Scope parentScope) {
         this.parentScope = parentScope;
     }
@@ -182,5 +185,13 @@ abstract public class Scope {
             return this.getReturnValuePtr();
         assert parentScope != null;
         return parentScope.getReturnValuePtr();
+    }
+
+    public boolean hasReturned() {
+        return hasReturned;
+    }
+
+    public void setAsReturned() {
+        hasReturned = true;
     }
 }

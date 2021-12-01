@@ -65,6 +65,42 @@ public class GlobalScope extends Scope {
         function = new FunctionEntity(new FunctionScope(stringType, null), "toString", origin);
         function.addParameter(new VariableEntity(intType, "i", origin));
         addFunction(function);
+
+        // for ir
+        function = new FunctionEntity(new FunctionScope(stringType, null), "__mx_concatenateString", origin);
+        function.addParameter(new VariableEntity(stringType, "s1", origin));
+        function.addParameter(new VariableEntity(stringType, "s2", origin));
+        addFunction(function);
+
+        function = new FunctionEntity(new FunctionScope(boolType, null), "__mx_stringLt", origin);
+        function.addParameter(new VariableEntity(stringType, "s1", origin));
+        function.addParameter(new VariableEntity(stringType, "s2", origin));
+        addFunction(function);
+
+        function = new FunctionEntity(new FunctionScope(boolType, null), "__mx_stringLe", origin);
+        function.addParameter(new VariableEntity(stringType, "s1", origin));
+        function.addParameter(new VariableEntity(stringType, "s2", origin));
+        addFunction(function);
+
+        function = new FunctionEntity(new FunctionScope(boolType, null), "__mx_stringGt", origin);
+        function.addParameter(new VariableEntity(stringType, "s1", origin));
+        function.addParameter(new VariableEntity(stringType, "s2", origin));
+        addFunction(function);
+
+        function = new FunctionEntity(new FunctionScope(boolType, null), "__mx_stringGe", origin);
+        function.addParameter(new VariableEntity(stringType, "s1", origin));
+        function.addParameter(new VariableEntity(stringType, "s2", origin));
+        addFunction(function);
+
+        function = new FunctionEntity(new FunctionScope(boolType, null), "__mx_stringEq", origin);
+        function.addParameter(new VariableEntity(stringType, "s1", origin));
+        function.addParameter(new VariableEntity(stringType, "s2", origin));
+        addFunction(function);
+
+        function = new FunctionEntity(new FunctionScope(boolType, null), "__mx_stringNe", origin);
+        function.addParameter(new VariableEntity(stringType, "s1", origin));
+        function.addParameter(new VariableEntity(stringType, "s2", origin));
+        addFunction(function);
     }
 
     public void addClass(String typeName, ClassType type) {

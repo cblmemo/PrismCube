@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <string.h>
 
 #define MAX_RETURN_STRING_LENGTH 1024
 
@@ -35,3 +36,36 @@ char * toString(int i) {
     sprintf(str, "%d", i);
     return str;
 }
+
+char * __mx_concatenateString(char * s1, char * s2) {
+    char str[MAX_RETURN_STRING_LENGTH];
+    str[0] = '\0';
+    strcat(str, s1);
+    strcat(str, s2);
+    return str;
+}
+
+unsigned char __mx_stringLt(char * s1, char * s2) {
+    return strcmp(s1, s2) < 0;
+}
+
+unsigned char __mx_stringLe(char * s1, char * s2) {
+    return strcmp(s1, s2) <= 0;
+}
+
+unsigned char __mx_stringGt(char * s1, char * s2) {
+    return strcmp(s1, s2) > 0;
+}
+
+unsigned char __mx_stringGe(char * s1, char * s2) {
+    return strcmp(s1, s2) >= 0;
+}
+
+unsigned char __mx_stringEq(char * s1, char * s2) {
+    return strcmp(s1, s2) == 0;
+}
+
+unsigned char __mx_stringNe(char * s1, char * s2) {
+    return strcmp(s1, s2) != 0;
+}
+

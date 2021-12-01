@@ -23,9 +23,8 @@ import Utility.Scope.GlobalScope;
 import Utility.Scope.Scope;
 import Utility.error.IRError;
 
+import java.util.Objects;
 import java.util.Stack;
-
-import static Debug.MemoLog.log;
 
 /**
  * This class build IRModule for source code.
@@ -112,6 +111,7 @@ public class IRBuilder implements ASTVisitor {
 
     @Override
     public void visit(VariableDefineNode node) {
+        if (currentScope.hasReturned()) return;
         node.getSingleDefines().forEach(define -> define.accept(this));
     }
 
@@ -219,12 +219,13 @@ public class IRBuilder implements ASTVisitor {
             VariableEntity parameterEntity = currentScope.getVariableEntityRecursively(node.getParameterName());
             IRRegister targetRegister = parameterEntity.getCurrentRegister();
             int srcRegisterId = targetRegister.getId() - ((FunctionScope) currentScope).getParameterNumber();
-            currentBasicBlock.appendInstruction(new IRStoreInstruction(parameterType, targetRegister, new IRRegister(new IRPointerType(parameterType), srcRegisterId)));
+            currentBasicBlock.appendInstruction(new IRStoreInstruction(parameterType, targetRegister, new IRRegister(parameterType, srcRegisterId)));
         }
     }
 
     @Override
     public void visit(BlockStatementNode node) {
+        if (currentScope.hasReturned()) return;
         if (node.getScopeId() != -1) currentScope = currentScope.getBlockScope(node.getScopeId());
         node.getStatements().forEach(statement -> statement.accept(this));
         if (node.getScopeId() != -1) currentScope = currentScope.getParentScope();
@@ -232,6 +233,7 @@ public class IRBuilder implements ASTVisitor {
 
     @Override
     public void visit(IfStatementNode node) {
+        if (currentScope.hasReturned()) return;
         // current block has already added to function
         node.getConditionExpression().accept(this);
         int id = labelCnt++;
@@ -242,14 +244,18 @@ public class IRBuilder implements ASTVisitor {
         currentBasicBlock.finishBlock();
         currentFunction.appendBasicBlock(currentBasicBlock);
         currentBasicBlock = thenBlock;
+        currentScope = currentScope.getBlockScope(node.getScopeId());
         node.getTrueStatement().accept(this);
+        currentScope = currentScope.getParentScope();
         if (!currentBasicBlock.hasEscapeInstruction()) // return statement might generate an escape instruction
             currentBasicBlock.setEscapeInstruction(new IRBrInstruction(null, terminateBlock, null, currentBasicBlock));
         currentBasicBlock.finishBlock();
         currentFunction.appendBasicBlock(currentBasicBlock);
         if (node.hasElse()) {
             currentBasicBlock = elseBlock;
+            currentScope = currentScope.getBlockScope(node.getIfElseId());
             node.getFalseStatement().accept(this);
+            currentScope = currentScope.getParentScope();
             if (!currentBasicBlock.hasEscapeInstruction()) // return statement might always generate an escape instruction
                 currentBasicBlock.setEscapeInstruction(new IRBrInstruction(null, terminateBlock, null, currentBasicBlock));
             currentBasicBlock.finishBlock();
@@ -260,16 +266,19 @@ public class IRBuilder implements ASTVisitor {
 
     @Override
     public void visit(ForStatementNode node) {
+        if (currentScope.hasReturned()) return;
 
     }
 
     @Override
     public void visit(WhileStatementNode node) {
+        if (currentScope.hasReturned()) return;
 
     }
 
     @Override
     public void visit(ReturnStatementNode node) {
+        if (currentScope.hasReturned()) return;
         node.getReturnValue().accept(this);
         IROperand returnValueRegister = node.getReturnValue().getIRResultValue();
         // return value should be store in a specific IRRegister, which will be created at the
@@ -277,6 +286,7 @@ public class IRBuilder implements ASTVisitor {
         currentBasicBlock.appendInstruction(new IRStoreInstruction(currentFunction.getReturnType(), currentScope.getReturnValuePtr(), returnValueRegister));
         // return statement should create an escape (i.e., branch) instruction to returnBlock.
         currentBasicBlock.setEscapeInstruction(new IRBrInstruction(null, currentFunction.getReturnBlock(), null, currentBasicBlock));
+        currentScope.setAsReturned();
     }
 
     @Override
@@ -291,6 +301,7 @@ public class IRBuilder implements ASTVisitor {
 
     @Override
     public void visit(ExpressionStatementNode node) {
+        if (currentScope.hasReturned()) return;
         node.getExpression().accept(this);
     }
 
@@ -322,7 +333,8 @@ public class IRBuilder implements ASTVisitor {
             // the most critical code to print Hello, Happy World!
             FunctionEntity entity = currentScope.getFunctionRecursively(node.getFunctionName());
             IRFunction function = entity.getIRFunction();
-            if (function == null) log.Errorf("[IRBuilder::visit(FunctionCallExpressionNode] IRFunction %s not found", node.getFunctionName());
+            // avoid to print redundant function declare
+            function.markAsCalled();
             IRCallInstruction inst = new IRCallInstruction(node.getExpressionType().toIRType(module), function);
             node.getArguments().forEach(argument -> {
                 if (argument.getEntry().isConstexpr()) inst.addArgument(argument.getEntry().toIROperand(module), argument.getExpressionType().toIRType(module));
@@ -360,7 +372,100 @@ public class IRBuilder implements ASTVisitor {
 
     @Override
     public void visit(BinaryExpressionNode node) {
+        if (node.getEntry().isConstexpr()) {
+            node.setIRResultValue(node.getEntry().toIROperand(module));
+            return;
+        }
+        IROperand lhsVal, rhsVal;
+        if (node.getLhs().getEntry().isConstexpr()) lhsVal = node.getLhs().getEntry().toIROperand(module);
+        else {
+            node.getLhs().accept(this);
+            lhsVal = node.getLhs().getIRResultValue();
+        }
+        if (node.getRhs().getEntry().isConstexpr()) rhsVal = node.getRhs().getEntry().toIROperand(module);
+        else {
+            node.getRhs().accept(this);
+            rhsVal = node.getRhs().getIRResultValue();
+        }
+        IRTypeSystem resultType = node.getExpressionType().toIRType(module);
+        IRRegister resultRegister = new IRRegister(resultType);
+        if (resultType.isInt()) {
+            String op;
+            switch (node.getOp()) {
+                case "+" -> op = "add";
+                case "-" -> op = "sub nsw"; // nsw stands for no signed wrap, which will set result to poison value if encounter overflow
+                case "*" -> op = "mul";
+                case "/" -> op = "sdiv"; // signed division
+                case "%" -> op = "srem"; // signed remainder
+                case "<<" -> op = "shl nsw";
+                case ">>" -> op = "ashr nsw";
+                case "&" -> op = "and";
+                case "^" -> op = "xor";
+                case "|" -> op = "or";
+                default -> {
+                    op = "";
+                    assert false;
+                }
+            }
+            currentBasicBlock.appendInstruction(new IRBinaryInstruction(op, resultRegister, lhsVal, rhsVal));
+        } else if (resultType.isBool()) {
+            if (Objects.equals(node.getOp(), "&&") || Objects.equals(node.getOp(), "||")) { // bool logic arithmetic
+                // todo zero extent to i8, calculate, and trunc to i1
+                currentBasicBlock.appendInstruction(new IRBinaryInstruction(Objects.equals(node.getOp(), "&&") ? "and" : "or", resultRegister, lhsVal, rhsVal));
+            } else { // cmp
+                if (node.getLhs().getExpressionType().isInt()) {
+                    String op;
+                    switch (node.getOp()) { // "s" stands for signed
+                        case "<" -> op = "slt";
+                        case "<=" -> op = "sle";
+                        case ">" -> op = "sgt";
+                        case ">=" -> op = "sge";
+                        case "==" -> op = "eq";
+                        case "!=" -> op = "ne";
+                        default -> {
+                            op = "";
+                            assert false;
+                        }
+                    }
+                    currentBasicBlock.appendInstruction(new IRIcmpInstruction(op, resultRegister, lhsVal, rhsVal));
+                } else if (node.getLhs().getExpressionType().isString()) {
+                    IRFunction cmpFunction;
+                    switch (node.getOp()) {
+                        case "<" -> cmpFunction = module.getFunction("__mx_stringLt");
+                        case "<=" -> cmpFunction = module.getFunction("__mx_stringLe");
+                        case ">" -> cmpFunction = module.getFunction("__mx_stringGt");
+                        case ">=" -> cmpFunction = module.getFunction("__mx_stringGe");
+                        case "==" -> cmpFunction = module.getFunction("__mx_stringEq");
+                        case "!=" -> cmpFunction = module.getFunction("__mx_stringNe");
+                        default -> {
+                            cmpFunction = null;
+                            assert false;
+                        }
+                    }
+                    IRRegister boolTempRegister = new IRRegister(module.getIRType("char"));
+                    IRCallInstruction inst = new IRCallInstruction(module.getIRType("bool"), cmpFunction);
+                    inst.addArgument(lhsVal, module.getIRType("string")).addArgument(rhsVal, module.getIRType("string"));
+                    inst.setResultRegister(boolTempRegister);
+                    currentBasicBlock.appendInstruction(inst);
+                    // trunc char return value to i1
+                    currentBasicBlock.appendInstruction(new IRTruncInstruction(resultRegister, boolTempRegister, module.getIRType("bool")));
+                } else {
+                    // todo support class == null && array != null
 
+                }
+            }
+        } else { // resultType.isString
+            // manually call strcat in c to implement string +
+            assert Objects.equals(node.getOp(), "+");
+            FunctionEntity entity = currentScope.getFunctionRecursively("__mx_concatenateString");
+            IRFunction function = entity.getIRFunction();
+            function.markAsCalled();
+            IRCallInstruction inst = new IRCallInstruction(module.getIRType("string"), function);
+            inst.addArgument(lhsVal, module.getIRType("string")).addArgument(rhsVal, module.getIRType("string"));
+            inst.setResultRegister(resultRegister);
+            currentBasicBlock.appendInstruction(inst);
+        }
+        node.setIRResultValue(resultRegister);
     }
 
     @Override

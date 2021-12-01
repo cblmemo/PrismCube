@@ -34,7 +34,9 @@ public class IRPrinter implements IRVisitor {
 
     @Override
     public void visit(IRModule module) {
-        module.getBuiltinFunctions().forEach((name, func) -> func.accept(this));
+        module.getBuiltinFunctions().forEach((name, func) -> {
+            if (func.hasCalled()) func.accept(this);
+        });
         ps.println();
         module.getStrings().forEach((name, string) -> string.accept(this));
         ps.println();
@@ -114,6 +116,24 @@ public class IRPrinter implements IRVisitor {
 
     @Override
     public void visit(IRStoreInstruction inst) {
+        ps.print(inst.toString());
+        ps.println(inst.getComment());
+    }
+
+    @Override
+    public void visit(IRBinaryInstruction inst) {
+        ps.print(inst.toString());
+        ps.println(inst.getComment());
+    }
+
+    @Override
+    public void visit(IRIcmpInstruction inst) {
+        ps.print(inst.toString());
+        ps.println(inst.getComment());
+    }
+
+    @Override
+    public void visit(IRTruncInstruction inst) {
         ps.print(inst.toString());
         ps.println(inst.getComment());
     }

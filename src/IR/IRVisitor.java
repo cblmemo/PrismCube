@@ -16,4 +16,7 @@ public interface IRVisitor {
     void visit(IRReturnInstruction inst);
     void visit(IRAllocaInstruction inst);
     void visit(IRStoreInstruction inst);
+    void visit(IRBinaryInstruction inst);
+    void visit(IRIcmpInstruction inst);
+    void visit(IRTruncInstruction inst);
 }

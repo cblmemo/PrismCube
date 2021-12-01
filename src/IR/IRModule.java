@@ -87,6 +87,55 @@ public class IRModule {
         globalScope.getFunction("toString").setIRFunction(toString);
 
         // todo add other member builtin functions
+
+        IRFunction concatenateString = new IRFunction("__mx_concatenateString", true);
+        concatenateString.setReturnType(getIRType("string"));
+        concatenateString.addParameterType(globalScope.getClass("string"), getIRType("string"));
+        concatenateString.addParameterType(globalScope.getClass("string"), getIRType("string"));
+        addBuiltinFunction(concatenateString);
+        globalScope.getFunction("__mx_concatenateString").setIRFunction(concatenateString);
+
+        IRFunction stringLt = new IRFunction("__mx_stringLt", true);
+        stringLt.setReturnType(getIRType("bool"));
+        stringLt.addParameterType(globalScope.getClass("string"), getIRType("string"));
+        stringLt.addParameterType(globalScope.getClass("string"), getIRType("string"));
+        addBuiltinFunction(stringLt);
+        globalScope.getFunction("__mx_stringLt").setIRFunction(stringLt);
+
+        IRFunction stringLe = new IRFunction("__mx_stringLe", true);
+        stringLe.setReturnType(getIRType("bool"));
+        stringLe.addParameterType(globalScope.getClass("string"), getIRType("string"));
+        stringLe.addParameterType(globalScope.getClass("string"), getIRType("string"));
+        addBuiltinFunction(stringLe);
+        globalScope.getFunction("__mx_stringLe").setIRFunction(stringLe);
+
+        IRFunction stringGt = new IRFunction("__mx_stringGt", true);
+        stringGt.setReturnType(getIRType("bool"));
+        stringGt.addParameterType(globalScope.getClass("string"), getIRType("string"));
+        stringGt.addParameterType(globalScope.getClass("string"), getIRType("string"));
+        addBuiltinFunction(stringGt);
+        globalScope.getFunction("__mx_stringGt").setIRFunction(stringGt);
+
+        IRFunction stringGe = new IRFunction("__mx_stringGe", true);
+        stringGe.setReturnType(getIRType("bool"));
+        stringGe.addParameterType(globalScope.getClass("string"), getIRType("string"));
+        stringGe.addParameterType(globalScope.getClass("string"), getIRType("string"));
+        addBuiltinFunction(stringGe);
+        globalScope.getFunction("__mx_stringGe").setIRFunction(stringGe);
+
+        IRFunction stringEq = new IRFunction("__mx_stringEq", true);
+        stringEq.setReturnType(getIRType("bool"));
+        stringEq.addParameterType(globalScope.getClass("string"), getIRType("string"));
+        stringEq.addParameterType(globalScope.getClass("string"), getIRType("string"));
+        addBuiltinFunction(stringEq);
+        globalScope.getFunction("__mx_stringEq").setIRFunction(stringEq);
+
+        IRFunction stringNe = new IRFunction("__mx_stringNe", true);
+        stringNe.setReturnType(getIRType("bool"));
+        stringNe.addParameterType(globalScope.getClass("string"), getIRType("string"));
+        stringNe.addParameterType(globalScope.getClass("string"), getIRType("string"));
+        addBuiltinFunction(stringNe);
+        globalScope.getFunction("__mx_stringNe").setIRFunction(stringNe);
     }
 
     public IRFunction getGlobalConstructor() {

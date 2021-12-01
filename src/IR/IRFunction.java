@@ -20,13 +20,13 @@ public class IRFunction {
     private final ArrayList<IRBasicBlock> blocks = new ArrayList<>();
     private final IRBasicBlock entryBlock;
     private final IRBasicBlock returnBlock;
+    private boolean hasCalled;
 
     // [[--NOTICE--]] need to call setReturnType and addParameterType manually after created an IRFunction instance.
     public IRFunction(String functionName) {
         this.functionName = functionName;
         this.declare = false;
         entryBlock = new IRBasicBlock(this, "entry");
-//        blocks.add(entryBlock);
         returnBlock = new IRBasicBlock(this, "return");
         returnBlock.markAsReturnBlock();
     }
@@ -35,7 +35,6 @@ public class IRFunction {
         this.functionName = functionName;
         this.declare = declare;
         entryBlock = new IRBasicBlock(this, "entry");
-//        blocks.add(entryBlock);
         returnBlock = new IRBasicBlock(this, "return");
         returnBlock.markAsReturnBlock();
     }
@@ -116,9 +115,10 @@ public class IRFunction {
         return returnType;
     }
 
-    public void addParameterType(Type paraType, IRTypeSystem parameterType) {
+    public IRFunction addParameterType(Type paraType, IRTypeSystem parameterType) {
         abbreviatedParameters += mangleParameterTypes(paraType);
         this.parameterType.add(parameterType);
+        return this;
     }
 
     public ArrayList<IRTypeSystem> getParameterType() {
@@ -158,6 +158,14 @@ public class IRFunction {
 
     public String getSuffix() {
         return "}";
+    }
+
+    public boolean hasCalled() {
+        return hasCalled;
+    }
+
+    public void markAsCalled() {
+        hasCalled = true;
     }
 
     public void accept(IRVisitor visitor) {

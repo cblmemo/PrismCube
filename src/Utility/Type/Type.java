@@ -80,6 +80,7 @@ abstract public class Type {
             return temp;
         }
         if (isInt()) return module.getIRType("int");
+        // bool is store as char in llvm, and trunc to i1 if needed
         if (isBool()) return module.getIRType("bool");
         if (isString()) return module.getIRType("string");
         if (isVoid()) return module.getIRType("void");

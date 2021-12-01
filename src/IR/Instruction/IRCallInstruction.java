@@ -21,10 +21,11 @@ public class IRCallInstruction extends IRInstruction {
         this.callFunction = callFunction;
     }
 
-    public void addArgument(IROperand argumentValue, IRTypeSystem argumentType) {
+    public IRCallInstruction addArgument(IROperand argumentValue, IRTypeSystem argumentType) {
         assert Objects.equals(argumentType, argumentValue.getIRType());
         argumentValues.add(argumentValue);
         argumentTypes.add(argumentType);
+        return this;
     }
 
     public void setResultRegister(IRRegister resultRegister) {
