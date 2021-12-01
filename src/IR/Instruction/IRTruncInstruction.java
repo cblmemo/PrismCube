@@ -3,7 +3,6 @@ package IR.Instruction;
 import IR.IRVisitor;
 import IR.Operand.IROperand;
 import IR.Operand.IRRegister;
-import IR.TypeSystem.IRIntType;
 import IR.TypeSystem.IRTypeSystem;
 
 public class IRTruncInstruction extends IRInstruction {
@@ -13,9 +12,9 @@ public class IRTruncInstruction extends IRInstruction {
     private final IRTypeSystem resultType;
 
     public IRTruncInstruction(IRRegister truncResultRegister, IROperand truncTarget, IRTypeSystem resultType) {
-        assert truncResultRegister.getIRType() instanceof IRIntType;
-        assert truncTarget.getIRType() instanceof IRIntType;
-        assert resultType instanceof IRIntType;
+        assert truncResultRegister.getIRType().isBool() || truncResultRegister.getIRType().isChar() || truncResultRegister.getIRType().isInt();
+        assert truncTarget.getIRType().isBool() || truncTarget.getIRType().isChar() || truncTarget.getIRType().isInt();
+        assert resultType.isBool() || resultType.isChar() || resultType.isInt();
         this.truncResultRegister = truncResultRegister;
         this.truncTarget = truncTarget;
         this.originalType = truncTarget.getIRType();

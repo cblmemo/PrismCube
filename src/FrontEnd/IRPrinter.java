@@ -137,4 +137,10 @@ public class IRPrinter implements IRVisitor {
         ps.print(inst.toString());
         ps.println(inst.getComment());
     }
+
+    @Override
+    public void visit(IRZextInstruction inst) {
+        ps.print(inst.toString());
+        ps.println(inst.getComment());
+    }
 }

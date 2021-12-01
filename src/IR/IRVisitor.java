@@ -19,4 +19,5 @@ public interface IRVisitor {
     void visit(IRBinaryInstruction inst);
     void visit(IRIcmpInstruction inst);
     void visit(IRTruncInstruction inst);
+    void visit(IRZextInstruction inst);
 }

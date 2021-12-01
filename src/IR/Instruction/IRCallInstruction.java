@@ -17,6 +17,8 @@ public class IRCallInstruction extends IRInstruction {
     private IRRegister resultRegister = null;
 
     public IRCallInstruction(IRTypeSystem returnType, IRFunction callFunction) {
+        // avoid to print redundant function declare
+        callFunction.markAsCalled();
         this.returnType = returnType;
         this.callFunction = callFunction;
     }

@@ -5,7 +5,6 @@ import IR.Operand.IRRegister;
 import Utility.Entity.FunctionEntity;
 import Utility.Entity.VariableEntity;
 import Utility.Type.Type;
-import Utility.error.IRError;
 import Utility.error.SemanticError;
 
 import java.util.HashMap;
@@ -18,7 +17,7 @@ abstract public class Scope {
     private final HashMap<Integer, BlockScope> blockScopes = new HashMap<>();
 
     // for ir
-    private boolean hasReturned = false;
+    private boolean encounteredFlow = false;
 
     public Scope(Scope parentScope) {
         this.parentScope = parentScope;
@@ -174,12 +173,6 @@ abstract public class Scope {
         return null;
     }
 
-    public boolean isGlobalVariable(String name) {
-        if (hasVariable(name)) return this instanceof GlobalScope;
-        if (parentScope == null) throw new IRError("[Scope::isGlobalVariable] identifier " + name + " not found");
-        return parentScope.isGlobalVariable(name);
-    }
-
     public IRRegister getReturnValuePtr() {
         if (this instanceof FunctionScope)
             return this.getReturnValuePtr();
@@ -187,11 +180,19 @@ abstract public class Scope {
         return parentScope.getReturnValuePtr();
     }
 
-    public boolean hasReturned() {
-        return hasReturned;
+    // a return statement will terminate all statement's translate
+    // after it in a same scope.
+    public boolean hasEncounteredFlow() {
+        return encounteredFlow;
     }
 
-    public void setAsReturned() {
-        hasReturned = true;
+    public void setAsEncounteredFlow() {
+        encounteredFlow = true;
+    }
+
+    public LoopScope getLoopScope() {
+        assert insideLoop();
+        if (this instanceof LoopScope) return (LoopScope) this;
+        return parentScope.getLoopScope();
     }
 }

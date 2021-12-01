@@ -40,10 +40,7 @@ abstract public class TypeNode extends ASTNode {
     public IRTypeSystem toIRType(IRModule module) {
         if (this instanceof ArrayTypeNode) {
             IRTypeSystem temp = ((ArrayTypeNode) this).getElementType().toIRType(module);
-            for (int i = 0; i < ((ArrayTypeNode) this).getDimension(); i++) {
-                temp = new IRPointerType(temp);
-            }
-            return temp;
+            return new IRPointerType(temp);
         }
         if (this instanceof ClassTypeNode) {
             // todo support struct
@@ -52,6 +49,7 @@ abstract public class TypeNode extends ASTNode {
             if (Objects.equals(getTypeName(), "int")) return module.getIRType("int");
             if (Objects.equals(getTypeName(), "bool")) return module.getIRType("bool");
             if (Objects.equals(getTypeName(), "string")) return module.getIRType("string");
+            assert false;
         }
         return module.getIRType("void");
     }
