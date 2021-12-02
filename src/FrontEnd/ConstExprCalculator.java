@@ -33,7 +33,7 @@ public class ConstExprCalculator implements ASTVisitor {
     private Scope currentScope;
 
     public void calculate(Memory memory) {
-        if (memory.calculateConstexpr()) {
+        if (memory.buildIR() && memory.calculateConstexpr()) {
             log.Infof("Calculate expression started.\n");
             currentScope = globalScope = memory.getGlobalScope();
             memory.getASTRoot().accept(this);
@@ -121,7 +121,7 @@ public class ConstExprCalculator implements ASTVisitor {
 
     @Override
     public void visit(ForStatementNode node) {
-        if (node.hasInitializeExpression()) node.getInitializeExpression().accept(this);
+        if (node.hasInitializeStatement()) node.getInitializeStatement().accept(this);
         if (node.hasConditionExpression()) node.getConditionExpression().accept(this);
         if (node.hasStepExpression()) node.getStepExpression().accept(this);
         currentScope = currentScope.getBlockScope(node.getScopeId());

@@ -30,6 +30,7 @@ public class Memory {
     private boolean Scope = true;
     private boolean IR = true;
     private boolean constexpr = true;
+    private boolean IRBuild = true;
 
     public Memory(String[] commandlineArguments) {
         this.commandlineArguments = commandlineArguments;
@@ -48,6 +49,11 @@ public class Memory {
         disableASTPrinter();
         disableScopePrinter();
         disableConstExprCalculate();
+    }
+
+    public void semanticOnly() {
+        disableIRBuild();
+        disableIRPrinter();
     }
 
     public void disableASTPrinter() {
@@ -80,6 +86,14 @@ public class Memory {
 
     public boolean calculateConstexpr() {
         return constexpr;
+    }
+
+    public void disableIRBuild() {
+        IRBuild = false;
+    }
+
+    public boolean buildIR() {
+        return IRBuild;
     }
 
     public void setParseTreeRoot(ParseTree parseTreeRoot) {

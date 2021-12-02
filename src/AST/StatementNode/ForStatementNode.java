@@ -1,11 +1,13 @@
 package AST.StatementNode;
 
+import AST.ASTNode;
 import AST.ASTVisitor;
 import AST.ExpressionNode.ExpressionNode;
 import Utility.Cursor;
 
 public class ForStatementNode extends StatementNode {
-    private ExpressionNode initializeExpression = null, conditionExpression = null, stepExpression = null;
+    private ASTNode initializeStatement = null;
+    private ExpressionNode conditionExpression = null, stepExpression = null;
     private final StatementNode loopBody;
 
     public ForStatementNode(StatementNode loopBody, Cursor cursor) {
@@ -13,8 +15,8 @@ public class ForStatementNode extends StatementNode {
         this.loopBody = loopBody;
     }
 
-    public void setInitializeExpression(ExpressionNode initializeExpression) {
-        this.initializeExpression = initializeExpression;
+    public void setInitializeStatement(ASTNode initializeStatement) {
+        this.initializeStatement = initializeStatement;
     }
 
     public void setConditionExpression(ExpressionNode conditionExpression) {
@@ -25,8 +27,8 @@ public class ForStatementNode extends StatementNode {
         this.stepExpression = stepExpression;
     }
 
-    public boolean hasInitializeExpression() {
-        return initializeExpression != null;
+    public boolean hasInitializeStatement() {
+        return initializeStatement != null;
     }
 
     public boolean hasConditionExpression() {
@@ -37,8 +39,8 @@ public class ForStatementNode extends StatementNode {
         return stepExpression != null;
     }
 
-    public ExpressionNode getInitializeExpression() {
-        return initializeExpression;
+    public ASTNode getInitializeStatement() {
+        return initializeStatement;
     }
 
     public ExpressionNode getConditionExpression() {

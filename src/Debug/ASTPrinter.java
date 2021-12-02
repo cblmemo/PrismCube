@@ -1,5 +1,6 @@
 package Debug;
 
+import AST.ASTNode;
 import AST.DefineNode.*;
 import AST.ExpressionNode.*;
 import AST.PrimaryNode.*;
@@ -224,7 +225,9 @@ public class ASTPrinter {
         if (node instanceof ForStatementNode) {
             printf("[ForStatementNode]\n");
             printf("initialize:\n");
-            printNode(((ForStatementNode) node).getInitializeExpression());
+            ASTNode init = ((ForStatementNode) node).getInitializeStatement();
+            if (init instanceof VariableDefineNode) printNode((VariableDefineNode) init);
+            else printNode((ExpressionNode) init);
             printf("condition:\n");
             printNode(((ForStatementNode) node).getConditionExpression());
             printf("step:\n");

@@ -26,7 +26,7 @@ public class IRPrinter implements IRVisitor {
     private PrintStream ps;
 
     public void print(Memory memory) throws FileNotFoundException {
-        if (memory.printIR()) {
+        if (memory.buildIR() && memory.printIR()) {
             ps = new PrintStream(new FileOutputStream("bin/test.ll"));
             memory.getIRModule().accept(this);
         }

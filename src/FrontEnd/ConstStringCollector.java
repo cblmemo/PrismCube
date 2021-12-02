@@ -24,10 +24,12 @@ public class ConstStringCollector implements ASTVisitor {
     private IRModule module;
 
     public void collect(Memory memory) {
-        log.Infof("Collect const string started.\n");
-        module = memory.getIRModule();
-        memory.getASTRoot().accept(this);
-        log.Infof("Collect const string finished.\n");
+        if (memory.buildIR()) {
+            log.Infof("Collect const string started.\n");
+            module = memory.getIRModule();
+            memory.getASTRoot().accept(this);
+            log.Infof("Collect const string finished.\n");
+        }
     }
 
     @Override
@@ -81,7 +83,7 @@ public class ConstStringCollector implements ASTVisitor {
 
     @Override
     public void visit(ForStatementNode node) {
-        if (node.hasInitializeExpression()) node.getInitializeExpression().accept(this);
+        if (node.hasInitializeStatement()) node.getInitializeStatement().accept(this);
         if (node.hasConditionExpression()) node.getConditionExpression().accept(this);
         if (node.hasStepExpression()) node.getStepExpression().accept(this);
         node.getLoopBody().accept(this);

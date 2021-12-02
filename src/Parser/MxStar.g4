@@ -33,12 +33,14 @@ builtinType: Bool | Int | String;
 
 suite: '{' statement* '}';
 
+forInitializeStatement: (expression? ';') | variableDefine;
+
 statement
     : suite                                                                                              #blockStatement
     | variableDefine                                                                                     #variableDefineStatement
     | If '(' expression ')' trueStatement = statement
         (Else falseStatement = statement)?                                                               #ifStatement
-    | For   '(' initializeExpression = expression? ';'
+    | For   '(' initializeStatement  = forInitializeStatement
                 conditionExpression  = expression? ';'
                 stepExpression       = expression? ')' statement                                         #forStatement
     | While '(' conditionExpression  = expression  ')' statement                                         #whileStatement

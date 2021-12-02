@@ -52,12 +52,14 @@ public class IRBuilder implements ASTVisitor {
     private final Stack<status> currentStatus = new Stack<>();
 
     public void build(Memory memory) {
-        currentScope = globalScope = memory.getGlobalScope();
-        module = memory.getIRModule();
-        module.initializeBuiltinFunction(globalScope);
-        currentStatus.push(status.idle);
-        memory.getASTRoot().accept(this);
-        currentStatus.pop();
+        if (memory.buildIR()) {
+            currentScope = globalScope = memory.getGlobalScope();
+            module = memory.getIRModule();
+            module.initializeBuiltinFunction(globalScope);
+            currentStatus.push(status.idle);
+            memory.getASTRoot().accept(this);
+            currentStatus.pop();
+        }
     }
 
     @Override
@@ -267,11 +269,12 @@ public class IRBuilder implements ASTVisitor {
     @Override
     public void visit(ForStatementNode node) {
         if (currentScope.hasEncounteredFlow()) return;
+        currentScope = currentScope.getBlockScope(node.getScopeId());
         int id = labelCnt++;
         IRBasicBlock conditionBlock = new IRBasicBlock(currentFunction, id + "_for_condition");
         IRBasicBlock bodyBlock = new IRBasicBlock(currentFunction, id + "_for_body");
         IRBasicBlock terminateBlock = new IRBasicBlock(currentFunction, id + "_for_terminate");
-        if (node.hasInitializeExpression()) node.getInitializeExpression().accept(this);
+        if (node.hasInitializeStatement()) node.getInitializeStatement().accept(this);
         currentBasicBlock.setEscapeInstruction(new IRBrInstruction(null, conditionBlock, null, currentBasicBlock));
         currentBasicBlock.finishBlock();
         currentFunction.appendBasicBlock(currentBasicBlock);
@@ -285,7 +288,6 @@ public class IRBuilder implements ASTVisitor {
         currentBasicBlock.finishBlock();
         currentFunction.appendBasicBlock(currentBasicBlock);
         currentBasicBlock = bodyBlock;
-        currentScope = currentScope.getBlockScope(node.getScopeId());
         LoopScope loopScope = currentScope.getLoopScope();
         loopScope.setLoopConditionBlock(conditionBlock);
         loopScope.setLoopTerminateBlock(terminateBlock);

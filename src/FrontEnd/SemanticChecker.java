@@ -168,14 +168,14 @@ public class SemanticChecker implements ASTVisitor {
 
     @Override
     public void visit(ForStatementNode node) {
-        if (node.hasInitializeExpression()) node.getInitializeExpression().accept(this);
+        currentScope = currentScope.createLoopScope(node);
+        if (node.hasInitializeStatement()) node.getInitializeStatement().accept(this);
         if (node.hasConditionExpression()) {
             node.getConditionExpression().accept(this);
             if (!node.getConditionExpression().getExpressionType().isBool())
                 throwError("non-bool for condition expression", node);
         }
         if (node.hasStepExpression()) node.getStepExpression().accept(this);
-        currentScope = currentScope.createLoopScope(node);
         node.getLoopBody().accept(this);
         currentScope = currentScope.getParentScope();
     }

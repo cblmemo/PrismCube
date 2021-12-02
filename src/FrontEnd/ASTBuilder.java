@@ -222,10 +222,17 @@ public class ASTBuilder extends MxStarBaseVisitor<ASTNode> {
     public ASTNode visitForStatement(MxStarParser.ForStatementContext ctx) {
         StatementNode loopBody = (StatementNode) visit(ctx.statement());
         ForStatementNode ret = new ForStatementNode(loopBody, new Cursor(ctx));
-        if (ctx.initializeExpression != null) ret.setInitializeExpression((ExpressionNode) visit(ctx.initializeExpression));
+        ret.setInitializeStatement(visit(ctx.initializeStatement));
         if (ctx.conditionExpression != null) ret.setConditionExpression((ExpressionNode) visit(ctx.conditionExpression));
         if (ctx.stepExpression != null) ret.setStepExpression((ExpressionNode) visit(ctx.stepExpression));
         return ret;
+    }
+
+    @Override
+    public ASTNode visitForInitializeStatement(MxStarParser.ForInitializeStatementContext ctx) {
+        if (ctx.variableDefine() != null) return visit(ctx.variableDefine());
+        if (ctx.expression() != null) return visit(ctx.expression());
+        return null;
     }
 
     @Override
