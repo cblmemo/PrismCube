@@ -21,8 +21,8 @@ public class Memory {
     private final String[] commandlineArguments;
     private ParseTree parseTreeRoot;
     private ProgramNode astRoot;
-    private IRModule irModule;
-    private final GlobalScope globalScope = new GlobalScope(null);
+    private final IRModule irModule;
+    private final GlobalScope globalScope;
     private InputStream inputStream;
 
     // flags
@@ -33,6 +33,8 @@ public class Memory {
 
     public Memory(String[] commandlineArguments) {
         this.commandlineArguments = commandlineArguments;
+        globalScope = new GlobalScope(null);
+        irModule = new IRModule();
     }
 
     public void useDefaultSetup() {
@@ -96,21 +98,19 @@ public class Memory {
         return astRoot;
     }
 
-    public void setIRModule(IRModule irModule) {
-        this.irModule = irModule;
-    }
-
-    public IRModule getIRModule() {
-        // construct when first access
-        if (irModule == null) irModule = new IRModule();
-        return irModule;
-    }
-
     public GlobalScope getGlobalScope() {
         return globalScope;
     }
 
+    public IRModule getIRModule() {
+        return irModule;
+    }
+
     public InputStream getInputStream() {
         return inputStream;
+    }
+
+    public String[] getCommandlineArguments() {
+        return commandlineArguments;
     }
 }

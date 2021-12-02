@@ -40,7 +40,6 @@ public class IRBuilder implements ASTVisitor {
     // [[--NOTICE--]] current basic block need to be appended when overlapped
     private IRBasicBlock currentBasicBlock;
 
-    private int returnCnt = 0;
     private int labelCnt = 0;
 
     private enum status {
@@ -187,7 +186,6 @@ public class IRBuilder implements ASTVisitor {
         node.getStatements().forEach(statement -> {
             statement.accept(this);
         });
-        if (!currentBasicBlock.hasEscapeInstruction()) currentBasicBlock.setEscapeInstruction(new IRBrInstruction(null, currentFunction.getReturnBlock(), null, currentBasicBlock));
         // void function or main could have no return statement
         if (!((FunctionScope) currentScope).hasReturnStatement()) {
             currentBasicBlock.setEscapeInstruction(new IRBrInstruction(null, currentFunction.getReturnBlock(), null, currentBasicBlock));
@@ -278,8 +276,11 @@ public class IRBuilder implements ASTVisitor {
         currentBasicBlock.finishBlock();
         currentFunction.appendBasicBlock(currentBasicBlock);
         currentBasicBlock = conditionBlock;
-        node.getConditionExpression().accept(this);
-        IROperand conditionResult = node.getConditionExpression().getIRResultValue();
+        IROperand conditionResult;
+        if (node.hasConditionExpression()) {
+            node.getConditionExpression().accept(this);
+            conditionResult = node.getConditionExpression().getIRResultValue();
+        } else conditionResult = new IRConstBool(module.getIRType("bool"), true);
         currentBasicBlock.setEscapeInstruction(new IRBrInstruction(conditionResult, bodyBlock, terminateBlock, currentBasicBlock));
         currentBasicBlock.finishBlock();
         currentFunction.appendBasicBlock(currentBasicBlock);
@@ -291,7 +292,7 @@ public class IRBuilder implements ASTVisitor {
         node.getLoopBody().accept(this);
         // might encounter return, break or continue
         if (!currentBasicBlock.hasEscapeInstruction()) {
-            node.getStepExpression().accept(this);
+            if (node.hasStepExpression()) node.getStepExpression().accept(this);
             currentBasicBlock.setEscapeInstruction(new IRBrInstruction(null, conditionBlock, null, currentBasicBlock));
         }
         currentScope = currentScope.getParentScope();

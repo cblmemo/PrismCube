@@ -37,7 +37,6 @@ public class IRPrinter implements IRVisitor {
         module.getBuiltinFunctions().forEach((name, func) -> {
             if (func.hasCalled()) func.accept(this);
         });
-        ps.println();
         module.getStrings().forEach((name, string) -> string.accept(this));
         ps.println();
         module.getGlobalDefines().forEach((name, define) -> define.accept(this));

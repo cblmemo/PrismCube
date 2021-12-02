@@ -4,6 +4,9 @@ import Memory.Memory;
 
 public class ArgumentParser {
     public void parse(Memory memory) {
-        // todo
+        String[] args = memory.getCommandlineArguments();
+        for (int i = 0; i < args.length; i++) {
+
+        }
     }
 }
