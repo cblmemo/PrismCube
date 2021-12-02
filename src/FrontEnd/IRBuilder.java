@@ -227,9 +227,9 @@ public class IRBuilder implements ASTVisitor {
     @Override
     public void visit(BlockStatementNode node) {
         if (currentScope.hasEncounteredFlow()) return;
-        if (node.getScopeId() != -1) currentScope = currentScope.getBlockScope(node.getScopeId());
+        currentScope = currentScope.getBlockScope(node.getScopeId());
         node.getStatements().forEach(statement -> statement.accept(this));
-        if (node.getScopeId() != -1) currentScope = currentScope.getParentScope();
+        currentScope = currentScope.getParentScope();
     }
 
     @Override

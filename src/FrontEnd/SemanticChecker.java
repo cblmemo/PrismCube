@@ -142,13 +142,11 @@ public class SemanticChecker implements ASTVisitor {
 
     @Override
     public void visit(BlockStatementNode node) {
-        boolean insideNewScope = currentScope instanceof BranchScope || currentScope instanceof LoopScope;
-        // avoid if (...) {} and while (...) {} creates two layer of scope
-        if (!insideNewScope) currentScope = currentScope.createBracesScope(node);
+        currentScope = currentScope.createBracesScope(node);
         node.getStatements().forEach(statement -> {
             statement.accept(this);
         });
-        if (!insideNewScope) currentScope = currentScope.getParentScope();
+        currentScope = currentScope.getParentScope();
     }
 
     @Override
