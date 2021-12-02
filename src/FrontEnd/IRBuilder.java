@@ -135,9 +135,9 @@ public class IRBuilder implements ASTVisitor {
                     node.getInitializeValue().accept(this);
                     // similar to ReturnStatementNode
                     IROperand returnValue = node.getInitializeValue().getIRResultValue();
-                    currentBasicBlock.appendInstruction(new IRStoreInstruction(variableIRType, new IRGlobalVariableRegister(variableIRType, node.getVariableNameStr()), returnValue));
+                    currentBasicBlock.appendInstruction(new IRStoreInstruction(variableIRType, variableRegister, returnValue));
                     currentBasicBlock.setEscapeInstruction(new IRBrInstruction(null, currentFunction.getReturnBlock(), null, currentBasicBlock));
-                    currentFunction.getReturnBlock().appendInstruction(new IRReturnInstruction(module.getIRType("void"), null));
+                    currentFunction.getReturnBlock().setEscapeInstruction(new IRReturnInstruction(module.getIRType("void"), null));
                     currentBasicBlock.finishBlock();
                     currentFunction.finishFunction();
                     IRRegister.resetTo(cnt);
@@ -150,15 +150,15 @@ public class IRBuilder implements ASTVisitor {
             IRRegister variableRegister = new IRRegister(new IRPointerType(variableIRType));
             currentBasicBlock.appendInstruction(new IRAllocaInstruction(variableIRType, variableRegister));
             currentScope.getVariableEntityRecursively(node.getVariableNameStr()).setCurrentRegister(variableRegister);
+            IROperand initVal;
             if (node.hasInitializeValue()) {
-                IROperand initVal;
                 if (node.getInitializeValue().getEntry().isConstexpr()) initVal = node.getInitializeValue().getEntry().toIROperand(module);
                 else {
                     node.getInitializeValue().accept(this);
                     initVal = node.getInitializeValue().getIRResultValue();
                 }
-                currentBasicBlock.appendInstruction(new IRStoreInstruction(variableIRType, variableRegister, initVal));
-            } else currentBasicBlock.appendInstruction(new IRStoreInstruction(variableIRType, variableRegister, variableIRType.getDefaultValue()));
+            } else initVal = variableIRType.getDefaultValue();
+            currentBasicBlock.appendInstruction(new IRStoreInstruction(variableIRType, variableRegister, initVal));
         }
     }
 
@@ -166,6 +166,7 @@ public class IRBuilder implements ASTVisitor {
     public void visit(ConstructorDefineNode node) {
         currentScope = ((ClassScope) currentScope).getConstructor().getConstructorScope();
 
+        // don't inherit any encountered flow mark since method has ended
         currentScope = currentScope.getParentScope();
     }
 
@@ -175,12 +176,20 @@ public class IRBuilder implements ASTVisitor {
         currentFunction = module.getFunction(node.getFunctionName());
         currentBasicBlock = currentFunction.getEntryBlock();
         currentScope = currentScope.getFunctionRecursively(node.getFunctionName()).getFunctionScope();
-        currentStatus.push(status.allocaParameter);
-        node.getParameters().forEach(parameter -> parameter.accept(this));
-        currentStatus.pop();
-        currentStatus.push(status.storeParameter);
-        node.getParameters().forEach(parameter -> parameter.accept(this));
-        currentStatus.pop();
+        node.getParameters().forEach(parameter -> {
+            IRTypeSystem parameterType = parameter.getType().toIRType(module);
+            IRRegister parameterRegister = new IRRegister(new IRPointerType(parameterType));
+            VariableEntity parameterEntity = currentScope.getVariableEntityRecursively(parameter.getParameterName());
+            parameterEntity.setCurrentRegister(parameterRegister);
+            currentBasicBlock.appendInstruction(new IRAllocaInstruction(parameterType, parameterRegister));
+        });
+        node.getParameters().forEach(parameter -> {
+            IRTypeSystem parameterType = parameter.getType().toIRType(module);
+            VariableEntity parameterEntity = currentScope.getVariableEntityRecursively(parameter.getParameterName());
+            IRRegister targetRegister = parameterEntity.getCurrentRegister();
+            int srcRegisterId = targetRegister.getId() - ((FunctionScope) currentScope).getParameterNumber();
+            currentBasicBlock.appendInstruction(new IRStoreInstruction(parameterType, targetRegister, new IRRegister(parameterType, srcRegisterId)));
+        });
         IRTypeSystem returnIRType = node.getReturnType().toIRType(module);
         IRRegister returnValuePtr = new IRRegister(new IRPointerType(returnIRType));
         currentBasicBlock.appendInstruction(new IRAllocaInstruction(returnIRType, returnValuePtr));
@@ -189,14 +198,13 @@ public class IRBuilder implements ASTVisitor {
             statement.accept(this);
         });
         // void function or main could have no return statement
-        if (!((FunctionScope) currentScope).hasReturnStatement()) {
-            currentBasicBlock.setEscapeInstruction(new IRBrInstruction(null, currentFunction.getReturnBlock(), null, currentBasicBlock));
-            currentFunction.getReturnBlock().setEscapeInstruction(new IRReturnInstruction(returnIRType, returnIRType.getDefaultValue()));
-        } else {
+        if (((FunctionScope) currentScope).hasReturnStatement()) {
             IRRegister returnValue = new IRRegister(returnIRType);
             currentFunction.getReturnBlock().appendInstruction(new IRLoadInstruction(returnIRType, returnValue, returnValuePtr));
             currentFunction.getReturnBlock().setEscapeInstruction(new IRReturnInstruction(returnIRType, returnValue));
-        }
+        } else currentFunction.getReturnBlock().setEscapeInstruction(new IRReturnInstruction(returnIRType, returnIRType.getDefaultValue()));
+        if (!currentBasicBlock.hasEscapeInstruction()) currentBasicBlock.setEscapeInstruction(new IRBrInstruction(null, currentFunction.getReturnBlock(), null, currentBasicBlock));
+        // don't inherit any encountered flow mark since function has ended
         currentScope = currentScope.getParentScope();
         currentBasicBlock.finishBlock();
         currentFunction.appendBasicBlock(currentBasicBlock);
@@ -207,21 +215,7 @@ public class IRBuilder implements ASTVisitor {
 
     @Override
     public void visit(ParameterDefineNode node) {
-        assert currentScope instanceof FunctionScope;
-        if (currentStatus.peek() == status.allocaParameter) {
-            IRTypeSystem parameterType = node.getType().toIRType(module);
-            IRRegister parameterRegister = new IRRegister(new IRPointerType(parameterType));
-            VariableEntity parameterEntity = currentScope.getVariableEntityRecursively(node.getParameterName());
-            parameterEntity.setCurrentRegister(parameterRegister);
-            currentBasicBlock.appendInstruction(new IRAllocaInstruction(parameterType, parameterRegister));
-        }
-        if (currentStatus.peek() == status.storeParameter) {
-            IRTypeSystem parameterType = node.getType().toIRType(module);
-            VariableEntity parameterEntity = currentScope.getVariableEntityRecursively(node.getParameterName());
-            IRRegister targetRegister = parameterEntity.getCurrentRegister();
-            int srcRegisterId = targetRegister.getId() - ((FunctionScope) currentScope).getParameterNumber();
-            currentBasicBlock.appendInstruction(new IRStoreInstruction(parameterType, targetRegister, new IRRegister(parameterType, srcRegisterId)));
-        }
+
     }
 
     @Override
@@ -229,6 +223,7 @@ public class IRBuilder implements ASTVisitor {
         if (currentScope.hasEncounteredFlow()) return;
         currentScope = currentScope.getBlockScope(node.getScopeId());
         node.getStatements().forEach(statement -> statement.accept(this));
+        currentScope.getParentScope().inheritEncounteredFlowMark(currentScope);
         currentScope = currentScope.getParentScope();
     }
 
@@ -247,6 +242,7 @@ public class IRBuilder implements ASTVisitor {
         currentBasicBlock = thenBlock;
         currentScope = currentScope.getBlockScope(node.getScopeId());
         node.getTrueStatement().accept(this);
+        // don't inherit any encountered flow mark
         currentScope = currentScope.getParentScope();
         // everytime encountered a statement, need to check whether it has escape or not
         if (!currentBasicBlock.hasEscapeInstruction()) // return statement might generate an escape instruction
@@ -257,6 +253,7 @@ public class IRBuilder implements ASTVisitor {
             currentBasicBlock = elseBlock;
             currentScope = currentScope.getBlockScope(node.getIfElseId());
             node.getFalseStatement().accept(this);
+            // don't inherit any encountered flow mark too
             currentScope = currentScope.getParentScope();
             if (!currentBasicBlock.hasEscapeInstruction()) // return statement might always generate an escape instruction
                 currentBasicBlock.setEscapeInstruction(new IRBrInstruction(null, terminateBlock, null, currentBasicBlock));
@@ -292,8 +289,11 @@ public class IRBuilder implements ASTVisitor {
         loopScope.setLoopConditionBlock(conditionBlock);
         loopScope.setLoopTerminateBlock(terminateBlock);
         node.getLoopBody().accept(this);
-        // might encounter return, break or continue
-        if (!currentBasicBlock.hasEscapeInstruction()) {
+        if (currentScope.hasEncounteredFlow()) {
+            // only keep return mark
+            currentScope.getParentScope().inheritEncounteredFlowMark(currentScope);
+            currentScope.getParentScope().eraseEncounteredLoopFlowMark();
+        } else {
             if (node.hasStepExpression()) node.getStepExpression().accept(this);
             currentBasicBlock.setEscapeInstruction(new IRBrInstruction(null, conditionBlock, null, currentBasicBlock));
         }
@@ -325,7 +325,9 @@ public class IRBuilder implements ASTVisitor {
         loopScope.setLoopConditionBlock(conditionBlock);
         loopScope.setLoopTerminateBlock(terminateBlock);
         node.getLoopBody().accept(this);
+        currentScope.getParentScope().inheritEncounteredFlowMark(currentScope);
         currentScope = currentScope.getParentScope();
+        currentScope.eraseEncounteredLoopFlowMark();
         // might encounter return, break or continue
         if (!currentBasicBlock.hasEscapeInstruction())
             currentBasicBlock.setEscapeInstruction(new IRBrInstruction(null, conditionBlock, null, currentBasicBlock));
@@ -344,21 +346,23 @@ public class IRBuilder implements ASTVisitor {
         currentBasicBlock.appendInstruction(new IRStoreInstruction(currentFunction.getReturnType(), currentScope.getReturnValuePtr(), returnValueRegister));
         // return statement should create an escape (i.e., branch) instruction to returnBlock.
         currentBasicBlock.setEscapeInstruction(new IRBrInstruction(null, currentFunction.getReturnBlock(), null, currentBasicBlock));
-        currentScope.setAsEncounteredFlow();
+        currentScope.setAsEncounteredFlow(Scope.flowStatementType.returnType);
     }
 
     @Override
     public void visit(BreakStatementNode node) {
+        if (currentScope.hasEncounteredFlow()) return;
         LoopScope loopScope = currentScope.getLoopScope();
         currentBasicBlock.setEscapeInstruction(new IRBrInstruction(null, loopScope.getLoopTerminateBlock(), null, currentBasicBlock));
-        currentScope.setAsEncounteredFlow();
+        currentScope.setAsEncounteredFlow(Scope.flowStatementType.breakType);
     }
 
     @Override
     public void visit(ContinueStatementNode node) {
+        if (currentScope.hasEncounteredFlow()) return;
         LoopScope loopScope = currentScope.getLoopScope();
         currentBasicBlock.setEscapeInstruction(new IRBrInstruction(null, loopScope.getLoopConditionBlock(), null, currentBasicBlock));
-        currentScope.setAsEncounteredFlow();
+        currentScope.setAsEncounteredFlow(Scope.flowStatementType.continueType);
     }
 
     @Override
@@ -374,7 +378,11 @@ public class IRBuilder implements ASTVisitor {
 
     @Override
     public void visit(NewTypeExpressionNode node) {
+        if (node.isNewArray()) {
+            IRTypeSystem elementType;
+        } else { // todo new class();
 
+        }
     }
 
     @Override

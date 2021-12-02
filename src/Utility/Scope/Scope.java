@@ -16,9 +16,6 @@ abstract public class Scope {
     private int blockScopeCnt = 0;
     private final HashMap<Integer, BlockScope> blockScopes = new HashMap<>();
 
-    // for ir
-    private boolean encounteredFlow = false;
-
     public Scope(Scope parentScope) {
         this.parentScope = parentScope;
     }
@@ -180,14 +177,28 @@ abstract public class Scope {
         return parentScope.getReturnValuePtr();
     }
 
-    // a return statement will terminate all statement's translate
+    // a flow statement will terminate all statement's translate
     // after it in a same scope.
-    public boolean hasEncounteredFlow() {
-        return encounteredFlow;
+    public enum flowStatementType {
+        returnType, breakType, continueType
     }
 
-    public void setAsEncounteredFlow() {
-        encounteredFlow = true;
+    private flowStatementType currentStatus = null;
+
+    public boolean hasEncounteredFlow() {
+        return currentStatus != null;
+    }
+
+    public void setAsEncounteredFlow(flowStatementType type) {
+        currentStatus = type;
+    }
+
+    public void inheritEncounteredFlowMark(Scope target) {
+        this.currentStatus = target.currentStatus;
+    }
+
+    public void eraseEncounteredLoopFlowMark() {
+        if (currentStatus == flowStatementType.breakType || currentStatus == flowStatementType.continueType) currentStatus = null;
     }
 
     public LoopScope getLoopScope() {

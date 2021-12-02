@@ -14,11 +14,11 @@ public class IRBasicBlock {
 
     private boolean hasFinished = false;
 
-    private static final String prefix = "_";
-    private static final String delim = "$";
+    private static final String prefix = "LABEL$";
+    private static final String delim = ".";
 
     public IRBasicBlock(IRFunction parentFunction, String labelName) {
-        this.label = new IRLabel(prefix + labelName + delim + parentFunction.getFunctionName());
+        this.label = new IRLabel(prefix + parentFunction.getFunctionName() + delim + labelName);
     }
 
     public IRLabel getLabel() {
@@ -44,10 +44,6 @@ public class IRBasicBlock {
         assert escapeInstruction != null;
         instructions.add(escapeInstruction);
         hasFinished = true;
-    }
-
-    public boolean isEmptyBasicBlock() {
-        return instructions.size() == 0;
     }
 
     public ArrayList<IRInstruction> getInstructions() {

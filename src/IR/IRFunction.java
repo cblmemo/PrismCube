@@ -43,22 +43,12 @@ public class IRFunction {
         blocks.add(block);
     }
 
-    private void deleteEmptyBlock() {
-        for (int i = 0; i < blocks.size(); i++) {
-            if (blocks.get(i).isEmptyBasicBlock()) {
-                blocks.remove(i);
-                i--;
-            }
-        }
-    }
-
     public void finishFunction() {
         returnBlock.finishBlock();
         blocks.add(returnBlock);
-//        deleteEmptyBlock();
     }
 
-    //   \/ --- after a day and a half I discover it is useless since Mx* doesn't support override :( --- \/
+    //   \/ --- after a day and a half I discover it is useless since Mx* doesn't support override :(
 
     private String mangleIdentifiers(String identifier) {
         // mangle identifier with length + identifier
@@ -97,7 +87,7 @@ public class IRFunction {
         log.Debugf(functionName);
     }
 
-    //   /\ --- after a day and a half I discover it is useless since Mx* doesn't support override :( --- /\
+    //   /\ --- after a day and a half I discover it is useless since Mx* doesn't support override :(
 
     public boolean isDeclare() {
         return declare;
@@ -115,10 +105,9 @@ public class IRFunction {
         return returnType;
     }
 
-    public IRFunction addParameterType(Type paraType, IRTypeSystem parameterType) {
+    public void addParameterType(Type paraType, IRTypeSystem parameterType) {
         abbreviatedParameters += mangleParameterTypes(paraType);
         this.parameterType.add(parameterType);
-        return this;
     }
 
     public ArrayList<IRTypeSystem> getParameterType() {
