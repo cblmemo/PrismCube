@@ -22,6 +22,7 @@ import Utility.Entity.VariableEntity;
 import Utility.Scope.*;
 import Utility.error.IRError;
 
+import java.util.LinkedList;
 import java.util.Objects;
 import java.util.Stack;
 
@@ -62,6 +63,26 @@ public class IRBuilder implements ASTVisitor {
         }
     }
 
+    private IRTypeSystem getBoolType() {
+        return module.getIRType("bool");
+    }
+
+    private IRTypeSystem getCharType() {
+        return module.getIRType("char");
+    }
+
+    private IRTypeSystem getIntType() {
+        return module.getIRType("int");
+    }
+
+    private IRTypeSystem getStringType() {
+        return module.getIRType("string");
+    }
+
+    private IRTypeSystem getVoidType() {
+        return module.getIRType("void");
+    }
+
     @Override
     public void visit(ProgramNode node) {
         // todo collect class
@@ -85,10 +106,10 @@ public class IRBuilder implements ASTVisitor {
         });
         IRFunction globalConstructor = module.getGlobalConstructor();
         IRBasicBlock entryBlock = globalConstructor.getEntryBlock();
-        module.getSingleInitializeFunctions().forEach(initFunc -> entryBlock.appendInstruction(new IRCallInstruction(module.getIRType("void"), initFunc)));
+        module.getSingleInitializeFunctions().forEach(initFunc -> entryBlock.appendInstruction(new IRCallInstruction(getVoidType(), initFunc)));
         entryBlock.setEscapeInstruction(new IRBrInstruction(null, globalConstructor.getReturnBlock(), null, entryBlock));
         entryBlock.finishBlock();
-        globalConstructor.getReturnBlock().setEscapeInstruction(new IRReturnInstruction(module.getIRType("void"), null));
+        globalConstructor.getReturnBlock().setEscapeInstruction(new IRReturnInstruction(getVoidType(), null));
         globalConstructor.finishFunction();
 
         // todo step into classes
@@ -137,7 +158,7 @@ public class IRBuilder implements ASTVisitor {
                     IROperand returnValue = node.getInitializeValue().getIRResultValue();
                     currentBasicBlock.appendInstruction(new IRStoreInstruction(variableIRType, variableRegister, returnValue));
                     currentBasicBlock.setEscapeInstruction(new IRBrInstruction(null, currentFunction.getReturnBlock(), null, currentBasicBlock));
-                    currentFunction.getReturnBlock().setEscapeInstruction(new IRReturnInstruction(module.getIRType("void"), null));
+                    currentFunction.getReturnBlock().setEscapeInstruction(new IRReturnInstruction(getVoidType(), null));
                     currentBasicBlock.finishBlock();
                     currentFunction.finishFunction();
                     IRRegister.resetTo(cnt);
@@ -191,18 +212,21 @@ public class IRBuilder implements ASTVisitor {
             currentBasicBlock.appendInstruction(new IRStoreInstruction(parameterType, targetRegister, new IRRegister(parameterType, srcRegisterId)));
         });
         IRTypeSystem returnIRType = node.getReturnType().toIRType(module);
-        IRRegister returnValuePtr = new IRRegister(new IRPointerType(returnIRType));
-        currentBasicBlock.appendInstruction(new IRAllocaInstruction(returnIRType, returnValuePtr));
-        ((FunctionScope) currentScope).setReturnValuePtr(returnValuePtr);
-        node.getStatements().forEach(statement -> {
-            statement.accept(this);
-        });
-        // void function or main could have no return statement
-        if (((FunctionScope) currentScope).hasReturnStatement()) {
-            IRRegister returnValue = new IRRegister(returnIRType);
-            currentFunction.getReturnBlock().appendInstruction(new IRLoadInstruction(returnIRType, returnValue, returnValuePtr));
-            currentFunction.getReturnBlock().setEscapeInstruction(new IRReturnInstruction(returnIRType, returnValue));
-        } else currentFunction.getReturnBlock().setEscapeInstruction(new IRReturnInstruction(returnIRType, returnIRType.getDefaultValue()));
+        if (!returnIRType.isVoid()) {
+            IRRegister returnValuePtr = new IRRegister(new IRPointerType(returnIRType));
+            currentBasicBlock.appendInstruction(new IRAllocaInstruction(returnIRType, returnValuePtr));
+            ((FunctionScope) currentScope).setReturnValuePtr(returnValuePtr);
+            node.getStatements().forEach(statement -> statement.accept(this));
+            // main function could have no return statement
+            if (((FunctionScope) currentScope).hasReturnStatement()) {
+                IRRegister returnValue = new IRRegister(returnIRType);
+                currentFunction.getReturnBlock().appendInstruction(new IRLoadInstruction(returnIRType, returnValue, returnValuePtr));
+                currentFunction.getReturnBlock().setEscapeInstruction(new IRReturnInstruction(returnIRType, returnValue));
+            } else currentFunction.getReturnBlock().setEscapeInstruction(new IRReturnInstruction(returnIRType, returnIRType.getDefaultValue()));
+        } else {
+            node.getStatements().forEach(statement -> statement.accept(this));
+            currentFunction.getReturnBlock().setEscapeInstruction(new IRReturnInstruction(returnIRType, null));
+        }
         if (!currentBasicBlock.hasEscapeInstruction()) currentBasicBlock.setEscapeInstruction(new IRBrInstruction(null, currentFunction.getReturnBlock(), null, currentBasicBlock));
         // don't inherit any encountered flow mark since function has ended
         currentScope = currentScope.getParentScope();
@@ -280,7 +304,7 @@ public class IRBuilder implements ASTVisitor {
         if (node.hasConditionExpression()) {
             node.getConditionExpression().accept(this);
             conditionResult = node.getConditionExpression().getIRResultValue();
-        } else conditionResult = new IRConstBool(module.getIRType("bool"), true);
+        } else conditionResult = new IRConstBool(getBoolType(), true);
         currentBasicBlock.setEscapeInstruction(new IRBrInstruction(conditionResult, bodyBlock, terminateBlock, currentBasicBlock));
         currentBasicBlock.finishBlock();
         currentFunction.appendBasicBlock(currentBasicBlock);
@@ -339,11 +363,13 @@ public class IRBuilder implements ASTVisitor {
     @Override
     public void visit(ReturnStatementNode node) {
         if (currentScope.hasEncounteredFlow()) return;
-        node.getReturnValue().accept(this);
-        IROperand returnValueRegister = node.getReturnValue().getIRResultValue();
-        // return value should be store in a specific IRRegister, which will be created at the
-        // entry block, i.e., the first time visit FunctionDefineNode, and escape block return that register.
-        currentBasicBlock.appendInstruction(new IRStoreInstruction(currentFunction.getReturnType(), currentScope.getReturnValuePtr(), returnValueRegister));
+        if (node.hasReturnValue()) {
+            node.getReturnValue().accept(this);
+            IROperand returnValueRegister = node.getReturnValue().getIRResultValue();
+            // return value should be store in a specific IRRegister, which will be created at the
+            // entry block, i.e., the first time visit FunctionDefineNode, and escape block return that register.
+            currentBasicBlock.appendInstruction(new IRStoreInstruction(currentFunction.getReturnType(), currentScope.getReturnValuePtr(), returnValueRegister));
+        }
         // return statement should create an escape (i.e., branch) instruction to returnBlock.
         currentBasicBlock.setEscapeInstruction(new IRBrInstruction(null, currentFunction.getReturnBlock(), null, currentBasicBlock));
         currentScope.setAsEncounteredFlow(Scope.flowStatementType.returnType);
@@ -376,10 +402,90 @@ public class IRBuilder implements ASTVisitor {
 
     }
 
+    private final LinkedList<IROperand> newArrayDimensionLength = new LinkedList<>();
+
+    private IRRegister generateNewArray(IRTypeSystem elementType, int posOnArray) {
+        IROperand length = newArrayDimensionLength.get(posOnArray);
+        IRRegister arrayLength = new IRRegister(getIntType());
+        // length of array
+        currentBasicBlock.appendInstruction(new IRBinaryInstruction("mul", arrayLength, length, new IRConstInt(getIntType(), elementType.sizeof())));
+        IRRegister mallocSize = new IRRegister(getIntType());
+        // 4 byte for address to array length
+        currentBasicBlock.appendInstruction(new IRBinaryInstruction("add", mallocSize, arrayLength, new IRConstInt(getIntType(), 4)));
+        IRFunction malloc = module.getBuiltinFunction("__mx_malloc");
+        IRRegister mallocPtr = new IRRegister(getStringType());
+        IRCallInstruction callInst = new IRCallInstruction(getStringType(), malloc);
+        callInst.addArgument(mallocSize, getIntType());
+        callInst.setResultRegister(mallocPtr);
+        currentBasicBlock.appendInstruction(callInst);
+        IRRegister arrayLengthRegister = new IRRegister(new IRPointerType(getIntType()));
+        currentBasicBlock.appendInstruction(new IRBitcastInstruction(arrayLengthRegister, mallocPtr, new IRPointerType(getIntType())));
+        currentBasicBlock.appendInstruction(new IRStoreInstruction(getIntType(), arrayLengthRegister, length));
+        IRRegister arrayIntPtrRegister = new IRRegister(new IRPointerType(getIntType()));
+        IRGetelementptrInstruction gepInst1 = new IRGetelementptrInstruction(arrayIntPtrRegister, getIntType(), arrayLengthRegister);
+        gepInst1.addIndex(new IRConstInt(getIntType(), 1));
+        currentBasicBlock.appendInstruction(gepInst1);
+        IRRegister arrayRegister = new IRRegister(new IRPointerType(elementType));
+        currentBasicBlock.appendInstruction(new IRBitcastInstruction(arrayRegister, arrayIntPtrRegister, new IRPointerType(elementType)));
+        if (posOnArray == newArrayDimensionLength.size() - 1) return arrayRegister; // escape recursion
+        assert elementType instanceof IRPointerType;
+        // use for loop to generate each element of array
+        int id = labelCnt++;
+        IRBasicBlock conditionBlock = new IRBasicBlock(currentFunction, id + "_array_generation_for_condition");
+        IRBasicBlock bodyBlock = new IRBasicBlock(currentFunction, id + "_array_generation_for_body");
+        IRBasicBlock terminateBlock = new IRBasicBlock(currentFunction, id + "_array_generation_for_terminate");
+        // for (auto iter = arr,
+        IRTypeSystem arrayType = arrayRegister.getIRType();
+        IRRegister iterPtr = new IRRegister(new IRPointerType(arrayType));
+        currentBasicBlock.appendInstruction(new IRAllocaInstruction(arrayType, iterPtr));
+        currentBasicBlock.appendInstruction(new IRStoreInstruction(arrayType, iterPtr, arrayRegister));
+        // iterEnd = arr + length;
+        IRRegister iterEnd = new IRRegister(arrayType);
+        IRGetelementptrInstruction gepInst2 = new IRGetelementptrInstruction(iterEnd, elementType, arrayRegister);
+        gepInst2.addIndex(length);
+        currentBasicBlock.appendInstruction(gepInst2);
+        currentBasicBlock.setEscapeInstruction(new IRBrInstruction(null, conditionBlock, null, currentBasicBlock));
+        currentBasicBlock.finishBlock();
+        currentFunction.appendBasicBlock(currentBasicBlock);
+        currentBasicBlock = conditionBlock;
+        // iter != iterEnd;
+        IRRegister iterVal = new IRRegister(arrayType);
+        currentBasicBlock.appendInstruction(new IRLoadInstruction(arrayType, iterVal, iterPtr));
+        IRRegister conditionResult = new IRRegister(getBoolType());
+        // using icmp to compare pointer
+        currentBasicBlock.appendInstruction(new IRIcmpInstruction("ne", conditionResult, iterVal, iterEnd));
+        currentBasicBlock.setEscapeInstruction(new IRBrInstruction(conditionResult, bodyBlock, terminateBlock, currentBasicBlock));
+        currentBasicBlock.finishBlock();
+        currentFunction.appendBasicBlock(currentBasicBlock);
+        currentBasicBlock = bodyBlock;
+        // loopBody: iter = new elementType[xxx];
+        IRRegister currentIterInitVal = generateNewArray(((IRPointerType) elementType).getBaseType(), posOnArray + 1);
+        currentBasicBlock.appendInstruction(new IRStoreInstruction(elementType, iterVal, currentIterInitVal));
+        // iter++)
+        IRRegister updatedIterVal = new IRRegister(arrayType);
+        IRGetelementptrInstruction gepInst3 = new IRGetelementptrInstruction(updatedIterVal, elementType, iterVal);
+        gepInst3.addIndex(new IRConstInt(getIntType(), 1));
+        currentBasicBlock.appendInstruction(gepInst3);
+        currentBasicBlock.appendInstruction(new IRStoreInstruction(arrayType, iterPtr, updatedIterVal));
+        currentBasicBlock.setEscapeInstruction(new IRBrInstruction(null, conditionBlock, null, currentBasicBlock));
+        currentBasicBlock.finishBlock();
+        currentFunction.appendBasicBlock(currentBasicBlock);
+        currentBasicBlock = terminateBlock;
+        return arrayRegister;
+    }
+
     @Override
     public void visit(NewTypeExpressionNode node) {
         if (node.isNewArray()) {
-            IRTypeSystem elementType;
+            IRTypeSystem elementType = IRPointerType.constructIRPointerType(node.getRootElementType().toIRType(module), node.getDimension() - 1);
+            assert newArrayDimensionLength.isEmpty();
+            node.getDimensionExpressions().forEach(expression -> {
+                expression.accept(this);
+                newArrayDimensionLength.addLast(expression.getIRResultValue());
+            });
+            IRRegister arrayRegister = generateNewArray(elementType, 0);
+            newArrayDimensionLength.clear();
+            node.setIRResultValue(arrayRegister);
         } else { // todo new class();
 
         }
@@ -398,31 +504,98 @@ public class IRBuilder implements ASTVisitor {
     @Override
     public void visit(FunctionCallExpressionNode node) {
         if (node.isClassMethod()) {
-            // todo call class method
+            IRTypeSystem instanceType = node.getInstance().getExpressionType().toIRType(module);
+            if (instanceType.isString()) {
+                node.getInstance().accept(this);
+                // support const string to invoke builtin method
+                IROperand str = node.getInstance().getIRResultValue();
+                IRTypeSystem returnType;
+                String innerFunctionName;
+                switch (node.getFunctionName()) {
+                    case "length" -> {
+                        returnType = getIntType();
+                        innerFunctionName = "__mx_stringLength";
+                    }
+                    case "substring" -> {
+                        returnType = getStringType();
+                        innerFunctionName = "__mx_stringSubstring";
+                    }
+                    case "parseInt" -> {
+                        returnType = getIntType();
+                        innerFunctionName = "__mx_stringParseInt";
+                    }
+                    case "ord" -> {
+                        returnType = getIntType();
+                        innerFunctionName = "__mx_stringOrd";
+                    }
+                    default -> throw new IRError("undefined string method");
+                }
+                IRFunction function = module.getBuiltinFunction(innerFunctionName);
+                IRCallInstruction callInst = new IRCallInstruction(returnType, function);
+                callInst.addArgument(str, getStringType());
+                node.getArguments().forEach(argument -> {
+                    argument.accept(this);
+                    callInst.addArgument(argument.getIRResultValue(), argument.getExpressionType().toIRType(module));
+                });
+                IRRegister resultRegister = new IRRegister(returnType);
+                callInst.setResultRegister(resultRegister);
+                node.setIRResultValue(resultRegister);
+                currentBasicBlock.appendInstruction(callInst);
+            } else if (instanceType.isArray()) {
+                assert node.getArguments().size() == 0;
+                assert Objects.equals(node.getFunctionName(), "size");
+                node.getInstance().accept(this);
+                assert node.getInstance().getIRResultValue() instanceof IRRegister;
+                IRRegister array = ((IRRegister) node.getInstance().getIRResultValue());
+                IRRegister intArray = new IRRegister(new IRPointerType(getIntType()));
+                currentBasicBlock.appendInstruction(new IRBitcastInstruction(intArray, array, new IRPointerType(getIntType())));
+                IRRegister sizePtr = new IRRegister(new IRPointerType(getIntType()));
+                IRGetelementptrInstruction gepInst = new IRGetelementptrInstruction(sizePtr, getIntType(), intArray);
+                gepInst.addIndex(new IRConstInt(getIntType(), -1));
+                currentBasicBlock.appendInstruction(gepInst);
+                IRRegister sizeRegister = new IRRegister(getIntType());
+                currentBasicBlock.appendInstruction(new IRLoadInstruction(getIntType(), sizeRegister, sizePtr));
+                node.setIRResultValue(sizeRegister);
+            } else {
+                // todo call class method
+
+            }
         } else {
             // the most critical code to print Hello, Happy World!
             FunctionEntity entity = currentScope.getFunctionRecursively(node.getFunctionName());
             IRFunction function = entity.getIRFunction();
-            IRCallInstruction inst = new IRCallInstruction(node.getExpressionType().toIRType(module), function);
+            IRCallInstruction callInst = new IRCallInstruction(node.getExpressionType().toIRType(module), function);
             node.getArguments().forEach(argument -> {
-                if (argument.getEntry().isConstexpr()) inst.addArgument(argument.getEntry().toIROperand(module), argument.getExpressionType().toIRType(module));
-                else {
-                    argument.accept(this);
-                    inst.addArgument(argument.getIRResultValue(), argument.getExpressionType().toIRType(module));
-                }
+                argument.accept(this);
+                callInst.addArgument(argument.getIRResultValue(), argument.getExpressionType().toIRType(module));
             });
             if (!entity.getReturnType().isVoid()) {
                 IRRegister resultRegister = new IRRegister(entity.getReturnType().toIRType(module));
-                inst.setResultRegister(resultRegister);
+                callInst.setResultRegister(resultRegister);
                 node.setIRResultValue(resultRegister);
             }
-            currentBasicBlock.appendInstruction(inst);
+            currentBasicBlock.appendInstruction(callInst);
         }
     }
 
     @Override
     public void visit(AddressingExpressionNode node) {
-
+        node.getIndex().accept(this);
+        IROperand index = node.getIndex().getIRResultValue();
+        node.getArray().accept(this);
+        assert node.getArray().getIRResultValue() instanceof IRRegister;
+        IRRegister array = (IRRegister) node.getArray().getIRResultValue();
+        IRTypeSystem arrayType = array.getIRType();
+        assert arrayType instanceof IRPointerType;
+        IRTypeSystem elementType = ((IRPointerType) arrayType).getBaseType();
+        IRRegister arrayIndexedPtr = new IRRegister(arrayType);
+        IRGetelementptrInstruction gepInst = new IRGetelementptrInstruction(arrayIndexedPtr, elementType, array);
+        gepInst.addIndex(index);
+        currentBasicBlock.appendInstruction(gepInst);
+        node.setLeftValuePointer(arrayIndexedPtr);
+        IRRegister resultRegister = new IRRegister(elementType);
+        currentBasicBlock.appendInstruction(new IRLoadInstruction(elementType, resultRegister, arrayIndexedPtr));
+        node.setIRResultValue(resultRegister);
     }
 
     @Override
@@ -447,14 +620,20 @@ public class IRBuilder implements ASTVisitor {
             IRRegister currentRegister = entity.getCurrentRegister();
             currentBasicBlock.appendInstruction(new IRLoadInstruction(resultType, tempRegister, currentRegister));
             IRTypeSystem variableType = ((IdentifierPrimaryNode) bottomLeftValueNode).getExpressionType().toIRType(module);
-            currentBasicBlock.appendInstruction(new IRBinaryInstruction("add", resultRegister, new IRConstInt(module.getIRType("int"), Objects.equals(node.getOp(), "++") ? 1 : -1), lhsVal));
+            currentBasicBlock.appendInstruction(new IRBinaryInstruction("add", resultRegister, new IRConstInt(getIntType(), Objects.equals(node.getOp(), "++") ? 1 : -1), lhsVal));
             currentBasicBlock.appendInstruction(new IRStoreInstruction(variableType, currentRegister, resultRegister));
             node.setIRResultValue(tempRegister);
         } else if (bottomLeftValueNode instanceof AddressingExpressionNode) {
-            // todo
+            AddressingExpressionNode leftValNode = (AddressingExpressionNode) bottomLeftValueNode;
+            IRRegister leftValPtr = leftValNode.getLeftValuePointer();
+            currentBasicBlock.appendInstruction(new IRLoadInstruction(resultType, tempRegister, leftValPtr));
+            IRTypeSystem addrExpType = leftValNode.getExpressionType().toIRType(module);
+            currentBasicBlock.appendInstruction(new IRBinaryInstruction("add", resultRegister, new IRConstInt(getIntType(), Objects.equals(node.getOp(), "++") ? 1 : -1), lhsVal));
+            currentBasicBlock.appendInstruction(new IRStoreInstruction(addrExpType, leftValPtr, resultRegister));
+            node.setIRResultValue(tempRegister);
         } else {
             assert bottomLeftValueNode instanceof MemberAccessExpressionNode;
-
+            // todo
         }
     }
 
@@ -474,11 +653,11 @@ public class IRBuilder implements ASTVisitor {
         IRRegister resultRegister = new IRRegister(resultType);
         if (resultType.isBool()) {
             assert Objects.equals(node.getOp(), "!");
-            IRRegister rhsCharVal = new IRRegister(module.getIRType("char"));
-            currentBasicBlock.appendInstruction(new IRZextInstruction(rhsCharVal, rhsVal, module.getIRType("char")));
-            IRRegister resultCharVal = new IRRegister(module.getIRType("char"));
-            currentBasicBlock.appendInstruction(new IRBinaryInstruction("xor", resultCharVal, new IRConstChar(module.getIRType("int"), 1), rhsCharVal));
-            currentBasicBlock.appendInstruction(new IRTruncInstruction(resultRegister, resultCharVal, module.getIRType("bool")));
+            IRRegister rhsCharVal = new IRRegister(getCharType());
+            currentBasicBlock.appendInstruction(new IRZextInstruction(rhsCharVal, rhsVal, getCharType()));
+            IRRegister resultCharVal = new IRRegister(getCharType());
+            currentBasicBlock.appendInstruction(new IRBinaryInstruction("xor", resultCharVal, new IRConstChar(getIntType(), 1), rhsCharVal));
+            currentBasicBlock.appendInstruction(new IRTruncInstruction(resultRegister, resultCharVal, getBoolType()));
         } else {
             assert resultType.isInt();
             if (Objects.equals(node.getOp(), "++") || Objects.equals(node.getOp(), "--")) {
@@ -487,14 +666,18 @@ public class IRBuilder implements ASTVisitor {
                     VariableEntity entity = currentScope.getVariableEntityRecursively(((IdentifierPrimaryNode) bottomLeftValueNode).getIdentifier());
                     IRRegister currentRegister = entity.getCurrentRegister();
                     IRTypeSystem variableType = ((IdentifierPrimaryNode) bottomLeftValueNode).getExpressionType().toIRType(module);
-                    currentBasicBlock.appendInstruction(new IRBinaryInstruction("add", resultRegister, new IRConstInt(module.getIRType("int"), Objects.equals(node.getOp(), "++") ? 1 : -1), rhsVal));
+                    currentBasicBlock.appendInstruction(new IRBinaryInstruction("add", resultRegister, new IRConstInt(getIntType(), Objects.equals(node.getOp(), "++") ? 1 : -1), rhsVal));
                     currentBasicBlock.appendInstruction(new IRStoreInstruction(variableType, currentRegister, resultRegister));
                     node.setIRResultValue(resultRegister);
                 } else if (bottomLeftValueNode instanceof AddressingExpressionNode) {
-                    // todo
+                    AddressingExpressionNode leftValNode = (AddressingExpressionNode) bottomLeftValueNode;
+                    IRRegister leftValPtr = leftValNode.getLeftValuePointer();
+                    IRTypeSystem addrExpType = leftValNode.getExpressionType().toIRType(module);
+                    currentBasicBlock.appendInstruction(new IRBinaryInstruction("add", resultRegister, new IRConstInt(getIntType(), Objects.equals(node.getOp(), "++") ? 1 : -1), rhsVal));
+                    currentBasicBlock.appendInstruction(new IRStoreInstruction(addrExpType, leftValPtr, resultRegister));
                 } else {
                     assert bottomLeftValueNode instanceof MemberAccessExpressionNode;
-
+                    // todo
                 }
             } else {
                 String op;
@@ -514,7 +697,7 @@ public class IRBuilder implements ASTVisitor {
                     }
                     default -> throw new IRError("invalid unary op");
                 }
-                currentBasicBlock.appendInstruction(new IRBinaryInstruction(op, resultRegister, new IRConstInt(module.getIRType("int"), lhsVal), rhsVal));
+                currentBasicBlock.appendInstruction(new IRBinaryInstruction(op, resultRegister, new IRConstInt(getIntType(), lhsVal), rhsVal));
             }
         }
         node.setIRResultValue(resultRegister);
@@ -558,14 +741,14 @@ public class IRBuilder implements ASTVisitor {
             node.setIRResultValue(resultRegister);
         } else if (resultType.isBool()) {
             if (Objects.equals(node.getOp(), "&&") || Objects.equals(node.getOp(), "||")) { // bool logic arithmetic
-                IRRegister lhsCharVal = new IRRegister(module.getIRType("char"));
-                currentBasicBlock.appendInstruction(new IRZextInstruction(lhsCharVal, lhsVal, module.getIRType("char")));
-                IRRegister rhsCharVal = new IRRegister(module.getIRType("char"));
-                currentBasicBlock.appendInstruction(new IRZextInstruction(rhsCharVal, rhsVal, module.getIRType("char")));
-                IRRegister resultCharVal = new IRRegister(module.getIRType("char"));
+                IRRegister lhsCharVal = new IRRegister(getCharType());
+                currentBasicBlock.appendInstruction(new IRZextInstruction(lhsCharVal, lhsVal, getCharType()));
+                IRRegister rhsCharVal = new IRRegister(getCharType());
+                currentBasicBlock.appendInstruction(new IRZextInstruction(rhsCharVal, rhsVal, getCharType()));
+                IRRegister resultCharVal = new IRRegister(getCharType());
                 IRRegister resultRegister = new IRRegister(resultType);
                 currentBasicBlock.appendInstruction(new IRBinaryInstruction(Objects.equals(node.getOp(), "&&") ? "and" : "or", resultCharVal, lhsCharVal, rhsCharVal));
-                currentBasicBlock.appendInstruction(new IRTruncInstruction(resultRegister, resultCharVal, module.getIRType("bool")));
+                currentBasicBlock.appendInstruction(new IRTruncInstruction(resultRegister, resultCharVal, getBoolType()));
                 node.setIRResultValue(resultRegister);
             } else { // cmp
                 if (node.getLhs().getExpressionType().isInt()) {
@@ -583,29 +766,31 @@ public class IRBuilder implements ASTVisitor {
                     currentBasicBlock.appendInstruction(new IRIcmpInstruction(op, resultRegister, lhsVal, rhsVal));
                     node.setIRResultValue(resultRegister);
                 } else if (node.getLhs().getExpressionType().isString()) {
-                    FunctionEntity entity;
+                    IRFunction cmpFunction;
                     switch (node.getOp()) {
-                        case "<" -> entity = currentScope.getFunctionRecursively("__mx_stringLt");
-                        case "<=" -> entity = currentScope.getFunctionRecursively("__mx_stringLe");
-                        case ">" -> entity = currentScope.getFunctionRecursively("__mx_stringGt");
-                        case ">=" -> entity = currentScope.getFunctionRecursively("__mx_stringGe");
-                        case "==" -> entity = currentScope.getFunctionRecursively("__mx_stringEq");
-                        case "!=" -> entity = currentScope.getFunctionRecursively("__mx_stringNe");
+                        case "<" -> cmpFunction = module.getBuiltinFunction("__mx_stringLt");
+                        case "<=" -> cmpFunction = module.getBuiltinFunction("__mx_stringLe");
+                        case ">" -> cmpFunction = module.getBuiltinFunction("__mx_stringGt");
+                        case ">=" -> cmpFunction = module.getBuiltinFunction("__mx_stringGe");
+                        case "==" -> cmpFunction = module.getBuiltinFunction("__mx_stringEq");
+                        case "!=" -> cmpFunction = module.getBuiltinFunction("__mx_stringNe");
                         default -> throw new IRError("invalid binary op");
                     }
-                    IRFunction cmpFunction = entity.getIRFunction();
-                    IRRegister boolTempRegister = new IRRegister(module.getIRType("char"));
-                    IRCallInstruction inst = new IRCallInstruction(module.getIRType("char"), cmpFunction);
-                    inst.addArgument(lhsVal, module.getIRType("string")).addArgument(rhsVal, module.getIRType("string"));
+                    IRRegister boolTempRegister = new IRRegister(getCharType());
+                    IRCallInstruction inst = new IRCallInstruction(getCharType(), cmpFunction);
+                    inst.addArgument(lhsVal, getStringType()).addArgument(rhsVal, getStringType());
                     inst.setResultRegister(boolTempRegister);
                     currentBasicBlock.appendInstruction(inst);
                     // trunc char return value to i1
                     IRRegister resultRegister = new IRRegister(resultType);
-                    currentBasicBlock.appendInstruction(new IRTruncInstruction(resultRegister, boolTempRegister, module.getIRType("bool")));
+                    currentBasicBlock.appendInstruction(new IRTruncInstruction(resultRegister, boolTempRegister, getBoolType()));
                     node.setIRResultValue(resultRegister);
                 } else {
-                    // todo support class == null && array != null
-
+                    IRRegister resultRegister = new IRRegister(getBoolType());
+                    String op = Objects.equals(node.getOp(), "==") ? "eq" : "ne";
+                    // using icmp to compare pointer
+                    currentBasicBlock.appendInstruction(new IRIcmpInstruction(op, resultRegister, lhsVal, rhsVal));
+                    node.setIRResultValue(resultRegister);
                 }
             }
         } else { // resultType.isString
@@ -613,10 +798,9 @@ public class IRBuilder implements ASTVisitor {
             // manually call strcat in c to implement string +
             assert Objects.equals(node.getOp(), "+");
             IRRegister resultRegister = new IRRegister(resultType);
-            FunctionEntity entity = currentScope.getFunctionRecursively("__mx_concatenateString");
-            IRFunction function = entity.getIRFunction();
-            IRCallInstruction inst = new IRCallInstruction(module.getIRType("string"), function);
-            inst.addArgument(lhsVal, module.getIRType("string")).addArgument(rhsVal, module.getIRType("string"));
+            IRFunction function = module.getBuiltinFunction("__mx_concatenateString");
+            IRCallInstruction inst = new IRCallInstruction(getStringType(), function);
+            inst.addArgument(lhsVal, getStringType()).addArgument(rhsVal, getStringType());
             inst.setResultRegister(resultRegister);
             currentBasicBlock.appendInstruction(inst);
             node.setIRResultValue(resultRegister);
@@ -635,13 +819,16 @@ public class IRBuilder implements ASTVisitor {
             IRRegister currentRegister = entity.getCurrentRegister();
             IRTypeSystem variableType = ((IdentifierPrimaryNode) bottomLeftValueNode).getExpressionType().toIRType(module);
             currentBasicBlock.appendInstruction(new IRStoreInstruction(variableType, currentRegister, node.getRhs().getIRResultValue()));
-            node.setIRResultValue(node.getRhs().getIRResultValue());
         } else if (bottomLeftValueNode instanceof AddressingExpressionNode) {
-            // todo
+            AddressingExpressionNode leftValNode = (AddressingExpressionNode) bottomLeftValueNode;
+            IRRegister leftValPtr = leftValNode.getLeftValuePointer();
+            IRTypeSystem addrExpType = leftValNode.getExpressionType().toIRType(module);
+            currentBasicBlock.appendInstruction(new IRStoreInstruction(addrExpType, leftValPtr, node.getRhs().getIRResultValue()));
         } else {
             assert bottomLeftValueNode instanceof MemberAccessExpressionNode;
 
         }
+        node.setIRResultValue(node.getRhs().getIRResultValue());
     }
 
     @Override
@@ -666,22 +853,22 @@ public class IRBuilder implements ASTVisitor {
     @Override
     public void visit(NumericalConstantPrimaryNode node) {
         // avoid using constexpr entry to support running without ConstExprCalculator
-        node.setIRResultValue(new IRConstInt(module.getIRType("int"), node.getNumericalConstant()));
+        node.setIRResultValue(new IRConstInt(getIntType(), node.getNumericalConstant()));
     }
 
     @Override
     public void visit(BoolConstantPrimaryNode node) {
-        node.setIRResultValue(new IRConstBool(module.getIRType("bool"), node.getBoolConstant()));
+        node.setIRResultValue(new IRConstBool(getBoolType(), node.getBoolConstant()));
     }
 
     @Override
     public void visit(StringConstantPrimaryNode node) {
-        node.setIRResultValue(new IRConstString(module.getIRType("string"), node.getStringConstant(), module.getConstStringId(node.getStringConstant())));
+        node.setIRResultValue(new IRConstString(getStringType(), node.getStringConstant(), module.getConstStringId(node.getStringConstant())));
     }
 
     @Override
     public void visit(NullConstantPrimaryNode node) {
-        node.setIRResultValue(new IRNull(module.getIRType("void")));
+        node.setIRResultValue(new IRNull(getVoidType()));
     }
 
     @Override

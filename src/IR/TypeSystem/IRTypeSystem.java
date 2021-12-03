@@ -9,6 +9,8 @@ abstract public class IRTypeSystem {
 
     abstract public IROperand getDefaultValue();
 
+    public abstract int sizeof();
+
     public boolean isBool() {
         if (this instanceof IRIntType)
             return ((IRIntType) this).getBandWidth() == 1;
@@ -31,6 +33,10 @@ abstract public class IRTypeSystem {
         if (this instanceof IRPointerType)
             return ((IRPointerType) this).getBaseType().isChar();
         return false;
+    }
+
+    public boolean isArray() {
+        return this instanceof IRPointerType;
     }
 
     public boolean isVoid() {

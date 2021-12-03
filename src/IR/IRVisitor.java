@@ -20,4 +20,6 @@ public interface IRVisitor {
     void visit(IRIcmpInstruction inst);
     void visit(IRTruncInstruction inst);
     void visit(IRZextInstruction inst);
+    void visit(IRGetelementptrInstruction inst);
+    void visit(IRBitcastInstruction inst);
 }

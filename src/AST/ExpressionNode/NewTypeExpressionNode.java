@@ -30,6 +30,10 @@ public class NewTypeExpressionNode extends ExpressionNode {
         return invalid;
     }
 
+    public boolean isNewArray() {
+        return dimension != 0;
+    }
+
     public TypeNode getRootElementType() {
         return rootElementType;
     }

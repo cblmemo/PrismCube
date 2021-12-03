@@ -142,4 +142,16 @@ public class IRPrinter implements IRVisitor {
         ps.print(inst.toString());
         ps.println(inst.getComment());
     }
+
+    @Override
+    public void visit(IRGetelementptrInstruction inst) {
+        ps.print(inst.toString());
+        ps.println(inst.getComment());
+    }
+
+    @Override
+    public void visit(IRBitcastInstruction inst) {
+        ps.print(inst.toString());
+        ps.println(inst.getComment());
+    }
 }

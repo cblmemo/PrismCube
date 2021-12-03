@@ -5,10 +5,10 @@ import IR.Operand.IROperand;
 import IR.Operand.IRRegister;
 
 public class IRBinaryInstruction extends IRInstruction {
-    private String op;
-    private IRRegister resultRegister;
-    private IROperand lhs;
-    private IROperand rhs;
+    private final String op;
+    private final IRRegister resultRegister;
+    private final IROperand lhs;
+    private final IROperand rhs;
 
     public IRBinaryInstruction(String op, IRRegister resultRegister, IROperand lhs, IROperand rhs) {
         this.op = op;

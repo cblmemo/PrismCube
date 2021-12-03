@@ -23,4 +23,9 @@ public class IRIntType extends IRTypeSystem {
     public IROperand getDefaultValue() {
         return new IRConstInt(this, 0);
     }
+
+    @Override
+    public int sizeof() {
+        return (bandWidth + 7) / 8;
+    }
 }

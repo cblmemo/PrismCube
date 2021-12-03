@@ -15,4 +15,9 @@ public class IRArrayType extends IRTypeSystem {
     public IROperand getDefaultValue() {
         return null;
     }
+
+    @Override
+    public int sizeof() {
+        return length * elementType.sizeof();
+    }
 }

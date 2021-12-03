@@ -1,6 +1,7 @@
 package AST.ExpressionNode;
 
 import AST.ASTVisitor;
+import IR.Operand.IRRegister;
 import Utility.Cursor;
 
 public class AddressingExpressionNode extends ExpressionNode {
@@ -19,6 +20,21 @@ public class AddressingExpressionNode extends ExpressionNode {
 
     public ExpressionNode getIndex() {
         return index;
+    }
+
+    // for ir
+    private IRRegister leftValuePointer = null;
+
+    public void setLeftValuePointer(IRRegister leftValuePointer) {
+        this.leftValuePointer = leftValuePointer;
+    }
+
+    public boolean hasLeftValuePointer() {
+        return leftValuePointer != null;
+    }
+
+    public IRRegister getLeftValuePointer() {
+        return leftValuePointer;
     }
 
     @Override

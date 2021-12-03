@@ -14,4 +14,9 @@ public class IRStructureType extends IRTypeSystem{
     public IROperand getDefaultValue() {
         return null;
     }
+
+    @Override
+    public int sizeof() {
+        return 0;
+    }
 }

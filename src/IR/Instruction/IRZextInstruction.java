@@ -3,6 +3,7 @@ package IR.Instruction;
 import IR.IRVisitor;
 import IR.Operand.IROperand;
 import IR.Operand.IRRegister;
+import IR.TypeSystem.IRIntType;
 import IR.TypeSystem.IRTypeSystem;
 
 public class IRZextInstruction extends IRInstruction {
@@ -12,9 +13,9 @@ public class IRZextInstruction extends IRInstruction {
     private final IRTypeSystem resultType;
 
     public IRZextInstruction(IRRegister zextResultRegister, IROperand zextTarget, IRTypeSystem resultType) {
-        assert zextResultRegister.getIRType().isInt();
-        assert zextTarget.getIRType().isInt();
-        assert resultType.isInt();
+        assert zextResultRegister.getIRType() instanceof IRIntType;
+        assert zextTarget.getIRType() instanceof IRIntType;
+        assert resultType instanceof IRIntType;
         this.zextResultRegister = zextResultRegister;
         this.zextTarget = zextTarget;
         this.originalType = zextTarget.getIRType();

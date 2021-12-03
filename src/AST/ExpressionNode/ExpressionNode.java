@@ -14,10 +14,6 @@ public abstract class ExpressionNode extends ASTNode {
     private Type expressionType;
     private boolean leftValue;
 
-    // for ir
-    private ConstExprEntry entry;
-    private IROperand resultRegister;
-
     public ExpressionNode(boolean leftValue, Cursor cursor) {
         super(cursor);
         this.leftValue = leftValue;
@@ -41,6 +37,8 @@ public abstract class ExpressionNode extends ASTNode {
     }
 
     // for ir
+    private ConstExprEntry entry;
+    private IROperand resultRegister;
 
     public void setEntry(ConstExprEntry entry) {
         this.entry = entry;

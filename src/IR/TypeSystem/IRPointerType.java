@@ -10,6 +10,11 @@ public class IRPointerType extends IRTypeSystem {
         this.baseType = baseType;
     }
 
+    public static IRTypeSystem constructIRPointerType(IRTypeSystem baseType, int dimension) {
+        if (dimension == 0) return baseType;
+        return constructIRPointerType(new IRPointerType(baseType), dimension - 1);
+    }
+
     public IRTypeSystem getBaseType() {
         return baseType;
     }
@@ -22,5 +27,10 @@ public class IRPointerType extends IRTypeSystem {
     @Override
     public IROperand getDefaultValue() {
         return new IRNull(this);
+    }
+
+    @Override
+    public int sizeof() {
+        return 4;
     }
 }

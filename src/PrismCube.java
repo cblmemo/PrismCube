@@ -17,7 +17,7 @@ public class PrismCube {
         try {
             Memory memory = new Memory(args);
             memory.useDefaultSetup();
-            memory.semanticOnly();
+//            memory.semanticOnly();
 
             new ArgumentParser().parse(memory);
             new Preprocessor().preprocess(memory);
