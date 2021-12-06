@@ -20,7 +20,7 @@ public class IRAllocaInstruction extends IRInstruction {
 
     @Override
     public String toString() {
-        return allocaTarget.toString() + " = alloca " + allocaType.toString();
+        return allocaTarget.toString() + " = alloca " + allocaType.toString() + ", align " + allocaType.sizeof();
     }
 
     @Override

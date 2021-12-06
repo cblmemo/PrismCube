@@ -21,7 +21,7 @@ void printlnInt(int n) {
 }
 
 char * getString() {
-    char * str = (char *) malloc(BUFFER_LENGTH);
+    char * str = (char *) malloc(sizeof(char) * BUFFER_LENGTH);
     scanf("%s", str);
     return str;
 }

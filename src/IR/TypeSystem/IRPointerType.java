@@ -31,6 +31,6 @@ public class IRPointerType extends IRTypeSystem {
 
     @Override
     public int sizeof() {
-        return 4;
+        return 8;
     }
 }

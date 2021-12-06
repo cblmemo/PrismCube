@@ -105,8 +105,8 @@ public class IRFunction {
         return returnType;
     }
 
-    public void addParameterType(Type paraType, IRTypeSystem parameterType) {
-        abbreviatedParameters += mangleParameterTypes(paraType);
+    public void addParameterType(IRTypeSystem parameterType) {
+//        abbreviatedParameters += mangleParameterTypes(paraType);
         this.parameterType.add(parameterType);
     }
 

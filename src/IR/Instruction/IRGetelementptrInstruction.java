@@ -26,16 +26,6 @@ public class IRGetelementptrInstruction extends IRInstruction {
         this.inbounds = true;
     }
 
-    public IRGetelementptrInstruction(IRRegister resultRegister, IRTypeSystem elementType, IROperand ptrValue, boolean inbounds) {
-        assert ptrValue.getIRType() instanceof IRPointerType;
-        assert Objects.equals(elementType, ((IRPointerType) ptrValue.getIRType()).getBaseType());
-        assert Objects.equals(resultRegister.getIRType(), ptrValue.getIRType());
-        this.resultRegister = resultRegister;
-        this.elementType = elementType;
-        this.ptrValue = ptrValue;
-        this.inbounds = inbounds;
-    }
-
     public void addIndex(IROperand index) {
         this.indices.add(index);
     }

@@ -5,8 +5,6 @@ import IR.Instruction.*;
 import IR.Operand.IRConstString;
 import Memory.Memory;
 
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
 import java.io.PrintStream;
 
 /**
@@ -25,9 +23,9 @@ import java.io.PrintStream;
 public class IRPrinter implements IRVisitor {
     private PrintStream ps;
 
-    public void print(Memory memory) throws FileNotFoundException {
+    public void print(Memory memory) {
         if (memory.buildIR() && memory.printIR()) {
-            ps = new PrintStream(new FileOutputStream("bin/test.ll"));
+            ps = memory.getPrintStream();
             memory.getIRModule().accept(this);
         }
     }
@@ -68,7 +66,7 @@ public class IRPrinter implements IRVisitor {
     public void visit(IRBasicBlock block) {
         if (!block.getInstructions().isEmpty()) {
             ps.print(block.getLabel().toBasicBlockLabel());
-            ps.println(" ".repeat(50 - block.getLabel().toBasicBlockLabel().length()) + block.getPreds());
+            ps.println(" ".repeat(60 - block.getLabel().toBasicBlockLabel().length()) + block.getPreds());
             block.getInstructions().forEach(instruction -> {
                 // indent non-label instructions
                 ps.print("\t");
