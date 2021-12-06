@@ -34,7 +34,6 @@ public class Memory {
     private boolean AST = true;
     private boolean Scope = true;
     private boolean IR = true;
-    private boolean constexpr = true;
     private boolean IRBuild = true;
 
     public Memory(String[] args) throws FileNotFoundException {
@@ -105,9 +104,7 @@ public class Memory {
                     inputStream = new FileInputStream(arg1);
                     receiveFromFile = true;
                 }
-                case "-debug" -> {
-                    debug = true;
-                }
+                case "-debug" -> debug = true;
                 default -> err("wrong argument format");
             }
         }
@@ -129,10 +126,9 @@ public class Memory {
         // receive source code from stdin by default
         inputStream = System.in;
 
-        // disable printer for debug and constexpr optimize
+        // disable printer for debug
         disableASTPrinter();
         disableScopePrinter();
-        disableConstExprCalculate();
     }
 
     public void disableASTPrinter() {
@@ -157,14 +153,6 @@ public class Memory {
 
     public boolean printIR() {
         return IR;
-    }
-
-    public void disableConstExprCalculate() {
-        constexpr = false;
-    }
-
-    public boolean calculateConstexpr() {
-        return constexpr;
     }
 
     public void disableIRBuild() {

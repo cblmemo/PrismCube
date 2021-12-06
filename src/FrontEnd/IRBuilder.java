@@ -150,25 +150,22 @@ public class IRBuilder implements ASTVisitor {
             IRGlobalDefine define = new IRGlobalDefine(node.getVariableNameStr(), node.getType().toIRType(module));
             currentScope.getVariableEntityRecursively(node.getVariableNameStr()).setCurrentRegister(variableRegister);
             if (node.hasInitializeValue()) {
-                if (node.getInitializeValue().getEntry().isConstexpr()) define.setInitValue(currentScope.getVariableEntityRecursively(node.getVariableNameStr()).getConstexprEntry().toIROperand(module));
-                else {
-                    // generate an initialize function
-                    IRFunction singleInitializeFunction = module.generateSingleInitializeFunction();
-                    int cnt = IRRegister.getCurrentCnt();
-                    currentFunction = singleInitializeFunction;
-                    currentBasicBlock = singleInitializeFunction.getEntryBlock();
-                    IRRegister.reset();
-                    node.getInitializeValue().accept(this);
-                    // similar to ReturnStatementNode
-                    IROperand returnValue = node.getInitializeValue().getIRResultValue();
-                    appendInst(new IRStoreInstruction(variableIRType, variableRegister, returnValue));
-                    currentFunction.getReturnBlock().setEscapeInstruction(new IRReturnInstruction(getVoidType(), null));
-                    finishCurrentBasicBlock(new IRBrInstruction(null, currentFunction.getReturnBlock(), null, currentBasicBlock));
-                    currentFunction.finishFunction();
-                    IRRegister.resetTo(cnt);
-                    currentFunction = null;
-                    currentBasicBlock = null;
-                }
+                // generate an initialize function
+                IRFunction singleInitializeFunction = module.generateSingleInitializeFunction();
+                int cnt = IRRegister.getCurrentCnt();
+                currentFunction = singleInitializeFunction;
+                currentBasicBlock = singleInitializeFunction.getEntryBlock();
+                IRRegister.reset();
+                node.getInitializeValue().accept(this);
+                // similar to ReturnStatementNode
+                IROperand returnValue = node.getInitializeValue().getIRResultValue();
+                appendInst(new IRStoreInstruction(variableIRType, variableRegister, returnValue));
+                currentFunction.getReturnBlock().setEscapeInstruction(new IRReturnInstruction(getVoidType(), null));
+                finishCurrentBasicBlock(new IRBrInstruction(null, currentFunction.getReturnBlock(), null, currentBasicBlock));
+                currentFunction.finishFunction();
+                IRRegister.resetTo(cnt);
+                currentFunction = null;
+                currentBasicBlock = null;
             }
             module.addGlobalDefine(define);
         } else {
@@ -177,11 +174,8 @@ public class IRBuilder implements ASTVisitor {
             currentScope.getVariableEntityRecursively(node.getVariableNameStr()).setCurrentRegister(variableRegister);
             IROperand initVal;
             if (node.hasInitializeValue()) {
-                if (node.getInitializeValue().getEntry().isConstexpr()) initVal = node.getInitializeValue().getEntry().toIROperand(module);
-                else {
-                    node.getInitializeValue().accept(this);
-                    initVal = node.getInitializeValue().getIRResultValue();
-                }
+                node.getInitializeValue().accept(this);
+                initVal = node.getInitializeValue().getIRResultValue();
             } else initVal = variableIRType.getDefaultValue();
             appendInst(new IRStoreInstruction(variableIRType, variableRegister, initVal));
         }
@@ -583,16 +577,8 @@ public class IRBuilder implements ASTVisitor {
 
     @Override
     public void visit(PostCrementExpressionNode node) {
-        if (node.getEntry().isConstexpr()) {
-            node.setIRResultValue(node.getEntry().toIROperand(module));
-            return;
-        }
-        IROperand lhsVal;
-        if (node.getLhs().getEntry().isConstexpr()) lhsVal = node.getLhs().getEntry().toIROperand(module);
-        else {
-            node.getLhs().accept(this);
-            lhsVal = node.getLhs().getIRResultValue();
-        }
+        node.getLhs().accept(this);
+        IROperand lhsVal = node.getLhs().getIRResultValue();
         IRTypeSystem resultType = node.getExpressionType().toIRType(module);
         assert resultType.isInt();
         IRRegister tempRegister = new IRRegister(resultType);
@@ -622,16 +608,8 @@ public class IRBuilder implements ASTVisitor {
 
     @Override
     public void visit(UnaryExpressionNode node) {
-        if (node.getEntry().isConstexpr()) {
-            node.setIRResultValue(node.getEntry().toIROperand(module));
-            return;
-        }
-        IROperand rhsVal;
-        if (node.getRhs().getEntry().isConstexpr()) rhsVal = node.getRhs().getEntry().toIROperand(module);
-        else {
-            node.getRhs().accept(this);
-            rhsVal = node.getRhs().getIRResultValue();
-        }
+        node.getRhs().accept(this);
+        IROperand rhsVal = node.getRhs().getIRResultValue();
         IRTypeSystem resultType = node.getExpressionType().toIRType(module);
         IRRegister resultRegister;
         if (resultType.isBool()) {
@@ -690,10 +668,6 @@ public class IRBuilder implements ASTVisitor {
 
     @Override
     public void visit(BinaryExpressionNode node) {
-        if (node.getEntry().isConstexpr()) {
-            node.setIRResultValue(node.getEntry().toIROperand(module));
-            return;
-        }
         if (node.getExpressionType().isBool() && (Objects.equals(node.getOp(), "&&") || Objects.equals(node.getOp(), "||"))) {
             // logic short-circuit
             IRRegister logicResultPtr = new IRRegister(new IRPointerType(getBoolType()));
@@ -735,17 +709,10 @@ public class IRBuilder implements ASTVisitor {
             node.setIRResultValue(logicResult);
             return;
         }
-        IROperand lhsVal, rhsVal;
-        if (node.getLhs().getEntry().isConstexpr()) lhsVal = node.getLhs().getEntry().toIROperand(module);
-        else {
-            node.getLhs().accept(this);
-            lhsVal = node.getLhs().getIRResultValue();
-        }
-        if (node.getRhs().getEntry().isConstexpr()) rhsVal = node.getRhs().getEntry().toIROperand(module);
-        else {
-            node.getRhs().accept(this);
-            rhsVal = node.getRhs().getIRResultValue();
-        }
+        node.getLhs().accept(this);
+        node.getRhs().accept(this);
+        IROperand lhsVal = node.getLhs().getIRResultValue();
+        IROperand rhsVal = node.getRhs().getIRResultValue();
         IRTypeSystem resultType = node.getExpressionType().toIRType(module);
         if (resultType.isInt()) {
             IRRegister resultRegister = new IRRegister(resultType);

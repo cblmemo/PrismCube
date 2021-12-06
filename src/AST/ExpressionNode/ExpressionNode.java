@@ -3,7 +3,6 @@ package AST.ExpressionNode;
 import AST.ASTNode;
 import AST.PrimaryNode.IdentifierPrimaryNode;
 import IR.Operand.IROperand;
-import Utility.ConstExpr.ConstExprEntry;
 import Utility.Cursor;
 import Utility.Type.Type;
 import Utility.error.IRError;
@@ -17,7 +16,6 @@ public abstract class ExpressionNode extends ASTNode {
     public ExpressionNode(boolean leftValue, Cursor cursor) {
         super(cursor);
         this.leftValue = leftValue;
-        this.entry = ConstExprEntry.nonConstExprEntry;
     }
 
     public Type getExpressionType() {
@@ -37,16 +35,7 @@ public abstract class ExpressionNode extends ASTNode {
     }
 
     // for ir
-    private ConstExprEntry entry;
     private IROperand resultRegister;
-
-    public void setEntry(ConstExprEntry entry) {
-        this.entry = entry;
-    }
-
-    public ConstExprEntry getEntry() {
-        return entry;
-    }
 
     public void setIRResultValue(IROperand resultRegister) {
         this.resultRegister = resultRegister;
