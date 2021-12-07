@@ -3,6 +3,7 @@ package FrontEnd;
 import IR.*;
 import IR.Instruction.*;
 import IR.Operand.IRConstString;
+import IR.TypeSystem.IRStructureType;
 import Memory.Memory;
 
 import java.io.PrintStream;
@@ -36,7 +37,9 @@ public class IRPrinter implements IRVisitor {
             if (func.hasCalled()) func.accept(this);
         });
         module.getStrings().forEach((name, string) -> string.accept(this));
-        ps.println();
+        if (module.getStrings().size() != 0) ps.println();
+        module.getClasses().forEach(type -> type.accept(this));
+        if (module.getClasses().size() != 0) ps.println();
         module.getGlobalDefines().forEach((name, define) -> define.accept(this));
         ps.println(module.getLLVMGlobalConstructors());
         ps.println();
@@ -79,6 +82,11 @@ public class IRPrinter implements IRVisitor {
     @Override
     public void visit(IRConstString string) {
         ps.println(string.toInitValueStr());
+    }
+
+    @Override
+    public void visit(IRStructureType type) {
+        ps.println(type.getClassDeclare());
     }
 
     @Override

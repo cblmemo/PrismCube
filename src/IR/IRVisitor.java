@@ -2,6 +2,7 @@ package IR;
 
 import IR.Instruction.*;
 import IR.Operand.IRConstString;
+import IR.TypeSystem.IRStructureType;
 
 public interface IRVisitor {
     void visit(IRModule module);
@@ -9,6 +10,7 @@ public interface IRVisitor {
     void visit(IRFunction function);
     void visit(IRBasicBlock block);
     void visit(IRConstString string);
+    void visit(IRStructureType type);
 
     void visit(IRBrInstruction inst);
     void visit(IRCallInstruction inst);

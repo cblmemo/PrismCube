@@ -41,7 +41,7 @@ public class ConstStringCollector implements ASTVisitor {
     public void visit(ClassDefineNode node) {
         node.getMembers().forEach(member -> member.accept(this));
         node.getMethods().forEach(method -> method.accept(this));
-        node.getConstructor().accept(this);
+        if (node.hasCustomConstructor()) node.getConstructor().accept(this);
     }
 
     @Override
@@ -97,7 +97,7 @@ public class ConstStringCollector implements ASTVisitor {
 
     @Override
     public void visit(ReturnStatementNode node) {
-        node.getReturnValue().accept(this);
+        if (node.hasReturnValue()) node.getReturnValue().accept(this);
     }
 
     @Override

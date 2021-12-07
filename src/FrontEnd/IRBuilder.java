@@ -15,11 +15,14 @@ import IR.IRModule;
 import IR.Instruction.*;
 import IR.Operand.*;
 import IR.TypeSystem.IRPointerType;
+import IR.TypeSystem.IRStructureType;
 import IR.TypeSystem.IRTypeSystem;
 import Memory.Memory;
+import Utility.Cursor;
 import Utility.Entity.FunctionEntity;
 import Utility.Entity.VariableEntity;
 import Utility.Scope.*;
+import Utility.Type.ClassType;
 import Utility.error.IRError;
 
 import java.util.LinkedList;
@@ -71,6 +74,10 @@ public class IRBuilder implements ASTVisitor {
         return module.getIRType("void");
     }
 
+    public IRTypeSystem getNullType() {
+        return module.getIRType("null");
+    }
+
     private void appendInst(IRInstruction inst) {
         currentBasicBlock.appendInstruction(inst);
     }
@@ -90,18 +97,70 @@ public class IRBuilder implements ASTVisitor {
 
     @Override
     public void visit(ProgramNode node) {
-        // todo collect class
-        //  what if function in class?? maybe considering use Stack<status>
-        //  and store IRFunction to FunctionEntity in visit FunctionDefineNode
+        // collect class
+        node.getDefines().forEach(define -> {
+            if (define instanceof ClassDefineNode) {
+                String className = ((ClassDefineNode) define).getClassName();
+                IRStructureType classType = new IRStructureType(className);
+                module.addIRClassType(className, classType);
+                globalScope.getClass(className).setClassIRType(classType);
+            }
+        });
+        // collect class method and class member
+        node.getDefines().forEach(define -> {
+            if (define instanceof ClassDefineNode) {
+                String className = ((ClassDefineNode) define).getClassName();
+                assert module.getIRType(className) instanceof IRStructureType;
+                IRStructureType classIRType = (IRStructureType) module.getIRType(className);
+                ClassType classType = globalScope.getClass(className);
+                if (((ClassDefineNode) define).hasCustomConstructor()) {
+                    classIRType.setAsHasCustomConstructor();
+                    // class constructor format: <className>.__mx_ctors
+                    IRFunction constructor = new IRFunction(className + ".__mx_ctors");
+                    constructor.setReturnType(getVoidType());
+                    constructor.addParameter("__mx_thisPtr", new IRPointerType(classIRType));
+                    VariableEntity thisPtrCtors = new VariableEntity(classType, "__mx_thisPtr", new Cursor(-1, -1));
+                    classType.getClassScope().getConstructor().getConstructorScope().addVariable(thisPtrCtors);
+                    module.addFunction(constructor);
+                }
+                ((ClassDefineNode) define).getMethods().forEach(method -> {
+                    FunctionEntity functionEntity = classType.getClassScope().getFunction(method.getFunctionName());
+                    functionEntity.getFunctionScope().getParameters().forEach(VariableEntity::setAsVisitedInIR);
+                    // class method format: <className>.<methodName>
+                    IRFunction function = new IRFunction(className + "." + method.getFunctionName());
+                    function.setReturnType(method.getReturnType().toIRType(module));
+                    // method's first parameter is this
+                    function.addParameter("__mx_thisPtr", new IRPointerType(classIRType));
+                    VariableEntity thisPtr = new VariableEntity(classType, "__mx_thisPtr", new Cursor(-1, -1));
+                    globalScope.getClass(className).getClassScope().getFunction(method.getFunctionName()).getFunctionScope().addVariable(thisPtr);
+                    method.getParameters().forEach(parameter -> function.addParameter(parameter.getParameterName(), parameter.getType().toIRType(module)));
+                    module.addFunction(function);
+                    globalScope.getClass(className).getClassScope().getFunction(method.getFunctionName()).setIRFunction(function);
+                });
+                ((ClassDefineNode) define).getMembers().forEach(memberDefine -> {
+                    IRTypeSystem memberType = memberDefine.getType().toIRType(module);
+                    memberDefine.getSingleDefines().forEach(member -> {
+                        String memberName = member.getVariableNameStr();
+                        int index = classIRType.addMember(memberName, memberType);
+                        // for member access
+                        VariableEntity memberEntity = classType.getClassScope().getVariableEntity(memberName);
+                        memberEntity.addClassMemberInfo(classIRType, index);
+                        memberEntity.setAsVisitedInIR();
+                    });
+                });
+            }
+        });
 
         // collect function
         node.getDefines().forEach(define -> {
             if (define instanceof FunctionDefineNode) {
+                FunctionEntity functionEntity = currentScope.getFunction(((FunctionDefineNode) define).getFunctionName());
+                functionEntity.getFunctionScope().getParameters().forEach(VariableEntity::setAsVisitedInIR);
                 IRFunction function = new IRFunction(((FunctionDefineNode) define).getFunctionName());
                 function.setReturnType(((FunctionDefineNode) define).getReturnType().toIRType(module));
-                ((FunctionDefineNode) define).getParameters().forEach(parameter -> function.addParameterType(parameter.getType().toIRType(module)));
+                ((FunctionDefineNode) define).getParameters().forEach(parameter -> function.addParameter(parameter.getParameterName(), parameter.getType().toIRType(module)));
                 module.addFunction(function);
-                currentScope.getFunctionRecursively(((FunctionDefineNode) define).getFunctionName()).setIRFunction(function);
+                globalScope.getFunctionRecursively(((FunctionDefineNode) define).getFunctionName()).setIRFunction(function);
             }
         });
 
@@ -117,10 +176,9 @@ public class IRBuilder implements ASTVisitor {
         globalConstructor.getReturnBlock().setEscapeInstruction(new IRReturnInstruction(getVoidType(), null));
         globalConstructor.finishFunction();
 
-        // todo step into classes
-//        node.getDefines().forEach(define -> {
-//            if (define instanceof ClassDefineNode) define.accept(this);
-//        });
+        node.getDefines().forEach(define -> {
+            if (define instanceof ClassDefineNode) define.accept(this);
+        });
 
         // step into functions
         node.getDefines().forEach(define -> {
@@ -131,7 +189,8 @@ public class IRBuilder implements ASTVisitor {
     @Override
     public void visit(ClassDefineNode node) {
         currentScope = globalScope.getClass(node.getClassName()).getClassScope();
-        System.exit(1);
+        if (node.hasCustomConstructor()) node.getConstructor().accept(this);
+        node.getMethods().forEach(method -> method.accept(this));
         currentScope = currentScope.getParentScope();
     }
 
@@ -144,6 +203,7 @@ public class IRBuilder implements ASTVisitor {
     @Override
     public void visit(SingleVariableDefineNode node) {
         IRTypeSystem variableIRType = node.getType().toIRType(module);
+        currentScope.getVariableEntity(node.getVariableNameStr()).setAsVisitedInIR();
         if (currentScope instanceof GlobalScope) {
             assert currentFunction == null && currentBasicBlock == null;
             IRGlobalVariableRegister variableRegister = new IRGlobalVariableRegister(new IRPointerType(variableIRType), node.getVariableNameStr());
@@ -169,46 +229,102 @@ public class IRBuilder implements ASTVisitor {
             }
             module.addGlobalDefine(define);
         } else {
-            IRRegister variableRegister = new IRRegister(new IRPointerType(variableIRType));
-            appendInst(new IRAllocaInstruction(variableIRType, variableRegister));
+            IRRegister variableRegister;
+            if (variableIRType.isClassPointer()) {
+                if (node.hasInitializeValue()) {
+                    variableRegister = new IRRegister(new IRPointerType(variableIRType));
+                    appendInst(new IRAllocaInstruction(variableIRType, variableRegister));
+                    node.getInitializeValue().accept(this);
+                    IROperand initVal = node.getInitializeValue().getIRResultValue();
+                    appendInst(new IRStoreInstruction(variableIRType, variableRegister, initVal));
+                } else {
+                    IRRegister classCharPtr = new IRRegister(getStringType());
+                    IRCallInstruction callInst = new IRCallInstruction(getStringType(), module.getBuiltinFunction("__mx_malloc"));
+                    IRStructureType classIRType = (IRStructureType) ((IRPointerType) variableIRType).getBaseType();
+                    callInst.addArgument(new IRConstInt(getIntType(), classIRType.sizeof()), getIntType());
+                    callInst.setResultRegister(classCharPtr);
+                    appendInst(callInst);
+                    IRRegister classRegister = new IRRegister(variableIRType);
+                    appendInst(new IRBitcastInstruction(classRegister, classCharPtr, variableIRType));
+                    variableRegister = new IRRegister(new IRPointerType(variableIRType));
+                    appendInst(new IRAllocaInstruction(variableIRType, variableRegister));
+                    appendInst(new IRStoreInstruction(variableIRType, variableRegister, classRegister));
+                }
+            } else {
+                variableRegister = new IRRegister(new IRPointerType(variableIRType));
+                appendInst(new IRAllocaInstruction(variableIRType, variableRegister));
+                IROperand initVal;
+                if (node.hasInitializeValue()) {
+                    node.getInitializeValue().accept(this);
+                    initVal = node.getInitializeValue().getIRResultValue();
+                } else {
+                    initVal = variableIRType.getDefaultValue();
+                }
+                appendInst(new IRStoreInstruction(variableIRType, variableRegister, initVal));
+            }
             currentScope.getVariableEntityRecursively(node.getVariableNameStr()).setCurrentRegister(variableRegister);
-            IROperand initVal;
-            if (node.hasInitializeValue()) {
-                node.getInitializeValue().accept(this);
-                initVal = node.getInitializeValue().getIRResultValue();
-            } else initVal = variableIRType.getDefaultValue();
-            appendInst(new IRStoreInstruction(variableIRType, variableRegister, initVal));
         }
     }
 
     @Override
     public void visit(ConstructorDefineNode node) {
         currentScope = ((ClassScope) currentScope).getConstructor().getConstructorScope();
-
+        String constructorName = node.getConstructorName() + ".__mx_ctors";
+        currentFunction = module.getFunction(constructorName);
+        currentBasicBlock = currentFunction.getEntryBlock();
+        // manage this parameter
+        assert currentFunction.getParameterType().size() == 1;
+        IRRegister.resetTo(1);
+        IRTypeSystem parameterType = currentFunction.getParameterType().get(0);
+        IRRegister parameterRegister = new IRRegister(new IRPointerType(parameterType));
+        ((MethodScope) currentScope).setThisPtrRegister(parameterRegister);
+        VariableEntity parameterEntity = currentScope.getVariableEntityRecursively(currentFunction.getParameterName().get(0));
+        parameterEntity.setCurrentRegister(parameterRegister);
+        appendInst(new IRAllocaInstruction(parameterType, parameterRegister));
+        int srcRegisterId = parameterRegister.getId() - 1;
+        appendInst(new IRStoreInstruction(parameterType, parameterRegister, new IRRegister(parameterType, srcRegisterId)));
+        node.getStatements().forEach(statement -> statement.accept(this));
+        currentFunction.getReturnBlock().setEscapeInstruction(new IRReturnInstruction(getVoidType(), null));
+        if (!currentBasicBlock.hasEscapeInstruction()) currentBasicBlock.setEscapeInstruction(new IRBrInstruction(null, currentFunction.getReturnBlock(), null, currentBasicBlock));
         // don't inherit any encountered flow mark since method has ended
         currentScope = currentScope.getParentScope();
+        finishCurrentBasicBlock();
+        currentFunction.finishFunction();
+        currentBasicBlock = null;
+        currentFunction = null;
     }
 
     @Override
     public void visit(FunctionDefineNode node) {
-        IRRegister.resetTo(node.getParameters().size());
-        currentFunction = module.getFunction(node.getFunctionName());
+        String functionName;
+        boolean insideClass = currentScope.insideClass();
+        if (insideClass) functionName = currentScope.getInsideClassName() + "." + node.getFunctionName();
+        else functionName = node.getFunctionName();
+        currentFunction = module.getFunction(functionName);
         currentBasicBlock = currentFunction.getEntryBlock();
         currentScope = currentScope.getFunctionRecursively(node.getFunctionName()).getFunctionScope();
-        node.getParameters().forEach(parameter -> {
-            IRTypeSystem parameterType = parameter.getType().toIRType(module);
+        int parameterNumber = currentFunction.getParameterType().size();
+        IRRegister.resetTo(parameterNumber);
+        for (int i = 0; i < parameterNumber; i++) {
+            IRTypeSystem parameterType = currentFunction.getParameterType().get(i);
             IRRegister parameterRegister = new IRRegister(new IRPointerType(parameterType));
-            VariableEntity parameterEntity = currentScope.getVariableEntityRecursively(parameter.getParameterName());
+            if (insideClass && i == 0) {
+                // store this ptr
+                ((MethodScope) currentScope).setThisPtrRegister(parameterRegister);
+            }
+            VariableEntity parameterEntity = currentScope.getVariableEntityRecursively(currentFunction.getParameterName().get(i));
             parameterEntity.setCurrentRegister(parameterRegister);
             appendInst(new IRAllocaInstruction(parameterType, parameterRegister));
-        });
-        node.getParameters().forEach(parameter -> {
-            IRTypeSystem parameterType = parameter.getType().toIRType(module);
-            VariableEntity parameterEntity = currentScope.getVariableEntityRecursively(parameter.getParameterName());
+        }
+        for (int i = 0; i < parameterNumber; i++) {
+            IRTypeSystem parameterType = currentFunction.getParameterType().get(i);
+            VariableEntity parameterEntity = currentScope.getVariableEntityRecursively(currentFunction.getParameterName().get(i));
             IRRegister targetRegister = parameterEntity.getCurrentRegister();
-            int srcRegisterId = targetRegister.getId() - ((FunctionScope) currentScope).getParameterNumber();
-            appendInst(new IRStoreInstruction(parameterType, targetRegister, new IRRegister(parameterType, srcRegisterId)));
-        });
+            int srcRegisterId = targetRegister.getId() - parameterNumber;
+            IRRegister srcRegister = new IRRegister(parameterType, srcRegisterId);
+            appendInst(new IRStoreInstruction(parameterType, targetRegister, srcRegister));
+            if (i == 0) currentFunction.setThisRegister(targetRegister);
+        }
         IRTypeSystem returnIRType = node.getReturnType().toIRType(module);
         if (!returnIRType.isVoid()) {
             IRRegister returnValuePtr = new IRRegister(new IRPointerType(returnIRType));
@@ -463,14 +579,44 @@ public class IRBuilder implements ASTVisitor {
             IRRegister arrayRegister = generateNewArray(elementType, 0);
             newArrayDimensionLength.clear();
             node.setIRResultValue(arrayRegister);
-        } else { // todo new class();
-
+        } else {
+            IRPointerType classTypePtr = (IRPointerType) node.getRootElementType().toIRType(module);
+            IRStructureType classType = (IRStructureType) classTypePtr.getBaseType();
+            IRRegister newClassCharPtr = new IRRegister(getStringType());
+            IRCallInstruction callInst = new IRCallInstruction(getStringType(), module.getBuiltinFunction("__mx_malloc"));
+            callInst.addArgument(new IRConstInt(getIntType(), classType.sizeof()), getIntType());
+            callInst.setResultRegister(newClassCharPtr);
+            appendInst(callInst);
+            IRRegister newClassVariable = new IRRegister(classTypePtr);
+            appendInst(new IRBitcastInstruction(newClassVariable, newClassCharPtr, classTypePtr));
+            if (classType.hasCustomConstructor()) {
+                IRFunction constructor = module.getFunction(node.getRootElementType().getTypeName() + ".__mx_ctors");
+                IRCallInstruction callConstructorInst = new IRCallInstruction(getVoidType(), constructor);
+                callConstructorInst.addArgument(newClassVariable, classTypePtr);
+                appendInst(callConstructorInst);
+            }
+            node.setIRResultValue(newClassVariable);
         }
     }
 
     @Override
     public void visit(MemberAccessExpressionNode node) {
-
+        assert !node.isAccessMethod();
+        IRPointerType classTypePtr = (IRPointerType) node.getInstance().getExpressionType().toIRType(module);
+        IRStructureType classIRType = (IRStructureType) classTypePtr.getBaseType();
+        node.getInstance().accept(this);
+        IRRegister classPtr = (IRRegister) node.getInstance().getIRResultValue();
+        IRTypeSystem memberType = node.getExpressionType().toIRType(module);
+        IRRegister classMemberPtr = new IRRegister(new IRPointerType(memberType));
+        int index = classIRType.getMemberIndex(node.getMemberName());
+        IRGetelementptrInstruction gepInst = new IRGetelementptrInstruction(classMemberPtr, classIRType, classPtr);
+        gepInst.addIndex(new IRConstInt(getIntType(), 0));
+        gepInst.addIndex(new IRConstInt(getIntType(), index));
+        appendInst(gepInst);
+        IRRegister classMember = new IRRegister(memberType);
+        appendInst(new IRLoadInstruction(memberType, classMember, classMemberPtr));
+        node.setIRResultValue(classMember);
+        node.setLeftValuePointer(classMemberPtr);
     }
 
     @Override
@@ -480,6 +626,8 @@ public class IRBuilder implements ASTVisitor {
 
     @Override
     public void visit(FunctionCallExpressionNode node) {
+        IRFunction function;
+        IRCallInstruction callInst;
         if (node.isClassMethod()) {
             IRTypeSystem instanceType = node.getInstance().getExpressionType().toIRType(module);
             if (instanceType.isString()) {
@@ -507,8 +655,8 @@ public class IRBuilder implements ASTVisitor {
                     }
                     default -> throw new IRError("undefined string method");
                 }
-                IRFunction function = module.getBuiltinFunction(innerFunctionName);
-                IRCallInstruction callInst = new IRCallInstruction(returnType, function);
+                function = module.getBuiltinFunction(innerFunctionName);
+                callInst = new IRCallInstruction(returnType, function);
                 callInst.addArgument(str, getStringType());
                 node.getArguments().forEach(argument -> {
                     argument.accept(this);
@@ -518,6 +666,7 @@ public class IRBuilder implements ASTVisitor {
                 callInst.setResultRegister(resultRegister);
                 node.setIRResultValue(resultRegister);
                 appendInst(callInst);
+                return;
             } else if (instanceType.isArray()) {
                 assert node.getArguments().size() == 0;
                 assert Objects.equals(node.getFunctionName(), "size");
@@ -531,28 +680,37 @@ public class IRBuilder implements ASTVisitor {
                 gepInst.addIndex(new IRConstInt(getIntType(), -1));
                 appendInst(gepInst);
                 IRRegister sizeRegister = new IRRegister(getIntType());
-                appendInst(new IRLoadInstruction(getIntType(), sizeRegister, sizePtr));
                 node.setIRResultValue(sizeRegister);
+                appendInst(new IRLoadInstruction(getIntType(), sizeRegister, sizePtr));
+                return;
             } else {
-                // todo call class method
-
+                IRStructureType methodClass = (IRStructureType) ((IRPointerType) instanceType).getBaseType();
+                function = module.getFunction(methodClass.getClassName() + "." + node.getFunctionName());
+                callInst = new IRCallInstruction(node.getExpressionType().toIRType(module), function);
+                node.getInstance().accept(this);
+                callInst.addArgument(node.getInstance().getIRResultValue(), node.getInstance().getIRResultValue().getIRType());
             }
         } else {
             // the most critical code to print Hello, Happy World!
-            FunctionEntity entity = currentScope.getFunctionRecursively(node.getFunctionName());
-            IRFunction function = entity.getIRFunction();
-            IRCallInstruction callInst = new IRCallInstruction(node.getExpressionType().toIRType(module), function);
-            node.getArguments().forEach(argument -> {
-                argument.accept(this);
-                callInst.addArgument(argument.getIRResultValue(), argument.getExpressionType().toIRType(module));
-            });
-            if (!entity.getReturnType().isVoid()) {
-                IRRegister resultRegister = new IRRegister(entity.getReturnType().toIRType(module));
-                callInst.setResultRegister(resultRegister);
-                node.setIRResultValue(resultRegister);
+            function = currentScope.getFunctionRecursively(node.getFunctionName()).getIRFunction();
+            callInst = new IRCallInstruction(node.getExpressionType().toIRType(module), function);
+            // inside class: classMethod() -> this.classMethod()
+            if (!Objects.equals(function.getFunctionName(), node.getFunctionName())) {
+                ThisPrimaryNode thisPtrNode = new ThisPrimaryNode(new Cursor(-1, -1));
+                thisPtrNode.accept(this);
+                callInst.addArgument(thisPtrNode.getIRResultValue(), thisPtrNode.getIRResultValue().getIRType());
             }
-            appendInst(callInst);
         }
+        node.getArguments().forEach(argument -> {
+            argument.accept(this);
+            callInst.addArgument(argument.getIRResultValue(), argument.getExpressionType().toIRType(module));
+        });
+        if (!function.getReturnType().isVoid()) {
+            IRRegister resultRegister = new IRRegister(function.getReturnType());
+            callInst.setResultRegister(resultRegister);
+            node.setIRResultValue(resultRegister);
+        }
+        appendInst(callInst);
     }
 
     @Override
@@ -575,34 +733,53 @@ public class IRBuilder implements ASTVisitor {
         node.setIRResultValue(resultRegister);
     }
 
+    IRRegister getIdentifierPtr(IdentifierPrimaryNode variableIdentifier) {
+        VariableEntity entity = currentScope.getDefinedVariableEntityRecursively(variableIdentifier.getIdentifier());
+        if (!entity.isClassMember()) return entity.getCurrentRegister();
+        int index = entity.getIndex();
+        IRStructureType classIRType = entity.getClassIRType();
+        IRTypeSystem identifierType = entity.getVariableType().toIRType(module);
+        assert currentScope.insideMethod();
+        MethodScope methodScope = currentScope.getMethodScope();
+        IRRegister thisPtrPtrRegister = methodScope.getThisPtrRegister();
+        IRRegister thisPtrRegister = new IRRegister(new IRPointerType(classIRType));
+        appendInst(new IRLoadInstruction(new IRPointerType(classIRType), thisPtrRegister, thisPtrPtrRegister));
+        IRRegister identifierPtr = new IRRegister(new IRPointerType(identifierType));
+        IRGetelementptrInstruction gepInst = new IRGetelementptrInstruction(identifierPtr, classIRType, thisPtrRegister);
+        gepInst.addIndex(new IRConstInt(getIntType(), 0));
+        gepInst.addIndex(new IRConstInt(getIntType(), index));
+        appendInst(gepInst);
+        return identifierPtr;
+    }
+
     @Override
     public void visit(PostCrementExpressionNode node) {
         node.getLhs().accept(this);
         IROperand lhsVal = node.getLhs().getIRResultValue();
         IRTypeSystem resultType = node.getExpressionType().toIRType(module);
         assert resultType.isInt();
-        IRRegister tempRegister = new IRRegister(resultType);
-        IRRegister resultRegister = new IRRegister(resultType);
+        IRRegister tempRegister, resultRegister;
         ASTNode bottomLeftValueNode = node.getLhs().getBottomLeftValueNode();
         if (bottomLeftValueNode instanceof IdentifierPrimaryNode) {
-            VariableEntity entity = currentScope.getVariableEntityRecursively(((IdentifierPrimaryNode) bottomLeftValueNode).getIdentifier());
-            IRRegister currentRegister = entity.getCurrentRegister();
+            IRRegister currentRegister = getIdentifierPtr(((IdentifierPrimaryNode) bottomLeftValueNode));
+            tempRegister = new IRRegister(resultType);
+            resultRegister = new IRRegister(resultType);
             appendInst(new IRLoadInstruction(resultType, tempRegister, currentRegister));
             IRTypeSystem variableType = ((IdentifierPrimaryNode) bottomLeftValueNode).getExpressionType().toIRType(module);
             appendInst(new IRBinaryInstruction("add", resultRegister, new IRConstInt(getIntType(), Objects.equals(node.getOp(), "++") ? 1 : -1), lhsVal));
             appendInst(new IRStoreInstruction(variableType, currentRegister, resultRegister));
             node.setIRResultValue(tempRegister);
-        } else if (bottomLeftValueNode instanceof AddressingExpressionNode) {
-            AddressingExpressionNode leftValNode = (AddressingExpressionNode) bottomLeftValueNode;
+        } else {
+            tempRegister = new IRRegister(resultType);
+            resultRegister = new IRRegister(resultType);
+            assert bottomLeftValueNode instanceof LeftValueExpressionNode;
+            LeftValueExpressionNode leftValNode = (LeftValueExpressionNode) bottomLeftValueNode;
             IRRegister leftValPtr = leftValNode.getLeftValuePointer();
             appendInst(new IRLoadInstruction(resultType, tempRegister, leftValPtr));
             IRTypeSystem addrExpType = leftValNode.getExpressionType().toIRType(module);
             appendInst(new IRBinaryInstruction("add", resultRegister, new IRConstInt(getIntType(), Objects.equals(node.getOp(), "++") ? 1 : -1), lhsVal));
             appendInst(new IRStoreInstruction(addrExpType, leftValPtr, resultRegister));
             node.setIRResultValue(tempRegister);
-        } else {
-            assert bottomLeftValueNode instanceof MemberAccessExpressionNode;
-            // todo
         }
     }
 
@@ -622,25 +799,23 @@ public class IRBuilder implements ASTVisitor {
             appendInst(new IRTruncInstruction(resultRegister, resultCharVal, getBoolType()));
         } else {
             assert resultType.isInt();
-            resultRegister = new IRRegister(resultType);
             if (Objects.equals(node.getOp(), "++") || Objects.equals(node.getOp(), "--")) {
                 ASTNode bottomLeftValueNode = node.getRhs().getBottomLeftValueNode();
                 if (bottomLeftValueNode instanceof IdentifierPrimaryNode) {
-                    VariableEntity entity = currentScope.getVariableEntityRecursively(((IdentifierPrimaryNode) bottomLeftValueNode).getIdentifier());
-                    IRRegister currentRegister = entity.getCurrentRegister();
+                    IRRegister currentRegister = getIdentifierPtr(((IdentifierPrimaryNode) bottomLeftValueNode));
+                    resultRegister = new IRRegister(resultType);
                     IRTypeSystem variableType = ((IdentifierPrimaryNode) bottomLeftValueNode).getExpressionType().toIRType(module);
                     appendInst(new IRBinaryInstruction("add", resultRegister, new IRConstInt(getIntType(), Objects.equals(node.getOp(), "++") ? 1 : -1), rhsVal));
                     appendInst(new IRStoreInstruction(variableType, currentRegister, resultRegister));
                     node.setIRResultValue(resultRegister);
-                } else if (bottomLeftValueNode instanceof AddressingExpressionNode) {
-                    AddressingExpressionNode leftValNode = (AddressingExpressionNode) bottomLeftValueNode;
+                } else {
+                    assert bottomLeftValueNode instanceof LeftValueExpressionNode;
+                    LeftValueExpressionNode leftValNode = (LeftValueExpressionNode) bottomLeftValueNode;
                     IRRegister leftValPtr = leftValNode.getLeftValuePointer();
                     IRTypeSystem addrExpType = leftValNode.getExpressionType().toIRType(module);
+                    resultRegister = new IRRegister(resultType);
                     appendInst(new IRBinaryInstruction("add", resultRegister, new IRConstInt(getIntType(), Objects.equals(node.getOp(), "++") ? 1 : -1), rhsVal));
                     appendInst(new IRStoreInstruction(addrExpType, leftValPtr, resultRegister));
-                } else {
-                    assert bottomLeftValueNode instanceof MemberAccessExpressionNode;
-                    // todo
                 }
             } else {
                 String op;
@@ -656,10 +831,11 @@ public class IRBuilder implements ASTVisitor {
                     }
                     case "~" -> {
                         op = "xor";
-                        lhsVal = ~-1;
+                        lhsVal = -1;
                     }
                     default -> throw new IRError("invalid unary op");
                 }
+                resultRegister = new IRRegister(resultType);
                 appendInst(new IRBinaryInstruction(op, resultRegister, new IRConstInt(getIntType(), lhsVal), rhsVal));
             }
         }
@@ -724,7 +900,7 @@ public class IRBuilder implements ASTVisitor {
                 case "/" -> op = "sdiv"; // signed division
                 case "%" -> op = "srem"; // signed remainder
                 case "<<" -> op = "shl nsw";
-                case ">>" -> op = "ashr nsw";
+                case ">>" -> op = "ashr";
                 case "&" -> op = "and";
                 case "^" -> op = "xor";
                 case "|" -> op = "or";
@@ -796,38 +972,42 @@ public class IRBuilder implements ASTVisitor {
         // self-crement need update register of original left value since value has changed
         ASTNode bottomLeftValueNode = node.getBottomLeftValueNode();
         if (bottomLeftValueNode instanceof IdentifierPrimaryNode) {
-            VariableEntity entity = currentScope.getVariableEntityRecursively(((IdentifierPrimaryNode) bottomLeftValueNode).getIdentifier());
-            IRRegister currentRegister = entity.getCurrentRegister();
+            IRRegister currentRegister = getIdentifierPtr(((IdentifierPrimaryNode) bottomLeftValueNode));
             IRTypeSystem variableType = ((IdentifierPrimaryNode) bottomLeftValueNode).getExpressionType().toIRType(module);
             appendInst(new IRStoreInstruction(variableType, currentRegister, node.getRhs().getIRResultValue()));
-        } else if (bottomLeftValueNode instanceof AddressingExpressionNode) {
-            AddressingExpressionNode leftValNode = (AddressingExpressionNode) bottomLeftValueNode;
+        } else {
+            assert bottomLeftValueNode instanceof LeftValueExpressionNode;
+            LeftValueExpressionNode leftValNode = (LeftValueExpressionNode) bottomLeftValueNode;
             IRRegister leftValPtr = leftValNode.getLeftValuePointer();
             IRTypeSystem addrExpType = leftValNode.getExpressionType().toIRType(module);
             appendInst(new IRStoreInstruction(addrExpType, leftValPtr, node.getRhs().getIRResultValue()));
-        } else {
-            assert bottomLeftValueNode instanceof MemberAccessExpressionNode;
-
         }
         node.setIRResultValue(node.getRhs().getIRResultValue());
     }
 
     @Override
     public void visit(ThisPrimaryNode node) {
-
+        assert currentScope.insideClass();
+        assert currentScope.insideMethod();
+        IRRegister thisPtrPtr = currentFunction.getThisRegister();
+        assert thisPtrPtr != null;
+        IRTypeSystem thisPtrType = ((IRPointerType) thisPtrPtr.getIRType()).getBaseType();
+        IRRegister thisPtr = new IRRegister(thisPtrType);
+        appendInst(new IRLoadInstruction(thisPtrType, thisPtr, thisPtrPtr));
+        node.setIRResultValue(thisPtr);
     }
 
     @Override
     public void visit(IdentifierPrimaryNode node) {
         if (!node.isVariable()) throw new IRError("visit FunctionIdentifier in IRBuilder");
-        VariableEntity entity = currentScope.getVariableEntityRecursively(node.getIdentifier());
-        IRTypeSystem loadType = entity.getVariableType().toIRType(module);
-        IRRegister loadTarget = new IRRegister(loadType);
+        IRRegister identifierPtr = getIdentifierPtr(node);
+        IRTypeSystem identifierType = ((IRPointerType) identifierPtr.getIRType()).getBaseType();
+        IRRegister loadTarget = new IRRegister(identifierType);
         // global variables always use @identifier to store value, therefore
         // local variable value is stored in registers, and might change when updated
         // so load target need update to VariableEntity
         // access to local variable need load first, otherwise will cause type error
-        appendInst(new IRLoadInstruction(loadType, loadTarget, entity.getCurrentRegister()));
+        appendInst(new IRLoadInstruction(identifierType, loadTarget, identifierPtr));
         node.setIRResultValue(loadTarget);
     }
 
@@ -849,7 +1029,7 @@ public class IRBuilder implements ASTVisitor {
 
     @Override
     public void visit(NullConstantPrimaryNode node) {
-        node.setIRResultValue(new IRNull(getVoidType()));
+        node.setIRResultValue(new IRNull(getNullType()));
     }
 
     @Override

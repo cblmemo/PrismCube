@@ -1,5 +1,6 @@
 package Utility.Type;
 
+import IR.TypeSystem.IRStructureType;
 import Utility.Cursor;
 import Utility.Entity.ConstructorEntity;
 import Utility.Entity.FunctionEntity;
@@ -13,6 +14,7 @@ import java.util.Objects;
 
 public class ClassType extends Type {
     private ClassScope classScope;
+    private IRStructureType classIRType;
 
     public ClassType(String typeName) {
         super(typeName);
@@ -24,6 +26,7 @@ public class ClassType extends Type {
     }
 
     public void addMember(VariableEntity entity) {
+        entity.setAsClassMember();
         classScope.addVariable(entity);
     }
 
@@ -34,6 +37,14 @@ public class ClassType extends Type {
 
     public ClassScope getClassScope() {
         return classScope;
+    }
+
+    public void setClassIRType(IRStructureType classIRType) {
+        this.classIRType = classIRType;
+    }
+
+    public IRStructureType getClassIRType() {
+        return classIRType;
     }
 
     public boolean isBuiltinType() {

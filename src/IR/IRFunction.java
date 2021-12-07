@@ -1,5 +1,6 @@
 package IR;
 
+import IR.Operand.IRRegister;
 import IR.TypeSystem.IRTypeSystem;
 import Utility.Type.ArrayType;
 import Utility.Type.ClassType;
@@ -17,10 +18,12 @@ public class IRFunction {
     private final boolean declare;
     private IRTypeSystem returnType;
     private final ArrayList<IRTypeSystem> parameterType = new ArrayList<>();
+    private final ArrayList<String> parameterName = new ArrayList<>();
     private final ArrayList<IRBasicBlock> blocks = new ArrayList<>();
     private final IRBasicBlock entryBlock;
     private final IRBasicBlock returnBlock;
     private boolean hasCalled;
+    private IRRegister thisRegister;
 
     // [[--NOTICE--]] need to call setReturnType and addParameterType manually after created an IRFunction instance.
     public IRFunction(String functionName) {
@@ -105,13 +108,24 @@ public class IRFunction {
         return returnType;
     }
 
-    public void addParameterType(IRTypeSystem parameterType) {
+    public void addParameter(String parameterName, IRTypeSystem parameterType) {
 //        abbreviatedParameters += mangleParameterTypes(paraType);
+        this.parameterName.add(parameterName);
+        this.parameterType.add(parameterType);
+    }
+
+    public void builtinAddParameter(IRTypeSystem parameterType) {
+//        abbreviatedParameters += mangleParameterTypes(paraType);
+        this.parameterName.add(""); // builtin function won't use this
         this.parameterType.add(parameterType);
     }
 
     public ArrayList<IRTypeSystem> getParameterType() {
         return parameterType;
+    }
+
+    public ArrayList<String> getParameterName() {
+        return parameterName;
     }
 
     public IRBasicBlock getEntryBlock() {
@@ -129,7 +143,7 @@ public class IRFunction {
     private String getParameterListStr() {
         StringBuilder builder = new StringBuilder();
         builder.append("(");
-        for (int i = 0; i < getParameterType().size(); i++) {
+        for (int i = 0; i < parameterType.size(); i++) {
             if (i != 0) builder.append(", ");
             builder.append(parameterType.get(i).toString());
         }
@@ -155,6 +169,14 @@ public class IRFunction {
 
     public void markAsCalled() {
         hasCalled = true;
+    }
+
+    public void setThisRegister(IRRegister thisRegister) {
+        this.thisRegister = thisRegister;
+    }
+
+    public IRRegister getThisRegister() {
+        return thisRegister;
     }
 
     public void accept(IRVisitor visitor) {

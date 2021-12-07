@@ -13,7 +13,7 @@ public class IRCallInstruction extends IRInstruction {
     private final IRTypeSystem returnType;
     private final IRFunction callFunction;
     private final ArrayList<IROperand> argumentValues = new ArrayList<>();
-    private final ArrayList<IRTypeSystem> argumentTypes = new ArrayList<>();
+    private int currentArgumentNumber = 0;
     private IRRegister resultRegister = null;
 
     public IRCallInstruction(IRTypeSystem returnType, IRFunction callFunction) {
@@ -25,8 +25,9 @@ public class IRCallInstruction extends IRInstruction {
 
     public IRCallInstruction addArgument(IROperand argumentValue, IRTypeSystem argumentType) {
         assert Objects.equals(argumentType, argumentValue.getIRType());
+        assert Objects.equals(callFunction.getParameterType().get(currentArgumentNumber), argumentType);
         argumentValues.add(argumentValue);
-        argumentTypes.add(argumentType);
+        currentArgumentNumber++;
         return this;
     }
 
@@ -40,7 +41,7 @@ public class IRCallInstruction extends IRInstruction {
         builder.append("(");
         for (int i = 0; i < argumentValues.size(); i++) {
             if (i != 0) builder.append(", ");
-            builder.append(argumentTypes.get(i).toString()).append(" ").append(argumentValues.get(i).toString());
+            builder.append(callFunction.getParameterType().get(i)).append(" ").append(argumentValues.get(i));
         }
         builder.append(")");
         return builder.toString();
@@ -48,6 +49,7 @@ public class IRCallInstruction extends IRInstruction {
 
     @Override
     public String toString() {
+        assert currentArgumentNumber == callFunction.getParameterType().size();
         String callBody = "call " + returnType.toString() + " @" + callFunction.getFunctionName() + getParameterListStr();
         if (resultRegister == null) return callBody;
         return resultRegister + " = " + callBody;

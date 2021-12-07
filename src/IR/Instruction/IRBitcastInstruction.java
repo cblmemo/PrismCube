@@ -24,7 +24,7 @@ public class IRBitcastInstruction extends IRInstruction {
 
     @Override
     public String toString() {
-        return resultRegister.toString() + " = bitcast " + ptrValue.getIRType().toString() + " " + ptrValue + " to " + targetType.toString();
+        return resultRegister + " = bitcast " + ptrValue.getIRType() + " " + ptrValue + " to " + targetType;
     }
 
     @Override

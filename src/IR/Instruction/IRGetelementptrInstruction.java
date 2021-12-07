@@ -14,16 +14,13 @@ public class IRGetelementptrInstruction extends IRInstruction {
     private final IRTypeSystem elementType;
     private final IROperand ptrValue;
     private final ArrayList<IROperand> indices = new ArrayList<>();
-    boolean inbounds;
 
     public IRGetelementptrInstruction(IRRegister resultRegister, IRTypeSystem elementType, IROperand ptrValue) {
         assert ptrValue.getIRType() instanceof IRPointerType;
         assert Objects.equals(elementType, ((IRPointerType) ptrValue.getIRType()).getBaseType());
-        assert Objects.equals(resultRegister.getIRType(), ptrValue.getIRType());
         this.resultRegister = resultRegister;
         this.elementType = elementType;
         this.ptrValue = ptrValue;
-        this.inbounds = true;
     }
 
     public void addIndex(IROperand index) {
@@ -33,10 +30,9 @@ public class IRGetelementptrInstruction extends IRInstruction {
     @Override
     public String toString() {
         StringBuilder builder = new StringBuilder();
-        builder.append(resultRegister.toString()).append(" = getelementptr ");
-        if (inbounds) builder.append("inbounds ");
-        builder.append(elementType.toString()).append(", ").append(ptrValue.getIRType()).append(" ").append(ptrValue);
-        indices.forEach(index -> builder.append(", ").append(index.getIRType().toString()).append(" ").append(index));
+        builder.append(resultRegister).append(" = getelementptr inbounds ");
+        builder.append(elementType).append(", ").append(ptrValue.getIRType()).append(" ").append(ptrValue);
+        indices.forEach(index -> builder.append(", ").append(index.getIRType()).append(" ").append(index));
         return builder.toString();
     }
 

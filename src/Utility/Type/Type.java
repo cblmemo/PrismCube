@@ -83,8 +83,7 @@ abstract public class Type {
         if (isBool()) return module.getIRType("bool");
         if (isString()) return module.getIRType("string");
         if (isVoid()) return module.getIRType("void");
-        // todo what if null?
-        // todo implement class type
-        throw new IRError("[Type::toIRType] cannot handle it correctly now.");
+        // store class with class pointer
+        return new IRPointerType(module.getIRType(typeName));
     }
 }

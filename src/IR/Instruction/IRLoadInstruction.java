@@ -11,20 +11,20 @@ import java.util.Objects;
 public class IRLoadInstruction extends IRInstruction {
     private final IRTypeSystem loadType;
     private final IRRegister loadTarget;
-    private final IROperand loadValue;
+    private final IROperand loadSource;
 
-    public IRLoadInstruction(IRTypeSystem loadType, IRRegister loadTarget, IROperand loadValue) {
-        assert loadValue.getIRType() instanceof IRPointerType;
-        assert Objects.equals(loadType, ((IRPointerType) loadValue.getIRType()).getBaseType());
+    public IRLoadInstruction(IRTypeSystem loadType, IRRegister loadTarget, IROperand loadSource) {
+        assert loadSource.getIRType() instanceof IRPointerType;
+        assert Objects.equals(loadType, ((IRPointerType) loadSource.getIRType()).getBaseType());
         assert Objects.equals(loadType, loadTarget.getIRType());
         this.loadType = loadType;
         this.loadTarget = loadTarget;
-        this.loadValue = loadValue;
+        this.loadSource = loadSource;
     }
 
     @Override
     public String toString() {
-        return loadTarget.toString() + " = load " + loadType + ", " + loadValue.getIRType() + " " + loadValue + ", align " + loadType.sizeof();
+        return loadTarget + " = load " + loadType + ", " + loadSource.getIRType() + " " + loadSource + ", align " + loadType.sizeof();
     }
 
     @Override

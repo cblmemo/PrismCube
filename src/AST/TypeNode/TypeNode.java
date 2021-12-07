@@ -42,9 +42,8 @@ abstract public class TypeNode extends ASTNode {
             IRTypeSystem temp = ((ArrayTypeNode) this).getElementType().toIRType(module);
             return new IRPointerType(temp);
         }
-        if (this instanceof ClassTypeNode) {
-            // todo support struct
-        }
+        // store class with class pointer
+        if (this instanceof ClassTypeNode) return new IRPointerType(module.getIRType(typeName));
         if (this instanceof BuiltinTypeNode) {
             if (Objects.equals(getTypeName(), "int")) return module.getIRType("int");
             if (Objects.equals(getTypeName(), "bool")) return module.getIRType("bool");

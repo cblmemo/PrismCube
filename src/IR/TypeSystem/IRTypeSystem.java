@@ -35,28 +35,41 @@ abstract public class IRTypeSystem {
         return false;
     }
 
+    public boolean isNull() {
+        return this instanceof IRNullType;
+    }
+
     public boolean isArray() {
-        return this instanceof IRPointerType;
+        return this instanceof IRPointerType && !(((IRPointerType) this).getBaseType() instanceof IRStructureType);
+    }
+
+    public boolean isClassPointer() {
+        return this instanceof IRPointerType && ((IRPointerType) this).getBaseType() instanceof IRStructureType;
     }
 
     public boolean isVoid() {
         return this instanceof IRVoidType;
     }
 
+    private boolean isNullAssignable() {
+        return this instanceof IRPointerType || this instanceof IRStructureType;
+    }
+
     @Override
     public boolean equals(Object obj) {
         if (obj == this) return true;
         if (!(obj instanceof IRTypeSystem)) return false;
+        if (isNullAssignable() && ((IRTypeSystem) obj).isNull()) return true;
+        if (((IRTypeSystem) obj).isNullAssignable() && isNull()) return true;
+        if (this instanceof IRPointerType) {
+            if (!(obj instanceof IRPointerType)) return false;
+            return Objects.equals(((IRPointerType) this).getBaseType(), ((IRPointerType) obj).getBaseType());
+        }
         return Objects.equals(toString(), obj.toString());
     }
 
     @Override
     public int hashCode() {
         return toString().hashCode();
-    }
-
-    public boolean isZeroInitializable() {
-        // todo update while adding new TypeSystem
-        return this instanceof IRArrayType || this instanceof IRStructureType;
     }
 }

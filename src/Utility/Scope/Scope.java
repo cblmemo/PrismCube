@@ -155,6 +155,18 @@ abstract public class Scope {
         return null;
     }
 
+    public boolean insideClass() {
+        if (this instanceof ClassScope) return true;
+        if (parentScope != null) return parentScope.insideClass();
+        return false;
+    }
+
+    public String getInsideClassName() {
+        if (this instanceof ClassScope) return ((ClassScope) this).getClassName();
+        if (parentScope != null) return parentScope.getInsideClassName();
+        return null;
+    }
+
     // for ir
 
     public VariableEntity getVariableEntity(String name) {
@@ -167,6 +179,21 @@ abstract public class Scope {
     public VariableEntity getVariableEntityRecursively(String name) {
         if (hasVariable(name)) return getVariableEntity(name);
         if (parentScope != null) return parentScope.getVariableEntityRecursively(name);
+        return null;
+    }
+
+    public VariableEntity getDefinedVariableEntityRecursively(String name) {
+        if (hasVariable(name)) {
+            VariableEntity entity = getVariableEntity(name);
+            // since symbol collector has collected all local variable, need to avoid synonym of variable such as:
+            // 1      int a;
+            // 2      while (true) {
+            // 3          int b = a;      // should use a in line 1
+            // 4          int a = 324;
+            // 5      }
+            if (entity.visitedInIR()) return entity;
+        }
+        if (parentScope != null) return parentScope.getDefinedVariableEntityRecursively(name);
         return null;
     }
 

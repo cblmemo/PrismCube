@@ -1,10 +1,7 @@
 package IR;
 
 import IR.Operand.IRConstString;
-import IR.TypeSystem.IRIntType;
-import IR.TypeSystem.IRPointerType;
-import IR.TypeSystem.IRTypeSystem;
-import IR.TypeSystem.IRVoidType;
+import IR.TypeSystem.*;
 import Utility.Scope.GlobalScope;
 import Utility.error.IRError;
 
@@ -23,6 +20,7 @@ import static Debug.MemoLog.log;
 public class IRModule {
     private final HashMap<String, IRTypeSystem> types = new HashMap<>();
     private final HashMap<String, IRFunction> builtinFunctions = new HashMap<>();
+    private final ArrayList<IRStructureType> classes = new ArrayList<>();
     private final HashMap<String, IRFunction> functions = new HashMap<>();
     private final HashMap<String, IRGlobalDefine> globalDefines = new HashMap<>();
     private final HashMap<String, IRConstString> strings = new HashMap<>();
@@ -34,12 +32,13 @@ public class IRModule {
     private final String globalInitializeFunctionName = "__mx_global_init";
 
     public IRModule() {
-        addType("void", new IRVoidType());
-        addType("bool", new IRIntType(1));
-        addType("char", new IRIntType(8));
-        addType("int", new IRIntType(32));
-        addType("string", new IRPointerType(getIRType("char")));
-        addType("void *", new IRPointerType(getIRType("void")));
+        addIRType("null", new IRNullType());
+        addIRType("void", new IRVoidType());
+        addIRType("bool", new IRIntType(1));
+        addIRType("char", new IRIntType(8));
+        addIRType("int", new IRIntType(32));
+        addIRType("string", new IRPointerType(getIRType("char")));
+        addIRType("void *", new IRPointerType(getIRType("void")));
 
         globalConstructor = generateGlobalInitializeFunction();
         globalConstructor.setReturnType(getIRType("void"));
@@ -49,25 +48,25 @@ public class IRModule {
     public void initializeBuiltinFunction(GlobalScope globalScope) {
         IRFunction print = new IRFunction("print", true);
         print.setReturnType(getIRType("void"));
-        print.addParameterType(getIRType("string"));
+        print.builtinAddParameter(getIRType("string"));
         addBuiltinFunction(print);
         globalScope.getFunction("print").setIRFunction(print);
 
         IRFunction printInt = new IRFunction("printInt", true);
         printInt.setReturnType(getIRType("void"));
-        printInt.addParameterType(getIRType("int"));
+        printInt.builtinAddParameter(getIRType("int"));
         addBuiltinFunction(printInt);
         globalScope.getFunction("printInt").setIRFunction(printInt);
 
         IRFunction println = new IRFunction("println", true);
         println.setReturnType(getIRType("void"));
-        println.addParameterType(getIRType("string"));
+        println.builtinAddParameter(getIRType("string"));
         addBuiltinFunction(println);
         globalScope.getFunction("println").setIRFunction(println);
 
         IRFunction printlnInt = new IRFunction("printlnInt", true);
         printlnInt.setReturnType(getIRType("void"));
-        printlnInt.addParameterType(getIRType("int"));
+        printlnInt.builtinAddParameter(getIRType("int"));
         addBuiltinFunction(printlnInt);
         globalScope.getFunction("printlnInt").setIRFunction(printlnInt);
 
@@ -83,80 +82,78 @@ public class IRModule {
 
         IRFunction toString = new IRFunction("toString", true);
         toString.setReturnType(getIRType("string"));
-        toString.addParameterType(getIRType("int"));
+        toString.builtinAddParameter(getIRType("int"));
         addBuiltinFunction(toString);
         globalScope.getFunction("toString").setIRFunction(toString);
 
-        // todo add other member builtin functions
-
         IRFunction concatenateString = new IRFunction("__mx_concatenateString", true);
         concatenateString.setReturnType(getIRType("string"));
-        concatenateString.addParameterType(getIRType("string"));
-        concatenateString.addParameterType(getIRType("string"));
+        concatenateString.builtinAddParameter(getIRType("string"));
+        concatenateString.builtinAddParameter(getIRType("string"));
         addBuiltinFunction(concatenateString);
 
         IRFunction stringLt = new IRFunction("__mx_stringLt", true);
         stringLt.setReturnType(getIRType("char"));
-        stringLt.addParameterType(getIRType("string"));
-        stringLt.addParameterType(getIRType("string"));
+        stringLt.builtinAddParameter(getIRType("string"));
+        stringLt.builtinAddParameter(getIRType("string"));
         addBuiltinFunction(stringLt);
 
         IRFunction stringLe = new IRFunction("__mx_stringLe", true);
         stringLe.setReturnType(getIRType("char"));
-        stringLe.addParameterType(getIRType("string"));
-        stringLe.addParameterType(getIRType("string"));
+        stringLe.builtinAddParameter(getIRType("string"));
+        stringLe.builtinAddParameter(getIRType("string"));
         addBuiltinFunction(stringLe);
 
         IRFunction stringGt = new IRFunction("__mx_stringGt", true);
         stringGt.setReturnType(getIRType("char"));
-        stringGt.addParameterType(getIRType("string"));
-        stringGt.addParameterType(getIRType("string"));
+        stringGt.builtinAddParameter(getIRType("string"));
+        stringGt.builtinAddParameter(getIRType("string"));
         addBuiltinFunction(stringGt);
 
         IRFunction stringGe = new IRFunction("__mx_stringGe", true);
         stringGe.setReturnType(getIRType("char"));
-        stringGe.addParameterType(getIRType("string"));
-        stringGe.addParameterType(getIRType("string"));
+        stringGe.builtinAddParameter(getIRType("string"));
+        stringGe.builtinAddParameter(getIRType("string"));
         addBuiltinFunction(stringGe);
 
         IRFunction stringEq = new IRFunction("__mx_stringEq", true);
         stringEq.setReturnType(getIRType("char"));
-        stringEq.addParameterType(getIRType("string"));
-        stringEq.addParameterType(getIRType("string"));
+        stringEq.builtinAddParameter(getIRType("string"));
+        stringEq.builtinAddParameter(getIRType("string"));
         addBuiltinFunction(stringEq);
 
         IRFunction stringNe = new IRFunction("__mx_stringNe", true);
         stringNe.setReturnType(getIRType("char"));
-        stringNe.addParameterType(getIRType("string"));
-        stringNe.addParameterType(getIRType("string"));
+        stringNe.builtinAddParameter(getIRType("string"));
+        stringNe.builtinAddParameter(getIRType("string"));
         addBuiltinFunction(stringNe);
 
         IRFunction stringLength = new IRFunction("__mx_stringLength", true);
         stringLength.setReturnType(getIRType("int"));
-        stringLength.addParameterType(getIRType("string"));
+        stringLength.builtinAddParameter(getIRType("string"));
         addBuiltinFunction(stringLength);
 
         IRFunction stringSubstring = new IRFunction("__mx_stringSubstring", true);
         stringSubstring.setReturnType(getIRType("string"));
-        stringSubstring.addParameterType(getIRType("string"));
-        stringSubstring.addParameterType(getIRType("int"));
-        stringSubstring.addParameterType(getIRType("int"));
+        stringSubstring.builtinAddParameter(getIRType("string"));
+        stringSubstring.builtinAddParameter(getIRType("int"));
+        stringSubstring.builtinAddParameter(getIRType("int"));
         addBuiltinFunction(stringSubstring);
 
         IRFunction stringParseInt = new IRFunction("__mx_stringParseInt", true);
         stringParseInt.setReturnType(getIRType("int"));
-        stringParseInt.addParameterType(getIRType("string"));
+        stringParseInt.builtinAddParameter(getIRType("string"));
         addBuiltinFunction(stringParseInt);
 
         IRFunction stringOrd = new IRFunction("__mx_stringOrd", true);
         stringOrd.setReturnType(getIRType("int"));
-        stringOrd.addParameterType(getIRType("string"));
-        stringOrd.addParameterType(getIRType("int"));
+        stringOrd.builtinAddParameter(getIRType("string"));
+        stringOrd.builtinAddParameter(getIRType("int"));
         addBuiltinFunction(stringOrd);
 
         IRFunction malloc = new IRFunction("__mx_malloc", true);
         malloc.setReturnType(getIRType("string"));
-        malloc.addParameterType(getIRType("int"));
+        malloc.builtinAddParameter(getIRType("int"));
         addBuiltinFunction(malloc);
     }
 
@@ -207,9 +204,14 @@ public class IRModule {
         throw new IRError("IR function not found");
     }
 
-    public void addType(String name, IRTypeSystem type) {
+    private void addIRType(String name, IRTypeSystem type) {
         if (types.containsKey(name)) throw new IRError("duplicated IR type name");
         types.put(name, type);
+    }
+
+    public void addIRClassType(String name, IRStructureType type) {
+        addIRType(name, type);
+        classes.add(type);
     }
 
     public IRTypeSystem getIRType(String name) {
@@ -230,6 +232,10 @@ public class IRModule {
     public int getConstStringId(String tar) {
         if (strings.containsKey(tar)) return strings.get(tar).getId();
         throw new IRError("get string id failed.");
+    }
+
+    public ArrayList<IRStructureType> getClasses() {
+        return classes;
     }
 
     public HashMap<String, IRGlobalDefine> getGlobalDefines() {
