@@ -7,8 +7,8 @@ import os, time
     Modify following configurations to adapt to your environment.
 """
 # test_cases_dir = './testcases/sema/'
-# test_cases_dir = './testcases/codegen/'
-test_cases_dir = './testcases/optim/'
+test_cases_dir = './testcases/codegen/'
+# test_cases_dir = './testcases/optim/'
 # test_cases_dir = './testcases/optim-new/'
 compile_cmd = "bash ./build.bash"
 execute_cmd = "bash ./semantic.bash"

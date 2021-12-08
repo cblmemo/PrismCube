@@ -26,7 +26,6 @@ public class PrismCube {
             new SemanticChecker().check(memory);
 
             new ConstStringCollector().collect(memory);
-//            new ConstExprCalculator().calculate(memory);
             new IRBuilder().build(memory);
             new IRPrinter().print(memory);
 
