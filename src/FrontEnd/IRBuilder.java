@@ -29,7 +29,9 @@ import java.util.LinkedList;
 import java.util.Objects;
 
 /**
- * This class build IRModule for source code.
+ * This class generate source code's
+ * intermediate representation, and
+ * support standard llvm ir output.
  *
  * @author rainy memory
  * @version 1.0.0
@@ -45,6 +47,13 @@ public class IRBuilder implements ASTVisitor {
 
     private int labelCnt = 0;
 
+    /**
+     * This method build ir structure
+     * for source code and store it in
+     * IRModule inside Memory.
+     *
+     * @see Memory
+     */
     public void build(Memory memory) {
         if (memory.buildIR()) {
             currentScope = globalScope = memory.getGlobalScope();
@@ -1016,7 +1025,6 @@ public class IRBuilder implements ASTVisitor {
 
     @Override
     public void visit(NumericalConstantPrimaryNode node) {
-        // avoid using constexpr entry to support running without ConstExprCalculator
         node.setIRResultValue(new IRConstInt(getIntType(), node.getNumericalConstant()));
     }
 

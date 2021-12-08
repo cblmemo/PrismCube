@@ -9,11 +9,18 @@ import Memory.Memory;
 import java.io.PrintStream;
 
 /**
- * This class print LLVM-IR to output file,
+ * This class print llvm ir to output file,
  * and could run by the following command:
  * ----------------------------------------
- * $ llvm-link test.ll builtin.ll -o a.out
- * $ lli a.out
+ * $ clang test.ll builtin.ll -o a.out
+ * $ ./a.out
+ * ----------------------------------------
+ * or:
+ * (not recommend since lli has some bug
+ * when encounter malloc)
+ * ----------------------------------------
+ * $ llvm-link test.ll builtin.ll -o link.ll
+ * $ lli link.ll
  * ----------------------------------------
  * clang version: 6.0.0-1ubuntu2 (tags/RELEASE_600/final)
  *
@@ -24,6 +31,12 @@ import java.io.PrintStream;
 public class IRPrinter implements IRVisitor {
     private PrintStream ps;
 
+    /**
+     * This method print llvm ir to PrintStream
+     * specified by Memory.
+     *
+     * @see Memory
+     */
     public void print(Memory memory) {
         if (memory.buildIR() && memory.printIR()) {
             ps = memory.getPrintStream();

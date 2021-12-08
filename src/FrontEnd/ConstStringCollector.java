@@ -23,6 +23,10 @@ import static Debug.MemoLog.log;
 public class ConstStringCollector implements ASTVisitor {
     private IRModule module;
 
+    /**
+     * This method collect all const string
+     * in source code and store them in IRModule.
+     */
     public void collect(Memory memory) {
         if (memory.buildIR()) {
             log.Infof("Collect const string started.\n");

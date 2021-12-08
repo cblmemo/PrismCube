@@ -24,17 +24,19 @@ import static Debug.MemoLog.log;
 
 public class Memory {
     private ParseTree parseTreeRoot;
+    private final GlobalScope globalScope;
     private ProgramNode astRoot;
     private final IRModule irModule;
-    private final GlobalScope globalScope;
+
+    // io
     private InputStream inputStream;
     private PrintStream printStream;
 
     // flags
-    private boolean AST = true;
-    private boolean Scope = true;
-    private boolean IR = true;
-    private boolean IRBuild = true;
+    private boolean AST = false;
+    private boolean Scope = false;
+    private boolean IR = false;
+    private boolean IRBuild = false;
 
     public Memory(String[] args) throws FileNotFoundException {
         globalScope = new GlobalScope(null);
@@ -47,7 +49,7 @@ public class Memory {
     }
 
     private void parseArgument(String[] args) throws FileNotFoundException {
-        boolean syntaxOnly = false, setLogLevel = false, setLogFile = false, debug = false, receiveFromFile = false, printToFile = false, emitLLVM = false;
+        boolean syntaxOnly = false, setLogLevel = false, setLogFile = false, receiveFromFile = false, printToFile = false, emitLLVM = false;
         if (args.length == 0) useDefaultSetup();
         for (int i = 0; i < args.length; i++) {
             String arg0 = args[i];
@@ -55,8 +57,6 @@ public class Memory {
             switch (arg0) {
                 case "-fsyntax-only" -> {
                     if (emitLLVM) err("argument conflict");
-                    disableIRBuild();
-                    disableIRPrinter();
                     syntaxOnly = true;
                 }
                 case "-log" -> {
@@ -90,6 +90,7 @@ public class Memory {
                 }
                 case "-emit-llvm" -> {
                     if (syntaxOnly) err("argument conflict");
+                    IR = true;
                     emitLLVM = true;
                 }
                 case "-o" -> {
@@ -104,17 +105,16 @@ public class Memory {
                     inputStream = new FileInputStream(arg1);
                     receiveFromFile = true;
                 }
-                case "-debug" -> debug = true;
+                case "-debug" -> {
+                    AST = true;
+                    Scope = true;
+                }
                 default -> err("wrong argument format");
             }
         }
         if (!setLogFile) log.disableLog();
         if (!setLogLevel) log.SetLogLevel(MemoLog.LogLevel.DebugLevel);
-        if (!debug) {
-            disableASTPrinter();
-            disableScopePrinter();
-        }
-        if (!emitLLVM) disableIRPrinter();
+        if (!syntaxOnly) IRBuild = true;
         if (!printToFile) printStream = System.out;
         if (!receiveFromFile) inputStream = System.in;
     }
@@ -127,36 +127,20 @@ public class Memory {
         inputStream = System.in;
 
         // disable printer for debug
-        disableASTPrinter();
-        disableScopePrinter();
-    }
-
-    public void disableASTPrinter() {
         AST = false;
+        Scope = false;
     }
 
     public boolean printAST() {
         return AST;
     }
 
-    public void disableScopePrinter() {
-        Scope = false;
-    }
-
     public boolean printScope() {
         return Scope;
     }
 
-    public void disableIRPrinter() {
-        IR = false;
-    }
-
     public boolean printIR() {
         return IR;
-    }
-
-    public void disableIRBuild() {
-        IRBuild = false;
     }
 
     public boolean buildIR() {
