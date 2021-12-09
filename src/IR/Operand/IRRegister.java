@@ -5,8 +5,10 @@ import IR.TypeSystem.IRTypeSystem;
 public class IRRegister extends IROperand {
     private final int id;
     private String name = null;
+    private boolean haveName = false;
 
     private static int registerCnt = 0;
+    private static int nameCnt = 0;
 
     public static void reset() {
         registerCnt = 0;
@@ -27,8 +29,9 @@ public class IRRegister extends IROperand {
 
     public IRRegister(IRTypeSystem irType, String name) {
         super(irType);
-        this.id = -1;
+        this.id = -(nameCnt++);
         this.name = name;
+        haveName = true;
     }
 
     public IRRegister(IRTypeSystem irType, int id) {
@@ -43,7 +46,8 @@ public class IRRegister extends IROperand {
 
     @Override
     public String toString() {
-        if (name != null) return "%" + name;
+        if (haveName) return "%" + name + "_" + (-id);
+        assert id > 0;
         return "%" + id;
     }
 }

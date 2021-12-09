@@ -1,5 +1,6 @@
 package IR;
 
+import IR.Instruction.IRAllocaInstruction;
 import IR.Instruction.IRBrInstruction;
 import IR.Instruction.IRInstruction;
 import IR.Instruction.IRReturnInstruction;
@@ -10,7 +11,9 @@ import java.util.ArrayList;
 public class IRBasicBlock {
     private final IRLabel label;
     private final ArrayList<IRInstruction> instructions = new ArrayList<>();
+    private ArrayList<IRAllocaInstruction> allocas;
     private IRInstruction escapeInstruction = null;
+    private boolean isEntryBlock = false;
     private boolean isReturnBlock = false;
     private final ArrayList<IRBasicBlock> predecessors = new ArrayList<>();
 
@@ -32,6 +35,10 @@ public class IRBasicBlock {
         instructions.add(inst);
     }
 
+    public void appendAlloca(IRAllocaInstruction inst) {
+        allocas.add(inst);
+    }
+
     public void setEscapeInstruction(IRInstruction escapeInstruction) {
         assert this.escapeInstruction == null;
         assert escapeInstruction instanceof IRReturnInstruction || escapeInstruction instanceof IRBrInstruction;
@@ -45,12 +52,19 @@ public class IRBasicBlock {
     public void finishBlock() {
         assert !hasFinished;
         assert escapeInstruction != null;
-        instructions.add(escapeInstruction);
         hasFinished = true;
     }
 
     public ArrayList<IRInstruction> getInstructions() {
         return instructions;
+    }
+
+    public ArrayList<IRAllocaInstruction> getAllocas() {
+        return allocas;
+    }
+
+    public IRInstruction getEscapeInstruction() {
+        return escapeInstruction;
     }
 
     public void markAsReturnBlock() {
@@ -59,6 +73,19 @@ public class IRBasicBlock {
 
     public boolean isReturnBlock() {
         return isReturnBlock;
+    }
+
+    public void markAsEntryBlock() {
+        isEntryBlock = true;
+        allocas = new ArrayList<>();
+    }
+
+    public boolean isEntryBlock() {
+        return isEntryBlock;
+    }
+
+    public boolean isEmpty() {
+        return instructions.isEmpty() && escapeInstruction == null;
     }
 
     public void addPredecessor(IRBasicBlock predecessor) {

@@ -8,6 +8,7 @@ import Utility.Type.Type;
 import Utility.error.IRError;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Objects;
 
 import static Debug.MemoLog.log;
@@ -30,6 +31,7 @@ public class IRFunction {
         this.functionName = functionName;
         this.declare = false;
         entryBlock = new IRBasicBlock(this, "entry");
+        entryBlock.markAsEntryBlock();
         returnBlock = new IRBasicBlock(this, "return");
         returnBlock.markAsReturnBlock();
     }
@@ -38,6 +40,7 @@ public class IRFunction {
         this.functionName = functionName;
         this.declare = declare;
         entryBlock = new IRBasicBlock(this, "entry");
+        entryBlock.markAsEntryBlock();
         returnBlock = new IRBasicBlock(this, "return");
         returnBlock.markAsReturnBlock();
     }
@@ -50,6 +53,18 @@ public class IRFunction {
         returnBlock.finishBlock();
         blocks.add(returnBlock);
     }
+
+//    public void changeLabelToNumber() {
+//        HashMap<String, Integer> label2num = new HashMap<>();
+//        int current = 0, offset = 0;
+//        for (int i = 0; i < blocks.size(); i++) {
+//            IRBasicBlock currentBlock = blocks.get(i);
+//            label2num.put(currentBlock.getLabel().getLabelName(), current);
+//            currentBlock.getLabel().setRegisterNum(current++);
+//
+//        }
+//
+//    }
 
     //   \/ --- after a day and a half I discover it is useless since Mx* doesn't support override :(
 

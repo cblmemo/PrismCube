@@ -71,6 +71,7 @@ public class IRPrinter implements IRVisitor {
     public void visit(IRFunction function) {
         if (function.isDeclare()) ps.println(function.getDeclare());
         else {
+//            function.changeLabelToNumber();
             ps.println(function.getDefineAndPrefix());
             function.getBlocks().forEach(block -> block.accept(this));
             ps.println(function.getSuffix());
@@ -80,14 +81,20 @@ public class IRPrinter implements IRVisitor {
 
     @Override
     public void visit(IRBasicBlock block) {
-        if (!block.getInstructions().isEmpty()) {
+        if (!block.isEmpty()) {
             ps.print(block.getLabel().toBasicBlockLabel());
             ps.println(" ".repeat(60 - block.getLabel().toBasicBlockLabel().length()) + block.getPreds());
+            if (block.isEntryBlock()) block.getAllocas().forEach(alloca -> {
+                ps.print("\t");
+                alloca.accept(this);
+            });
             block.getInstructions().forEach(instruction -> {
                 // indent non-label instructions
                 ps.print("\t");
                 instruction.accept(this);
             });
+            ps.print("\t");
+            block.getEscapeInstruction().accept(this);
             if (!block.isReturnBlock()) ps.println();
         }
     }

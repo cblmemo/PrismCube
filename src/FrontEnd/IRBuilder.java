@@ -88,7 +88,11 @@ public class IRBuilder implements ASTVisitor {
     }
 
     private void appendInst(IRInstruction inst) {
-        currentBasicBlock.appendInstruction(inst);
+        // alloca in entry block to avoid multi alloca inside loop
+        // [[--NOTICE--]] alloca register cannot use temporary register (%0) now
+        // since numerical order will be disrupted
+        if (inst instanceof IRAllocaInstruction) currentFunction.getEntryBlock().appendAlloca((IRAllocaInstruction) inst);
+        else currentBasicBlock.appendInstruction(inst);
     }
 
     private void finishCurrentBasicBlock() {
@@ -241,7 +245,7 @@ public class IRBuilder implements ASTVisitor {
             IRRegister variableRegister;
             if (variableIRType.isClassPointer()) {
                 if (node.hasInitializeValue()) {
-                    variableRegister = new IRRegister(new IRPointerType(variableIRType));
+                    variableRegister = new IRRegister(new IRPointerType(variableIRType), "alloca");
                     appendInst(new IRAllocaInstruction(variableIRType, variableRegister));
                     node.getInitializeValue().accept(this);
                     IROperand initVal = node.getInitializeValue().getIRResultValue();
@@ -255,12 +259,12 @@ public class IRBuilder implements ASTVisitor {
                     appendInst(callInst);
                     IRRegister classRegister = new IRRegister(variableIRType);
                     appendInst(new IRBitcastInstruction(classRegister, classCharPtr, variableIRType));
-                    variableRegister = new IRRegister(new IRPointerType(variableIRType));
+                    variableRegister = new IRRegister(new IRPointerType(variableIRType), "alloca");
                     appendInst(new IRAllocaInstruction(variableIRType, variableRegister));
                     appendInst(new IRStoreInstruction(variableIRType, variableRegister, classRegister));
                 }
             } else {
-                variableRegister = new IRRegister(new IRPointerType(variableIRType));
+                variableRegister = new IRRegister(new IRPointerType(variableIRType), "alloca");
                 appendInst(new IRAllocaInstruction(variableIRType, variableRegister));
                 IROperand initVal;
                 if (node.hasInitializeValue()) {
@@ -285,13 +289,12 @@ public class IRBuilder implements ASTVisitor {
         assert currentFunction.getParameterType().size() == 1;
         IRRegister.resetTo(1);
         IRTypeSystem parameterType = currentFunction.getParameterType().get(0);
-        IRRegister parameterRegister = new IRRegister(new IRPointerType(parameterType));
+        IRRegister parameterRegister = new IRRegister(new IRPointerType(parameterType), "alloca");
         ((MethodScope) currentScope).setThisPtrRegister(parameterRegister);
         VariableEntity parameterEntity = currentScope.getVariableEntityRecursively(currentFunction.getParameterName().get(0));
         parameterEntity.setCurrentRegister(parameterRegister);
         appendInst(new IRAllocaInstruction(parameterType, parameterRegister));
-        int srcRegisterId = parameterRegister.getId() - 1;
-        appendInst(new IRStoreInstruction(parameterType, parameterRegister, new IRRegister(parameterType, srcRegisterId)));
+        appendInst(new IRStoreInstruction(parameterType, parameterRegister, new IRRegister(parameterType, 0)));
         node.getStatements().forEach(statement -> statement.accept(this));
         currentFunction.getReturnBlock().setEscapeInstruction(new IRReturnInstruction(getVoidType(), null));
         if (!currentBasicBlock.hasEscapeInstruction()) currentBasicBlock.setEscapeInstruction(new IRBrInstruction(null, currentFunction.getReturnBlock(), null, currentBasicBlock));
@@ -316,7 +319,7 @@ public class IRBuilder implements ASTVisitor {
         IRRegister.resetTo(parameterNumber);
         for (int i = 0; i < parameterNumber; i++) {
             IRTypeSystem parameterType = currentFunction.getParameterType().get(i);
-            IRRegister parameterRegister = new IRRegister(new IRPointerType(parameterType));
+            IRRegister parameterRegister = new IRRegister(new IRPointerType(parameterType), "parameter");
             if (insideClass && i == 0) {
                 // store this ptr
                 ((MethodScope) currentScope).setThisPtrRegister(parameterRegister);
@@ -329,14 +332,13 @@ public class IRBuilder implements ASTVisitor {
             IRTypeSystem parameterType = currentFunction.getParameterType().get(i);
             VariableEntity parameterEntity = currentScope.getVariableEntityRecursively(currentFunction.getParameterName().get(i));
             IRRegister targetRegister = parameterEntity.getCurrentRegister();
-            int srcRegisterId = targetRegister.getId() - parameterNumber;
-            IRRegister srcRegister = new IRRegister(parameterType, srcRegisterId);
+            IRRegister srcRegister = new IRRegister(parameterType, i);
             appendInst(new IRStoreInstruction(parameterType, targetRegister, srcRegister));
             if (i == 0) currentFunction.setThisRegister(targetRegister);
         }
         IRTypeSystem returnIRType = node.getReturnType().toIRType(module);
         if (!returnIRType.isVoid()) {
-            IRRegister returnValuePtr = new IRRegister(new IRPointerType(returnIRType));
+            IRRegister returnValuePtr = new IRRegister(new IRPointerType(returnIRType), "return_value");
             appendInst(new IRAllocaInstruction(returnIRType, returnValuePtr));
             ((FunctionScope) currentScope).setReturnValuePtr(returnValuePtr);
             node.getStatements().forEach(statement -> statement.accept(this));
@@ -544,7 +546,7 @@ public class IRBuilder implements ASTVisitor {
         IRBasicBlock terminateBlock = new IRBasicBlock(currentFunction, id + "_array_generation_for_terminate");
         // for (auto iter = arr,
         IRTypeSystem arrayType = arrayRegister.getIRType();
-        IRRegister iterPtr = new IRRegister(new IRPointerType(arrayType));
+        IRRegister iterPtr = new IRRegister(new IRPointerType(arrayType), "array_generate_iterator");
         appendInst(new IRAllocaInstruction(arrayType, iterPtr));
         appendInst(new IRStoreInstruction(arrayType, iterPtr, arrayRegister));
         // iterEnd = arr + length;
@@ -855,7 +857,7 @@ public class IRBuilder implements ASTVisitor {
     public void visit(BinaryExpressionNode node) {
         if (node.getExpressionType().isBool() && (Objects.equals(node.getOp(), "&&") || Objects.equals(node.getOp(), "||"))) {
             // logic short-circuit
-            IRRegister logicResultCharPtr = new IRRegister(new IRPointerType(getCharType()));
+            IRRegister logicResultCharPtr = new IRRegister(new IRPointerType(getCharType()), "logic_short_circuit_result");
             appendInst(new IRAllocaInstruction(getCharType(), logicResultCharPtr));
             int id = labelCnt++;
             String opName = Objects.equals(node.getOp(), "&&") ? "and" : "or";
