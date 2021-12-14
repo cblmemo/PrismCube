@@ -31,6 +31,12 @@ import java.io.PrintStream;
 public class IRPrinter implements IRVisitor {
     private PrintStream ps;
 
+    static boolean print = false;
+
+    public static void enable() {
+        print = true;
+    }
+
     /**
      * This method print llvm ir to PrintStream
      * specified by Memory.
@@ -38,7 +44,7 @@ public class IRPrinter implements IRVisitor {
      * @see Memory
      */
     public void print(Memory memory) {
-        if (memory.buildIR() && memory.printIR()) {
+        if (print) {
             ps = memory.getPrintStream();
             memory.getIRModule().accept(this);
         }

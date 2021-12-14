@@ -15,5 +15,5 @@ rm ./bin/b.ll
 rm ./bin/t.ll
 rm ./bin/*.bc
 echo "build finished."
-./bin/a.out
+#./bin/a.out
 rm ./bin/a.out

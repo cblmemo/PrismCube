@@ -23,8 +23,14 @@ import Memory.Memory;
 public class ASTPrinter {
     private int indentCnt = 0;
 
+    static boolean print = false;
+
+    public static void enable() {
+        print = true;
+    }
+
     public void print(Memory memory) {
-        if (memory.printAST()) {
+        if (print) {
             printf("-----------------------------------------ASTPrinter-----------------------------------------\n");
             printNode(memory.getASTRoot());
             printf("-----------------------------------------ASTPrinter-----------------------------------------\n");

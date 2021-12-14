@@ -1,8 +1,14 @@
 package Memory;
 
 import AST.ProgramNode;
+import Debug.ASTPrinter;
 import Debug.MemoLog;
+import Debug.ScopePrinter;
+import FrontEnd.ConstStringCollector;
+import FrontEnd.IRBuilder;
+import FrontEnd.IRPrinter;
 import IR.IRModule;
+import IR.Operand.IRRegister;
 import Utility.Scope.GlobalScope;
 import Utility.error.ArgumentParseError;
 import org.antlr.v4.runtime.tree.ParseTree;
@@ -31,12 +37,6 @@ public class Memory {
     // io
     private InputStream inputStream;
     private PrintStream printStream;
-
-    // flags
-    private boolean AST = false;
-    private boolean Scope = false;
-    private boolean IR = false;
-    private boolean IRBuild = false;
 
     public Memory(String[] args) throws FileNotFoundException {
         globalScope = new GlobalScope(null);
@@ -90,7 +90,7 @@ public class Memory {
                 }
                 case "-emit-llvm" -> {
                     if (syntaxOnly) err("argument conflict");
-                    IR = true;
+                    IRPrinter.enable();
                     emitLLVM = true;
                 }
                 case "-o" -> {
@@ -106,15 +106,19 @@ public class Memory {
                     receiveFromFile = true;
                 }
                 case "-debug" -> {
-                    AST = true;
-                    Scope = true;
+                    ASTPrinter.enable();
+                    ScopePrinter.enable();
                 }
+                case "-print-reg-name" -> IRRegister.printRegisterName();
                 default -> err("wrong argument format");
             }
         }
         if (!setLogFile) log.disableLog();
         if (!setLogLevel) log.SetLogLevel(MemoLog.LogLevel.DebugLevel);
-        if (!syntaxOnly) IRBuild = true;
+        if (!syntaxOnly) {
+            ConstStringCollector.enable();
+            IRBuilder.enable();
+        }
         if (!printToFile) printStream = System.out;
         if (!receiveFromFile) inputStream = System.in;
     }
@@ -125,26 +129,6 @@ public class Memory {
 
         // receive source code from stdin by default
         inputStream = System.in;
-
-        // disable printer for debug
-        AST = false;
-        Scope = false;
-    }
-
-    public boolean printAST() {
-        return AST;
-    }
-
-    public boolean printScope() {
-        return Scope;
-    }
-
-    public boolean printIR() {
-        return IR;
-    }
-
-    public boolean buildIR() {
-        return IRBuild;
     }
 
     public void setParseTreeRoot(ParseTree parseTreeRoot) {

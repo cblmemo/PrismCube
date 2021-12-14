@@ -14,8 +14,14 @@ import java.util.concurrent.atomic.AtomicInteger;
  */
 
 public class ScopePrinter {
+    static boolean print = false;
+
+    public static void enable() {
+        print = true;
+    }
+
     public void print(Memory memory) {
-        if (memory.printScope()) {
+        if (print) {
             printf("----------------------------------------ScopePrinter----------------------------------------\n");
             printScope(memory.getGlobalScope());
             printf("----------------------------------------ScopePrinter----------------------------------------\n");
@@ -48,9 +54,7 @@ public class ScopePrinter {
         } else {
             printf("-variables: (%d)\n", scope.getVariables().size());
             printf("%-" + (tabletLength - indentCnt * 4) + "s%s\n", "variable type", "variable name");
-            scope.getVariables().forEach((k, v) -> {
-                printf("%-" + (tabletLength - indentCnt * 4) + "s%s\n", v.getVariableType().getTypeName(), k);
-            });
+            scope.getVariables().forEach((k, v) -> printf("%-" + (tabletLength - indentCnt * 4) + "s%s\n", v.getVariableType().getTypeName(), k));
         }
         if (scope.getFunctions().size() == 0) {
             if (scope instanceof GlobalScope) {
@@ -113,9 +117,7 @@ public class ScopePrinter {
         } else {
             printf("parameters: (%d)\n", scope.getParameters().size());
             printf("%-" + (tabletLength - indentCnt * 4) + "s%s\n", "parameter type", "parameter name");
-            scope.getParameters().forEach(parameter -> {
-                printf("%-" + (tabletLength - indentCnt * 4) + "s%s\n", parameter.getVariableType().getTypeName(), parameter.getEntityName());
-            });
+            scope.getParameters().forEach(parameter -> printf("%-" + (tabletLength - indentCnt * 4) + "s%s\n", parameter.getVariableType().getTypeName(), parameter.getEntityName()));
         }
         printDefaultScope(scope);
         leave("Function Scope");

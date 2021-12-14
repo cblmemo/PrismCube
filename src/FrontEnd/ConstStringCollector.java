@@ -23,12 +23,18 @@ import static Debug.MemoLog.log;
 public class ConstStringCollector implements ASTVisitor {
     private IRModule module;
 
+    static boolean collect = false;
+
+    public static void enable() {
+        collect = true;
+    }
+
     /**
      * This method collect all const string
      * in source code and store them in IRModule.
      */
     public void collect(Memory memory) {
-        if (memory.buildIR()) {
+        if (collect) {
             log.Infof("Collect const string started.\n");
             module = memory.getIRModule();
             memory.getASTRoot().accept(this);

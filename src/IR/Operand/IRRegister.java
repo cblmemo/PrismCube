@@ -4,50 +4,61 @@ import IR.TypeSystem.IRTypeSystem;
 
 public class IRRegister extends IROperand {
     private final int id;
-    private String name = null;
-    private boolean haveName = false;
+    private final String name;
+    private boolean isAlloca = false;
 
     private static int registerCnt = 0;
-    private static int nameCnt = 0;
+    private static int allocaCnt = 0;
+    private static boolean printName = false;
 
     public static void reset() {
         registerCnt = 0;
+    }
+
+    public static void resetAlloca() {
+        allocaCnt = 0;
     }
 
     public static void resetTo(int cnt) {
         registerCnt = cnt;
     }
 
+    public static void resetAllocaTo(int cnt) {
+        allocaCnt = cnt;
+    }
+
     public static int getCurrentCnt() {
         return registerCnt;
     }
 
-    public IRRegister(IRTypeSystem irType) {
-        super(irType);
-        this.id = registerCnt++;
-    }
-
     public IRRegister(IRTypeSystem irType, String name) {
         super(irType);
-        this.id = -(nameCnt++);
+        this.id = registerCnt++;
         this.name = name;
-        haveName = true;
     }
 
     public IRRegister(IRTypeSystem irType, int id) {
         super(irType);
         this.id = id;
+        this.name = null;
     }
 
-    public int getId() {
-        assert id > 0;
-        return id;
+    public IRRegister(IRTypeSystem irType, String name, boolean isAlloca) {
+        super(irType);
+        this.id = -(++allocaCnt);
+        this.name = name;
+        this.isAlloca = isAlloca;
+    }
+
+    public static void printRegisterName() {
+        printName = true;
     }
 
     @Override
     public String toString() {
-        if (haveName) return "%" + name + "_" + (-id);
-        assert id > 0;
-        return "%" + id;
+        if (isAlloca) return "%" + name + "_" + (-id);
+        assert id >= 0;
+        if (printName && name != null) return "%" + name + "_" + id;
+        else return "%" + id;
     }
 }
