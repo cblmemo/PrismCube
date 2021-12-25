@@ -1,6 +1,6 @@
 package IR.Instruction;
 
-import IR.IRVisitor;
+import FrontEnd.IRVisitor;
 import IR.Operand.IROperand;
 import IR.TypeSystem.IRPointerType;
 import IR.TypeSystem.IRTypeSystem;
@@ -19,6 +19,18 @@ public class IRStoreInstruction extends IRInstruction {
         this.storeType = storeType;
         this.storeTarget = storeTarget;
         this.storeValue = storeValue;
+    }
+
+    public IROperand getStoreTarget() {
+        return storeTarget;
+    }
+
+    public IROperand getStoreValue() {
+        return storeValue;
+    }
+
+    public IRTypeSystem getStoreType() {
+        return storeType;
     }
 
     @Override

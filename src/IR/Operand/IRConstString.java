@@ -1,6 +1,6 @@
 package IR.Operand;
 
-import IR.IRVisitor;
+import FrontEnd.IRVisitor;
 import IR.TypeSystem.IRTypeSystem;
 
 public class IRConstString extends IROperand {

@@ -1,6 +1,6 @@
 package IR.Instruction;
 
-import IR.IRVisitor;
+import FrontEnd.IRVisitor;
 
 abstract public class IRInstruction {
     private String comment = null;

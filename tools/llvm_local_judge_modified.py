@@ -7,8 +7,8 @@ import os, time
     Modify following configurations to adapt to your environment.
 """
 # test_cases_dir = './testcases/sema/'
-test_cases_dir = './testcases/codegen/'
-# test_cases_dir = './testcases/optim/'
+# test_cases_dir = './testcases/codegen/'
+test_cases_dir = './testcases/optim/'
 # test_cases_dir = './testcases/optim-new/'
 compile_cmd = "bash ./build.bash"
 execute_cmd = "bash ./semantic.bash"
@@ -35,6 +35,7 @@ def collect_test_cases():
     for f in os.listdir(test_cases_dir):
         if os.path.splitext(f)[1] == '.mx':
             test_cases.append(f)
+    print(len(test_cases))
     for s in excluded_test_cases:
         if s in test_cases: test_cases.remove(s)
     test_cases.sort()
@@ -61,13 +62,13 @@ def clear():
     os.system("rm test.*")
     os.system("rm *.out")
     os.system("rm *.ll")
-    os.system("rm *.bc")
 
 def main():
     if os.system(compile_cmd):
         print(color_red + "Fail when building your compiler...")
         return
     test_cases = collect_test_cases()
+#     os.system('clang -S -emit-llvm builtin/builtin.c -o builtin/builtin.ll')
     os.system('cp %s ./builtin.ll' % builtin_path)
     total = 0
     passed = 0
@@ -96,11 +97,7 @@ def main():
             continue
         print("(T=%.2fs)" % (time.time() - start), end="\n")
         if test_codegen:
-            os.system(llc_cmd + ' --march=riscv32 -mattr=+m -o test.s test.ll')
-            os.system("llvm-as test.ll -o t.bc")
-            os.system("llvm-as builtin.ll -o b.bc")
-            os.system("llvm-link t.bc b.bc -o l.bc")
-            os.system("clang l.bc -o a.out")
+            os.system("clang test.ll builtin.ll -o a.out")
             os.system("./a.out < test.in > test.out")
             if os.system('diff -B -b test.out test.ans > diff.out'):
                 print(color_red + "Wrong answer" + color_none)

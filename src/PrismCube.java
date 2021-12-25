@@ -1,3 +1,4 @@
+import BackEnd.InstructionSelector;
 import Debug.ASTPrinter;
 import Debug.ScopePrinter;
 import FrontEnd.*;
@@ -29,6 +30,7 @@ public class PrismCube {
             new IRBuilder().build(memory);
             new IRPrinter().print(memory);
 
+            new InstructionSelector().select(memory);
         } catch (error err) {
             System.err.println(err.toString());
             throw new RuntimeException();

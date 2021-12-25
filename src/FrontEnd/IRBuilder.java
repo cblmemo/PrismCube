@@ -52,6 +52,10 @@ public class IRBuilder implements ASTVisitor {
         build = true;
     }
 
+    public static void disable() {
+        build = false;
+    }
+
     /**
      * This method build ir structure
      * for source code and store it in

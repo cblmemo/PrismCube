@@ -1,5 +1,6 @@
 package IR;
 
+import FrontEnd.IRVisitor;
 import IR.Operand.IRConstString;
 import IR.TypeSystem.*;
 import Utility.Scope.GlobalScope;
@@ -30,6 +31,13 @@ public class IRModule {
 
     private boolean generatedInitializeFunction = false;
     private final String globalInitializeFunctionName = "__mx_global_init";
+
+    private static final String llvmDetails = """
+            ; ModuleID = 'src.mx'
+            source_filename = "src.mx"
+            target datalayout = "e-m:o-i64:64-i128:128-n32:64-S128"
+            target triple = "arm64-apple-macosx12.0.0"
+            """;
 
     public IRModule() {
         addIRType("null", new IRNullType());
@@ -157,6 +165,10 @@ public class IRModule {
         addBuiltinFunction(malloc);
     }
 
+    public static String getLLVMDetails() {
+        return llvmDetails;
+    }
+
     public IRFunction getGlobalConstructor() {
         return globalConstructor;
     }
@@ -184,7 +196,8 @@ public class IRModule {
     }
 
     private void addBuiltinFunction(IRFunction function) {
-        if (builtinFunctions.containsKey(function.getFunctionName())) throw new IRError("duplicated IR builtin function name");
+        if (builtinFunctions.containsKey(function.getFunctionName()))
+            throw new IRError("duplicated IR builtin function name");
         builtinFunctions.put(function.getFunctionName(), function);
     }
 

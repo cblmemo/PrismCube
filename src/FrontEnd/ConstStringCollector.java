@@ -29,6 +29,10 @@ public class ConstStringCollector implements ASTVisitor {
         collect = true;
     }
 
+    public static void disable() {
+        collect = false;
+    }
+
     /**
      * This method collect all const string
      * in source code and store them in IRModule.

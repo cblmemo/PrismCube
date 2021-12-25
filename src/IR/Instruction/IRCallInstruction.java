@@ -1,7 +1,7 @@
 package IR.Instruction;
 
 import IR.IRFunction;
-import IR.IRVisitor;
+import FrontEnd.IRVisitor;
 import IR.Operand.IROperand;
 import IR.Operand.IRRegister;
 import IR.TypeSystem.IRTypeSystem;

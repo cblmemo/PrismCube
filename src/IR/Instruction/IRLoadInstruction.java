@@ -1,6 +1,6 @@
 package IR.Instruction;
 
-import IR.IRVisitor;
+import FrontEnd.IRVisitor;
 import IR.Operand.IROperand;
 import IR.Operand.IRRegister;
 import IR.TypeSystem.IRPointerType;
@@ -11,20 +11,32 @@ import java.util.Objects;
 public class IRLoadInstruction extends IRInstruction {
     private final IRTypeSystem loadType;
     private final IRRegister loadTarget;
-    private final IROperand loadSource;
+    private final IROperand loadValue;
 
-    public IRLoadInstruction(IRTypeSystem loadType, IRRegister loadTarget, IROperand loadSource) {
-        assert loadSource.getIRType() instanceof IRPointerType;
-        assert Objects.equals(loadType, ((IRPointerType) loadSource.getIRType()).getBaseType());
+    public IRLoadInstruction(IRTypeSystem loadType, IRRegister loadTarget, IROperand loadValue) {
+        assert loadValue.getIRType() instanceof IRPointerType;
+        assert Objects.equals(loadType, ((IRPointerType) loadValue.getIRType()).getBaseType());
         assert Objects.equals(loadType, loadTarget.getIRType());
         this.loadType = loadType;
         this.loadTarget = loadTarget;
-        this.loadSource = loadSource;
+        this.loadValue = loadValue;
+    }
+
+    public IRRegister getLoadTarget() {
+        return loadTarget;
+    }
+
+    public IROperand getLoadValue() {
+        return loadValue;
+    }
+
+    public IRTypeSystem getLoadType() {
+        return loadType;
     }
 
     @Override
     public String toString() {
-        return loadTarget + " = load " + loadType + ", " + loadSource.getIRType() + " " + loadSource + ", align " + loadType.sizeof();
+        return loadTarget + " = load " + loadType + ", " + loadValue.getIRType() + " " + loadValue + ", align " + loadType.sizeof();
     }
 
     @Override

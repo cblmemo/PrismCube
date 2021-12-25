@@ -1,6 +1,6 @@
 package IR.Instruction;
 
-import IR.IRVisitor;
+import FrontEnd.IRVisitor;
 import IR.Operand.IRRegister;
 import IR.TypeSystem.IRPointerType;
 import IR.TypeSystem.IRTypeSystem;

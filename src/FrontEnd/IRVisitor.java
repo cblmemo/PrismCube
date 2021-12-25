@@ -1,5 +1,9 @@
-package IR;
+package FrontEnd;
 
+import IR.IRBasicBlock;
+import IR.IRFunction;
+import IR.IRGlobalDefine;
+import IR.IRModule;
 import IR.Instruction.*;
 import IR.Operand.IRConstString;
 import IR.TypeSystem.IRStructureType;

@@ -37,6 +37,10 @@ public class IRPrinter implements IRVisitor {
         print = true;
     }
 
+    public static void disable() {
+        print = false;
+    }
+
     /**
      * This method print llvm ir to PrintStream
      * specified by Memory.
@@ -52,6 +56,7 @@ public class IRPrinter implements IRVisitor {
 
     @Override
     public void visit(IRModule module) {
+        ps.println(module.getLLVMDetails());
         module.getBuiltinFunctions().forEach((name, func) -> {
             if (func.hasCalled()) func.accept(this);
         });

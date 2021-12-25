@@ -10,6 +10,10 @@ public class IRConstBool extends IROperand {
         this.value = value;
     }
 
+    public boolean getValue() {
+        return value;
+    }
+
     @Override
     public String toString() {
         // bool is treated as i8 and has init value of const int 0 && 1 in clang

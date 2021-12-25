@@ -1,6 +1,9 @@
 package Memory;
 
+import ASM.ASMModule;
 import AST.ProgramNode;
+import BackEnd.ASMPrinter;
+import BackEnd.InstructionSelector;
 import Debug.ASTPrinter;
 import Debug.MemoLog;
 import Debug.ScopePrinter;
@@ -33,6 +36,7 @@ public class Memory {
     private final GlobalScope globalScope;
     private ProgramNode astRoot;
     private final IRModule irModule;
+    private final ASMModule asmModule;
 
     // io
     private InputStream inputStream;
@@ -41,6 +45,7 @@ public class Memory {
     public Memory(String[] args) throws FileNotFoundException {
         globalScope = new GlobalScope(null);
         irModule = new IRModule();
+        asmModule = new ASMModule();
         parseArgument(args);
     }
 
@@ -49,15 +54,19 @@ public class Memory {
     }
 
     private void parseArgument(String[] args) throws FileNotFoundException {
-        boolean syntaxOnly = false, setLogLevel = false, setLogFile = false, receiveFromFile = false, printToFile = false, emitLLVM = false;
-        if (args.length == 0) useDefaultSetup();
+        boolean syntaxOnly = false, setLogLevel = false, setLogFile = false, emitLLVM = false, codegen = false;
+        useDefaultSetup();
         for (int i = 0; i < args.length; i++) {
             String arg0 = args[i];
             if (!Objects.equals(arg0.charAt(0), '-')) err("wrong argument format");
             switch (arg0) {
                 case "-fsyntax-only" -> {
-                    if (emitLLVM) err("argument conflict");
+                    if (emitLLVM || codegen) err("argument conflict");
                     syntaxOnly = true;
+                    ConstStringCollector.disable();
+                    IRBuilder.disable();
+                    InstructionSelector.disable();
+                    ASMPrinter.disable();
                 }
                 case "-log" -> {
                     if (i == args.length - 1) err("missing argument");
@@ -89,21 +98,24 @@ public class Memory {
                     }
                 }
                 case "-emit-llvm" -> {
-                    if (syntaxOnly) err("argument conflict");
+                    if (syntaxOnly || codegen) err("argument conflict");
                     IRPrinter.enable();
                     emitLLVM = true;
+                }
+                case "-emit-asm" -> {
+                    if (syntaxOnly || emitLLVM) err("argument conflict");
+                    codegen = true;
+                    // -emit-asm is default setup
                 }
                 case "-o" -> {
                     if (i == args.length - 1) err("missing argument");
                     String arg1 = args[++i];
                     printStream = new PrintStream(arg1);
-                    printToFile = true;
                 }
                 case "-i" -> {
                     if (i == args.length - 1) err("missing argument");
                     String arg1 = args[++i];
                     inputStream = new FileInputStream(arg1);
-                    receiveFromFile = true;
                 }
                 case "-debug" -> {
                     ASTPrinter.enable();
@@ -113,22 +125,18 @@ public class Memory {
                 default -> err("wrong argument format");
             }
         }
-        if (!setLogFile) log.disableLog();
-        if (!setLogLevel) log.SetLogLevel(MemoLog.LogLevel.DebugLevel);
-        if (!syntaxOnly) {
-            ConstStringCollector.enable();
-            IRBuilder.enable();
-        }
-        if (!printToFile) printStream = System.out;
-        if (!receiveFromFile) inputStream = System.in;
     }
 
     public void useDefaultSetup() {
+        log.disableLog();
         log.SetLogLevel(MemoLog.LogLevel.DebugLevel);
         log.SetOutPutFile("bin/log.txt");
-
-        // receive source code from stdin by default
+        printStream = System.out;
         inputStream = System.in;
+        ConstStringCollector.enable();
+        IRBuilder.enable();
+        InstructionSelector.enable();
+        ASMPrinter.enable();
     }
 
     public void setParseTreeRoot(ParseTree parseTreeRoot) {
@@ -153,6 +161,10 @@ public class Memory {
 
     public IRModule getIRModule() {
         return irModule;
+    }
+
+    public ASMModule getAsmModule() {
+        return asmModule;
     }
 
     public InputStream getInputStream() {

@@ -1,6 +1,6 @@
 package IR.TypeSystem;
 
-import IR.IRVisitor;
+import FrontEnd.IRVisitor;
 import IR.Operand.IROperand;
 import IR.Operand.IRZeroInitializer;
 

@@ -1,7 +1,7 @@
 package IR.Instruction;
 
 import IR.IRBasicBlock;
-import IR.IRVisitor;
+import FrontEnd.IRVisitor;
 import IR.Operand.IROperand;
 
 public class IRBrInstruction extends IRInstruction {

@@ -50,6 +50,10 @@ public class IRRegister extends IROperand {
         this.isAlloca = isAlloca;
     }
 
+    public String getName() {
+        return name;
+    }
+
     public static void printRegisterName() {
         printName = true;
     }

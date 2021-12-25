@@ -44,6 +44,10 @@ public class MemoLog {
         this.level = level;
     }
 
+    public void enableLog() {
+        disabled = false;
+    }
+
     public void disableLog() {
         disabled = true;
     }

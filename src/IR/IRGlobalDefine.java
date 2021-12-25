@@ -1,5 +1,6 @@
 package IR;
 
+import FrontEnd.IRVisitor;
 import IR.Operand.IROperand;
 import IR.TypeSystem.IRIntType;
 import IR.TypeSystem.IRTypeSystem;

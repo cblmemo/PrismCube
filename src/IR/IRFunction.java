@@ -1,5 +1,6 @@
 package IR;
 
+import FrontEnd.IRVisitor;
 import IR.Operand.IRRegister;
 import IR.TypeSystem.IRTypeSystem;
 import Utility.Type.ArrayType;
@@ -8,7 +9,6 @@ import Utility.Type.Type;
 import Utility.error.IRError;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.Objects;
 
 import static Debug.MemoLog.log;

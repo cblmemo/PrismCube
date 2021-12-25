@@ -1,5 +1,6 @@
 package IR;
 
+import FrontEnd.IRVisitor;
 import IR.Instruction.IRAllocaInstruction;
 import IR.Instruction.IRBrInstruction;
 import IR.Instruction.IRInstruction;
