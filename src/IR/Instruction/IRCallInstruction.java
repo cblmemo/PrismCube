@@ -47,6 +47,26 @@ public class IRCallInstruction extends IRInstruction {
         return builder.toString();
     }
 
+    public ArrayList<IROperand> getArgumentValues() {
+        return argumentValues;
+    }
+
+    public IRFunction getCallFunction() {
+        return callFunction;
+    }
+
+    public boolean haveReturnValue() {
+        return resultRegister != null;
+    }
+
+    public IRRegister getResultRegister() {
+        return resultRegister;
+    }
+
+    public int getArgumentNumber() {
+        return argumentValues.size();
+    }
+
     @Override
     public String toString() {
         assert currentArgumentNumber == callFunction.getParameterType().size();

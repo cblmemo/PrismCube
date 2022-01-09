@@ -47,6 +47,14 @@ public class IRStructureType extends IRTypeSystem {
         return memberIndices.get(memberName);
     }
 
+    public int getMemberOffset(int index) {
+        AtomicInteger ret = new AtomicInteger();
+        memberTypes.forEach((name, type) -> {
+            if (memberIndices.get(name) < index) ret.addAndGet(type.sizeof());
+        });
+        return ret.get();
+    }
+
     public boolean hasCustomConstructor() {
         return hasCustomConstructor;
     }

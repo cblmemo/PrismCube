@@ -18,6 +18,7 @@ public class IRFunction {
     private String abbreviatedParameters = "";
     private final boolean declare;
     private IRTypeSystem returnType;
+    private final ArrayList<IRRegister> parameters = new ArrayList<>();
     private final ArrayList<IRTypeSystem> parameterType = new ArrayList<>();
     private final ArrayList<String> parameterName = new ArrayList<>();
     private final ArrayList<IRBasicBlock> blocks = new ArrayList<>();
@@ -125,14 +126,20 @@ public class IRFunction {
 
     public void addParameter(String parameterName, IRTypeSystem parameterType) {
 //        abbreviatedParameters += mangleParameterTypes(paraType);
+        this.parameters.add(new IRRegister(parameterType, "argument"));
         this.parameterName.add(parameterName);
         this.parameterType.add(parameterType);
     }
 
     public void builtinAddParameter(IRTypeSystem parameterType) {
 //        abbreviatedParameters += mangleParameterTypes(paraType);
+        this.parameters.add(null);
         this.parameterName.add(""); // builtin function won't use this
         this.parameterType.add(parameterType);
+    }
+
+    public ArrayList<IRRegister> getParameters() {
+        return parameters;
     }
 
     public ArrayList<IRTypeSystem> getParameterType() {
@@ -141,6 +148,10 @@ public class IRFunction {
 
     public ArrayList<String> getParameterName() {
         return parameterName;
+    }
+
+    public int getParameterNumber() {
+        return parameters.size();
     }
 
     public IRBasicBlock getEntryBlock() {
@@ -158,7 +169,7 @@ public class IRFunction {
     private String getParameterListStr() {
         StringBuilder builder = new StringBuilder();
         builder.append("(");
-        for (int i = 0; i < parameterType.size(); i++) {
+        for (int i = 0; i < parameters.size(); i++) {
             if (i != 0) builder.append(", ");
             builder.append(parameterType.get(i).toString());
         }

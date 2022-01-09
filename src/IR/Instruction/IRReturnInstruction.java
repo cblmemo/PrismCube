@@ -17,6 +17,14 @@ public class IRReturnInstruction extends IRInstruction {
         this.returnValue = returnValue;
     }
 
+    public boolean hasReturnValue() {
+        return !returnType.isVoid();
+    }
+
+    public IROperand getReturnValue() {
+        return returnValue;
+    }
+
     @Override
     public String toString() {
         if (returnType.isVoid()) return "ret void";

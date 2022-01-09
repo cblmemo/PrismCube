@@ -1,15 +1,16 @@
 #!python3
 
 import os, time
-
+import sys
 
 """
     Modify following configurations to adapt to your environment.
 """
 # test_cases_dir = './testcases/sema/'
 # test_cases_dir = './testcases/codegen/'
-test_cases_dir = './testcases/optim/'
+# test_cases_dir = './testcases/optim/'
 # test_cases_dir = './testcases/optim-new/'
+test_cases_dir = './testcases/' + sys.argv[1] + '/'
 compile_cmd = "bash ./build.bash"
 execute_cmd = "bash ./semantic.bash"
 excluded_test_cases = ["foo.mx"]

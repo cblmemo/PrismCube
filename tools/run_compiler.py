@@ -10,11 +10,10 @@ def clear(case):
     if case == 1:
         exe("rm ./bin/b.ll")
         exe("rm ./bin/t.ll")
-        exe("rm ./bin/a.out")
     elif case == 2:
         # todo add asm clear
-        exe("rm")
-        exe("rm ./bin/a.out")
+        exe("")
+    exe("rm ./bin/a.out")
 
 
 def build():
@@ -27,7 +26,7 @@ def build():
 
 def ir_gen_executable():
     exe("java -cp ./lib/antlr-4.9.1-complete.jar:./myout PrismCube -i ./bin/test.mx -o ./bin/test.ll -emit-llvm")
-    exe("clang -S -emit-llvm ./builtin/builtin.c -o ./builtin/builtin.ll -O0")
+    # exe("clang -S -emit-llvm ./builtin/builtin.c -o ./builtin/builtin.ll -O0")
     exe("scp ./builtin/builtin.ll ./bin/b.ll")
     exe("scp ./bin/test.ll ./bin/t.ll")
     exe("clang ./bin/b.ll ./bin/t.ll -o ./bin/a.out")
@@ -35,7 +34,9 @@ def ir_gen_executable():
 
 
 def asm_gen_executable():
-    # todo add asm cmd
+    exe("java -cp ./lib/antlr-4.9.1-complete.jar:./myout PrismCube -i ./bin/test.mx -o ./bin/test.s -emit-asm")
+    exe("scp ./bin/test.s ./bin/t.s")
+    exe("clang ./bin/t.s -o ./bin/a.out")
     print("asm generate and link finished.")
 
 
@@ -51,6 +52,11 @@ def gen_riscv_asm():
     exe("llc bin/a.ll -o bin/a.s -march=riscv32")
 
 
+def compile_test():
+    exe("java -cp ./lib/antlr-4.9.1-complete.jar:./myout PrismCube -i ./bin/test.mx -o ./bin/test.ll -emit-llvm")
+    exe("java -cp ./lib/antlr-4.9.1-complete.jar:./myout PrismCube -i ./bin/test.mx -o ./bin/test.s -emit-asm")
+
+
 def run():
     i = 1
     case = 0
@@ -60,13 +66,14 @@ def run():
         if arg == "--help" or arg == "-h":
             print("welcome to rainy memory's compiler runner!")
             print("now support:")
-            print("------------------------------------------------------")
+            print("---------------------------------------------------------")
             print("-h / --help       show help message")
             print("--reload          re-build compiler")
-            print("-emit-asm        generate standard rv32i asm for bin/a.c")
+            print("-emit-asm         generate standard rv32i asm for bin/a.c")
+            print("-compile-test     generate test.ll and test.s for test.mx")
             print("ir                test ir  for bin/test.mx")
             print("asm               test asm for bin/test.mx")
-            print("------------------------------------------------------")
+            print("---------------------------------------------------------")
             exit(0)
         elif arg == "--reload":
             build()
@@ -91,6 +98,13 @@ def run():
             else:
                 conflict = True
             case = 3
+        elif arg == "-compile-test":
+            if conflict:
+                print("error: mode conflict")
+                exit(1)
+            else:
+                conflict = True
+            case = 4
         else:
             print("error: unknown argument type")
             exit(1)
@@ -105,6 +119,8 @@ def run():
         clear(case)
     elif case == 3:
         gen_riscv_asm()
+    elif case == 4:
+        compile_test()
 
 
 run()

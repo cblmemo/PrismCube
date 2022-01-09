@@ -20,10 +20,26 @@ public class IRBrInstruction extends IRInstruction {
         assert condition == null || (condition.getIRType().isBool());
     }
 
+    public boolean isBranch() {
+        return condition != null;
+    }
+
+    public IROperand getCondition() {
+        return condition;
+    }
+
+    public IRBasicBlock getThenBlock() {
+        return thenBlock;
+    }
+
+    public IRBasicBlock getElseBlock() {
+        return elseBlock;
+    }
+
     @Override
     public String toString() {
-        if (condition == null) return "br label " + thenBlock.getLabel();
-        return "br " + condition.getIRType() + " " + condition + ", label " + thenBlock.getLabel() + ", label " + elseBlock.getLabel();
+        if (isBranch()) return "br " + condition.getIRType() + " " + condition + ", label " + thenBlock.getLabel() + ", label " + elseBlock.getLabel();
+        return "br label " + thenBlock.getLabel();
     }
 
     @Override

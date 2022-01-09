@@ -22,6 +22,14 @@ public class IRBitcastInstruction extends IRInstruction {
         this.targetType = targetType;
     }
 
+    public IRRegister getResultRegister() {
+        return resultRegister;
+    }
+
+    public IROperand getPtrValue() {
+        return ptrValue;
+    }
+
     @Override
     public String toString() {
         return resultRegister + " = bitcast " + ptrValue.getIRType() + " " + ptrValue + " to " + targetType;

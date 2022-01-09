@@ -4,6 +4,7 @@ import ASM.ASMModule;
 import AST.ProgramNode;
 import BackEnd.ASMPrinter;
 import BackEnd.InstructionSelector;
+import BackEnd.RegisterAllocator;
 import Debug.ASTPrinter;
 import Debug.MemoLog;
 import Debug.ScopePrinter;
@@ -54,6 +55,7 @@ public class Memory {
     }
 
     private void parseArgument(String[] args) throws FileNotFoundException {
+        // todo use enum mode to avoid chaos enable and disable
         boolean syntaxOnly = false, setLogLevel = false, setLogFile = false, emitLLVM = false, codegen = false;
         useDefaultSetup();
         for (int i = 0; i < args.length; i++) {
@@ -66,6 +68,7 @@ public class Memory {
                     ConstStringCollector.disable();
                     IRBuilder.disable();
                     InstructionSelector.disable();
+                    RegisterAllocator.disable();
                     ASMPrinter.disable();
                 }
                 case "-log" -> {
@@ -100,6 +103,9 @@ public class Memory {
                 case "-emit-llvm" -> {
                     if (syntaxOnly || codegen) err("argument conflict");
                     IRPrinter.enable();
+                    InstructionSelector.disable();
+                    RegisterAllocator.disable();
+                    ASMPrinter.disable();
                     emitLLVM = true;
                 }
                 case "-emit-asm" -> {
@@ -136,6 +142,7 @@ public class Memory {
         ConstStringCollector.enable();
         IRBuilder.enable();
         InstructionSelector.enable();
+        RegisterAllocator.enable();
         ASMPrinter.enable();
     }
 

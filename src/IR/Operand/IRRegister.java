@@ -23,14 +23,6 @@ public class IRRegister extends IROperand {
         registerCnt = cnt;
     }
 
-    public static void resetAllocaTo(int cnt) {
-        allocaCnt = cnt;
-    }
-
-    public static int getCurrentCnt() {
-        return registerCnt;
-    }
-
     public IRRegister(IRTypeSystem irType, String name) {
         super(irType);
         this.id = registerCnt++;
@@ -51,7 +43,7 @@ public class IRRegister extends IROperand {
     }
 
     public String getName() {
-        return name;
+        return name + Math.abs(id);
     }
 
     public static void printRegisterName() {

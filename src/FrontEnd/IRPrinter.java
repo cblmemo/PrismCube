@@ -104,8 +104,6 @@ public class IRPrinter implements IRVisitor {
                 ps.print("\t");
                 instruction.accept(this);
             });
-            ps.print("\t");
-            block.getEscapeInstruction().accept(this);
             if (!block.isReturnBlock()) ps.println();
         }
     }

@@ -18,6 +18,14 @@ public class IRAllocaInstruction extends IRInstruction {
         this.allocaTarget = allocaTarget;
     }
 
+    public IRTypeSystem getAllocaType() {
+        return allocaType;
+    }
+
+    public IRRegister getAllocaTarget() {
+        return allocaTarget;
+    }
+
     @Override
     public String toString() {
         return allocaTarget + " = alloca " + allocaType + ", align " + allocaType.sizeof();

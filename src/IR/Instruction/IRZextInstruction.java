@@ -22,6 +22,14 @@ public class IRZextInstruction extends IRInstruction {
         this.resultType = resultType;
     }
 
+    public IRRegister getZextResultRegister() {
+        return zextResultRegister;
+    }
+
+    public IROperand getZextTarget() {
+        return zextTarget;
+    }
+
     @Override
     public String toString() {
         return zextResultRegister + " = zext " + originalType + " " + zextTarget + " to " + resultType;

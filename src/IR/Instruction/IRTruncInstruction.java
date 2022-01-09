@@ -21,6 +21,14 @@ public class IRTruncInstruction extends IRInstruction {
         this.resultType = resultType;
     }
 
+    public IRRegister getTruncResultRegister() {
+        return truncResultRegister;
+    }
+
+    public IROperand getTruncTarget() {
+        return truncTarget;
+    }
+
     @Override
     public String toString() {
         return truncResultRegister + " = trunc " + originalType + " " + truncTarget + " to " + resultType;

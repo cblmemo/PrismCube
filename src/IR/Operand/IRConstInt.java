@@ -2,7 +2,7 @@ package IR.Operand;
 
 import IR.TypeSystem.IRTypeSystem;
 
-public class IRConstInt extends IROperand {
+public class IRConstInt extends IRConstNumber {
     private final int value;
 
     public IRConstInt(IRTypeSystem irType, int value) {
@@ -11,6 +11,11 @@ public class IRConstInt extends IROperand {
     }
 
     public int getValue() {
+        return value;
+    }
+
+    @Override
+    public int getIntValue() {
         return value;
     }
 

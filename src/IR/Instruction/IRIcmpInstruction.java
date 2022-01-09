@@ -1,10 +1,11 @@
 package IR.Instruction;
 
 import FrontEnd.IRVisitor;
+import IR.Operand.IRConstNumber;
 import IR.Operand.IROperand;
 import IR.Operand.IRRegister;
 
-public class IRIcmpInstruction extends IRInstruction{
+public class IRIcmpInstruction extends IRInstruction {
     private final String op;
     private final IRRegister resultRegister;
     private final IROperand lhs;
@@ -15,6 +16,22 @@ public class IRIcmpInstruction extends IRInstruction{
         this.resultRegister = resultRegister;
         this.lhs = lhs;
         this.rhs = rhs;
+    }
+
+    public String getOp() {
+        return op;
+    }
+
+    public IRRegister getResultRegister() {
+        return resultRegister;
+    }
+
+    public IROperand getLhs() {
+        return lhs;
+    }
+
+    public IROperand getRhs() {
+        return rhs;
     }
 
     @Override

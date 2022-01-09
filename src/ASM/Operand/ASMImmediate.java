@@ -7,6 +7,14 @@ public class ASMImmediate extends ASMOperand {
         this.imm = imm;
     }
 
+    public void updateImmediate(int offset) {
+        imm += offset;
+    }
+
+    public int getImm() {
+        return imm;
+    }
+
     @Override
     public String toString() {
         return Integer.toString(imm);

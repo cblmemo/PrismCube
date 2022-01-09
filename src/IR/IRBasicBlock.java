@@ -11,6 +11,7 @@ import java.util.ArrayList;
 
 public class IRBasicBlock {
     private final IRLabel label;
+    private final String labelName;
     private final ArrayList<IRInstruction> instructions = new ArrayList<>();
     private ArrayList<IRAllocaInstruction> allocas;
     private IRInstruction escapeInstruction = null;
@@ -25,10 +26,15 @@ public class IRBasicBlock {
 
     public IRBasicBlock(IRFunction parentFunction, String labelName) {
         this.label = new IRLabel(prefix + parentFunction.getFunctionName() + delim + labelName);
+        this.labelName = labelName;
     }
 
     public IRLabel getLabel() {
         return label;
+    }
+
+    public String getLabelName() {
+        return labelName;
     }
 
     public void appendInstruction(IRInstruction inst) {
@@ -54,6 +60,7 @@ public class IRBasicBlock {
         assert !hasFinished;
         assert escapeInstruction != null;
         hasFinished = true;
+        instructions.add(escapeInstruction);
     }
 
     public ArrayList<IRInstruction> getInstructions() {
@@ -62,10 +69,6 @@ public class IRBasicBlock {
 
     public ArrayList<IRAllocaInstruction> getAllocas() {
         return allocas;
-    }
-
-    public IRInstruction getEscapeInstruction() {
-        return escapeInstruction;
     }
 
     public void markAsReturnBlock() {

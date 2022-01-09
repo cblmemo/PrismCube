@@ -11,6 +11,6 @@ public class ASMVirtualRegister extends ASMRegister {
 
     @Override
     public String toString() {
-        return "%" + name;
+        return "$" + name;
     }
 }

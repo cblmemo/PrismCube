@@ -2,7 +2,7 @@ package IR.Operand;
 
 import IR.TypeSystem.IRTypeSystem;
 
-public class IRConstBool extends IROperand {
+public class IRConstBool extends IRConstNumber {
     private final boolean value;
 
     public IRConstBool(IRTypeSystem irType, boolean value) {
@@ -12,6 +12,11 @@ public class IRConstBool extends IROperand {
 
     public boolean getValue() {
         return value;
+    }
+
+    @Override
+    public int getIntValue() {
+        return value ? 1 : 0;
     }
 
     @Override

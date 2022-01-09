@@ -151,6 +151,7 @@ public class IRBuilder implements ASTVisitor {
                     // class method format: <className>.<methodName>
                     IRFunction function = new IRFunction(className + "." + method.getFunctionName());
                     function.setReturnType(method.getReturnType().toIRType(module));
+                    IRRegister.reset();
                     // method's first parameter is this
                     function.addParameter("__mx_thisPtr", new IRPointerType(classIRType));
                     VariableEntity thisPtr = new VariableEntity(classType, "__mx_thisPtr", new Cursor(-1, -1));
@@ -180,6 +181,7 @@ public class IRBuilder implements ASTVisitor {
                 functionEntity.getFunctionScope().getParameters().forEach(VariableEntity::setAsVisitedInIR);
                 IRFunction function = new IRFunction(((FunctionDefineNode) define).getFunctionName());
                 function.setReturnType(((FunctionDefineNode) define).getReturnType().toIRType(module));
+                IRRegister.reset();
                 ((FunctionDefineNode) define).getParameters().forEach(parameter -> function.addParameter(parameter.getParameterName(), parameter.getType().toIRType(module)));
                 module.addFunction(function);
                 globalScope.getFunctionRecursively(((FunctionDefineNode) define).getFunctionName()).setIRFunction(function);
@@ -234,7 +236,6 @@ public class IRBuilder implements ASTVisitor {
             if (node.hasInitializeValue()) {
                 // generate an initialize function
                 IRFunction singleInitializeFunction = module.generateSingleInitializeFunction();
-                int cnt = IRRegister.getCurrentCnt();
                 currentFunction = singleInitializeFunction;
                 currentBasicBlock = singleInitializeFunction.getEntryBlock();
                 IRRegister.reset();
@@ -246,8 +247,6 @@ public class IRBuilder implements ASTVisitor {
                 currentFunction.getReturnBlock().setEscapeInstruction(new IRReturnInstruction(getVoidType(), null));
                 finishCurrentBasicBlock(new IRBrInstruction(null, currentFunction.getReturnBlock(), null, currentBasicBlock));
                 currentFunction.finishFunction();
-                IRRegister.resetTo(cnt);
-                IRRegister.resetAllocaTo(cnt);
                 currentFunction = null;
                 currentBasicBlock = null;
             }
@@ -299,7 +298,6 @@ public class IRBuilder implements ASTVisitor {
         // manage this parameter
         assert currentFunction.getParameterType().size() == 1;
         IRRegister.resetTo(1);
-        IRRegister.resetAllocaTo(1);
         IRTypeSystem parameterType = currentFunction.getParameterType().get(0);
         IRRegister parameterRegister = new IRRegister(new IRPointerType(parameterType), "para", true);
         ((MethodScope) currentScope).setThisPtrRegister(parameterRegister);
@@ -329,7 +327,6 @@ public class IRBuilder implements ASTVisitor {
         currentScope = currentScope.getFunctionRecursively(node.getFunctionName()).getFunctionScope();
         int parameterNumber = currentFunction.getParameterType().size();
         IRRegister.resetTo(parameterNumber);
-        IRRegister.resetAllocaTo(parameterNumber);
         for (int i = 0; i < parameterNumber; i++) {
             IRTypeSystem parameterType = currentFunction.getParameterType().get(i);
             IRRegister parameterRegister = new IRRegister(new IRPointerType(parameterType), "para", true);

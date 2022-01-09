@@ -1,8 +1,11 @@
 package IR.Instruction;
 
 import FrontEnd.IRVisitor;
+import IR.Operand.IRConstNumber;
 import IR.Operand.IROperand;
 import IR.Operand.IRRegister;
+
+import java.util.Objects;
 
 public class IRBinaryInstruction extends IRInstruction {
     private final String op;
@@ -15,6 +18,22 @@ public class IRBinaryInstruction extends IRInstruction {
         this.resultRegister = resultRegister;
         this.lhs = lhs;
         this.rhs = rhs;
+    }
+
+    public String getOp() {
+        return op;
+    }
+
+    public IRRegister getResultRegister() {
+        return resultRegister;
+    }
+
+    public IROperand getLhs() {
+        return lhs;
+    }
+
+    public IROperand getRhs() {
+        return rhs;
     }
 
     @Override

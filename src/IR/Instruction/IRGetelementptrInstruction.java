@@ -27,6 +27,22 @@ public class IRGetelementptrInstruction extends IRInstruction {
         this.indices.add(index);
     }
 
+    public ArrayList<IROperand> getIndices() {
+        return indices;
+    }
+
+    public IRRegister getResultRegister() {
+        return resultRegister;
+    }
+
+    public IRTypeSystem getElementType() {
+        return elementType;
+    }
+
+    public IROperand getPtrValue() {
+        return ptrValue;
+    }
+
     @Override
     public String toString() {
         StringBuilder builder = new StringBuilder();
