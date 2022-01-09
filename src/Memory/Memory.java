@@ -135,8 +135,6 @@ public class Memory {
 
     public void useDefaultSetup() {
         log.disableLog();
-        log.SetLogLevel(MemoLog.LogLevel.DebugLevel);
-        log.SetOutPutFile("bin/log.txt");
         printStream = System.out;
         inputStream = System.in;
         ConstStringCollector.enable();
