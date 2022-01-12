@@ -8,8 +8,7 @@ import Memory.Memory;
 import Utility.error.error;
 
 /**
- * This class compiles source code.
- * Now support ir generate.
+ * This class compiles source code to rv32i asm.
  *
  * @author rainy memory
  * @version 1.0.0
@@ -33,6 +32,7 @@ public class PrismCube {
             new IRPrinter().print(memory);
 
             new InstructionSelector().select(memory);
+            new ASMPrinter().printVirtual(memory);
             new RegisterAllocator().naiveAllocate(memory);
             new ASMPrinter().print(memory);
         } catch (error err) {

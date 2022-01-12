@@ -64,6 +64,12 @@ public class InstructionSelector implements IRVisitor {
         appendInst(arithmeticInstruction);
     }
 
+    private ASMLabel getFunctionLabel(String functionName) {
+        if (functions.containsKey(functionName)) return functions.get(functionName).getLabel();
+        assert builtinFunctions.containsKey(functionName);
+        return builtinFunctions.get(functionName).getLabel();
+    }
+
     private ASMVirtualRegister toVirtualRegister(IROperand operand) {
         if (operand instanceof IRRegister) {
             if (operand instanceof IRGlobalVariableRegister) {
@@ -192,7 +198,8 @@ public class InstructionSelector implements IRVisitor {
             ASMAddress argumentAddress = new ASMAddress(ASMPhysicalRegister.getPhysicalRegister(ASMPhysicalRegister.PhysicalRegisterName.sp), new ASMImmediate(4 * (i - 8)));
             appendInst(new ASMMemoryInstruction(ASMMemoryInstruction.InstType.sw, toVirtualRegister(inst.getArgumentValues().get(i)), argumentAddress));
         }
-        appendPseudoInst(ASMPseudoInstruction.InstType.call, functions.get(inst.getCallFunction().getFunctionName()).getLabel());
+        ASMLabel functionLabel = getFunctionLabel(inst.getCallFunction().getFunctionName());
+        appendPseudoInst(ASMPseudoInstruction.InstType.call, functionLabel);
         if (inst.haveReturnValue()) appendPseudoInst(ASMPseudoInstruction.InstType.mv, toVirtualRegister(inst.getResultRegister()), ASMPhysicalRegister.getPhysicalRegister(ASMPhysicalRegister.PhysicalRegisterName.a0));
         // retrieve callee save register
         ASMPhysicalRegister.getCallerSaveRegisters().forEach(reg -> appendPseudoInst(ASMPseudoInstruction.InstType.mv, reg, callerSaves.get(reg)));
@@ -219,7 +226,7 @@ public class InstructionSelector implements IRVisitor {
     @Override
     public void visit(IRAllocaInstruction inst) {
         ASMImmediate offset = new ASMImmediate(currentFunction.getStackFrame().getAllocaRegisterOffset(inst.getAllocaTarget()));
-        appendArithmeticInst(ASMArithmeticInstruction.InstType.add, toVirtualRegister(inst.getAllocaTarget()), ASMPhysicalRegister.getPhysicalRegister(ASMPhysicalRegister.PhysicalRegisterName.sp), offset);
+        appendArithmeticInst(ASMArithmeticInstruction.InstType.addi, toVirtualRegister(inst.getAllocaTarget()), ASMPhysicalRegister.getPhysicalRegister(ASMPhysicalRegister.PhysicalRegisterName.sp), offset);
     }
 
     @Override

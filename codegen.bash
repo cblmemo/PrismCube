@@ -1,3 +1,4 @@
 set ff=UNIX
 set -e
-cat | java -cp lib/antlr-4.9.1-complete.jar:./myout PrismCube -emit-asm
+scp ./builtin/builtin.s ./builtin.s
+cat | java -cp lib/antlr-4.9.1-complete.jar:./myout PrismCube -emit-asm -o output.s

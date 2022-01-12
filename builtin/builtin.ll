@@ -1,7 +1,7 @@
-; ModuleID = './builtin/builtin.c'
-source_filename = "./builtin/builtin.c"
+; ModuleID = 'builtin/builtin.c'
+source_filename = "builtin/builtin.c"
 target datalayout = "e-m:o-i64:64-i128:128-n32:64-S128"
-target triple = "arm64-apple-macosx12.0.0"
+target triple = "riscv32"
 
 @.str = private unnamed_addr constant [3 x i8] c"%s\00", align 1
 @.str.1 = private unnamed_addr constant [4 x i8] c"%s\0A\00", align 1
@@ -49,7 +49,7 @@ define void @printlnInt(i32 %0) #0 {
 ; Function Attrs: noinline nounwind optnone ssp uwtable
 define i8* @getString() #0 {
   %1 = alloca i8*, align 8
-  %2 = call i8* @malloc(i64 1024) #5
+  %2 = call align 16 i8* @malloc(i64 1024) #5
   store i8* %2, i8** %1, align 8
   %3 = load i8*, i8** %1, align 8
   %4 = call i32 (i8*, ...) @scanf(i8* getelementptr inbounds ([3 x i8], [3 x i8]* @.str, i64 0, i64 0), i8* %3)
@@ -58,7 +58,7 @@ define i8* @getString() #0 {
 }
 
 ; Function Attrs: allocsize(0)
-declare i8* @malloc(i64) #2
+declare align 16 i8* @malloc(i64) #2
 
 declare i32 @scanf(i8*, ...) #1
 
@@ -75,7 +75,7 @@ define i8* @toString(i32 %0) #0 {
   %2 = alloca i32, align 4
   %3 = alloca i8*, align 8
   store i32 %0, i32* %2, align 4
-  %4 = call i8* @malloc(i64 20) #5
+  %4 = call align 16 i8* @malloc(i64 20) #5
   store i8* %4, i8** %3, align 8
   %5 = load i8*, i8** %3, align 8
   %6 = load i8*, i8** %3, align 8
@@ -109,29 +109,30 @@ define i8* @__mx_concatenateString(i8* %0, i8* %1) #0 {
   store i32 %13, i32* %5, align 4
   %14 = load i32, i32* %5, align 4
   %15 = sext i32 %14 to i64
-  %16 = call i8* @malloc(i64 %15) #5
-  store i8* %16, i8** %6, align 8
-  %17 = load i8*, i8** %6, align 8
-  %18 = getelementptr inbounds i8, i8* %17, i64 0
-  store i8 0, i8* %18, align 1
-  %19 = load i8*, i8** %6, align 8
-  %20 = load i8*, i8** %3, align 8
-  %21 = load i8*, i8** %6, align 8
-  %22 = call i64 @llvm.objectsize.i64.p0i8(i8* %21, i1 false, i1 true, i1 false)
-  %23 = call i8* @__strcat_chk(i8* %19, i8* %20, i64 %22) #6
-  %24 = load i8*, i8** %6, align 8
-  %25 = load i8*, i8** %4, align 8
-  %26 = load i8*, i8** %6, align 8
-  %27 = call i64 @llvm.objectsize.i64.p0i8(i8* %26, i1 false, i1 true, i1 false)
-  %28 = call i8* @__strcat_chk(i8* %24, i8* %25, i64 %27) #6
-  %29 = load i8*, i8** %6, align 8
-  %30 = load i32, i32* %5, align 4
-  %31 = sub nsw i32 %30, 1
-  %32 = sext i32 %31 to i64
-  %33 = getelementptr inbounds i8, i8* %29, i64 %32
-  store i8 0, i8* %33, align 1
-  %34 = load i8*, i8** %6, align 8
-  ret i8* %34
+  %16 = mul i64 1, %15
+  %17 = call align 16 i8* @malloc(i64 %16) #5
+  store i8* %17, i8** %6, align 8
+  %18 = load i8*, i8** %6, align 8
+  %19 = getelementptr inbounds i8, i8* %18, i64 0
+  store i8 0, i8* %19, align 1
+  %20 = load i8*, i8** %6, align 8
+  %21 = load i8*, i8** %3, align 8
+  %22 = load i8*, i8** %6, align 8
+  %23 = call i64 @llvm.objectsize.i64.p0i8(i8* %22, i1 false, i1 true, i1 false)
+  %24 = call i8* @__strcat_chk(i8* %20, i8* %21, i64 %23) #6
+  %25 = load i8*, i8** %6, align 8
+  %26 = load i8*, i8** %4, align 8
+  %27 = load i8*, i8** %6, align 8
+  %28 = call i64 @llvm.objectsize.i64.p0i8(i8* %27, i1 false, i1 true, i1 false)
+  %29 = call i8* @__strcat_chk(i8* %25, i8* %26, i64 %28) #6
+  %30 = load i8*, i8** %6, align 8
+  %31 = load i32, i32* %5, align 4
+  %32 = sub nsw i32 %31, 1
+  %33 = sext i32 %32 to i64
+  %34 = getelementptr inbounds i8, i8* %30, i64 %33
+  store i8 0, i8* %34, align 1
+  %35 = load i8*, i8** %6, align 8
+  ret i8* %35
 }
 
 declare i64 @strlen(i8*) #1
@@ -258,41 +259,44 @@ define i8* @__mx_stringSubstring(i8* %0, i32 %1, i32 %2) #0 {
   store i32 %12, i32* %7, align 4
   %13 = load i32, i32* %7, align 4
   %14 = sext i32 %13 to i64
-  %15 = call i8* @malloc(i64 %14) #5
-  store i8* %15, i8** %8, align 8
-  %16 = load i8*, i8** %8, align 8
-  %17 = load i8*, i8** %4, align 8
-  %18 = load i32, i32* %5, align 4
-  %19 = sext i32 %18 to i64
-  %20 = getelementptr inbounds i8, i8* %17, i64 %19
-  %21 = load i32, i32* %7, align 4
-  %22 = sext i32 %21 to i64
-  %23 = load i8*, i8** %8, align 8
-  %24 = call i64 @llvm.objectsize.i64.p0i8(i8* %23, i1 false, i1 true, i1 false)
-  %25 = call i8* @__strncat_chk(i8* %16, i8* %20, i64 %22, i64 %24) #6
-  %26 = load i8*, i8** %8, align 8
-  %27 = load i32, i32* %7, align 4
-  %28 = sub nsw i32 %27, 1
-  %29 = sext i32 %28 to i64
-  %30 = getelementptr inbounds i8, i8* %26, i64 %29
-  store i8 0, i8* %30, align 1
-  %31 = load i8*, i8** %8, align 8
-  ret i8* %31
+  %15 = mul i64 1, %14
+  %16 = call align 16 i8* @malloc(i64 %15) #5
+  store i8* %16, i8** %8, align 8
+  %17 = load i8*, i8** %8, align 8
+  %18 = load i8*, i8** %4, align 8
+  %19 = load i32, i32* %5, align 4
+  %20 = sext i32 %19 to i64
+  %21 = getelementptr inbounds i8, i8* %18, i64 %20
+  %22 = load i32, i32* %7, align 4
+  %23 = sext i32 %22 to i64
+  %24 = load i8*, i8** %8, align 8
+  %25 = call i64 @llvm.objectsize.i64.p0i8(i8* %24, i1 false, i1 true, i1 false)
+  %26 = call i8* @__memcpy_chk(i8* %17, i8* %21, i64 %23, i64 %25) #6
+  %27 = load i8*, i8** %8, align 8
+  %28 = load i32, i32* %7, align 4
+  %29 = sub nsw i32 %28, 1
+  %30 = sext i32 %29 to i64
+  %31 = getelementptr inbounds i8, i8* %27, i64 %30
+  store i8 0, i8* %31, align 1
+  %32 = load i8*, i8** %8, align 8
+  ret i8* %32
 }
 
 ; Function Attrs: nounwind
-declare i8* @__strncat_chk(i8*, i8*, i64, i64) #4
+declare i8* @__memcpy_chk(i8*, i8*, i64, i64) #4
 
 ; Function Attrs: noinline nounwind optnone ssp uwtable
 define i32 @__mx_stringParseInt(i8* %0) #0 {
   %2 = alloca i8*, align 8
+  %3 = alloca i32, align 4
   store i8* %0, i8** %2, align 8
-  %3 = load i8*, i8** %2, align 8
-  %4 = call i32 @atoi(i8* %3)
-  ret i32 %4
+  %4 = load i8*, i8** %2, align 8
+  %5 = call i32 (i8*, i8*, ...) @sscanf(i8* %4, i8* getelementptr inbounds ([3 x i8], [3 x i8]* @.str.2, i64 0, i64 0), i32* %3)
+  %6 = load i32, i32* %3, align 4
+  ret i32 %6
 }
 
-declare i32 @atoi(i8*) #1
+declare i32 @sscanf(i8*, i8*, ...) #1
 
 ; Function Attrs: noinline nounwind optnone ssp uwtable
 define i32 @__mx_stringOrd(i8* %0, i32 %1) #0 {
@@ -315,26 +319,12 @@ define i8* @__mx_malloc(i32 %0) #0 {
   store i32 %0, i32* %2, align 4
   %3 = load i32, i32* %2, align 4
   %4 = sext i32 %3 to i64
-  %5 = call i8* @malloc(i64 %4) #5
+  %5 = call align 16 i8* @malloc(i64 %4) #5
   ret i8* %5
 }
 
-attributes #0 = { noinline nounwind optnone ssp uwtable "disable-tail-calls"="false" "frame-pointer"="non-leaf" "less-precise-fpmad"="false" "min-legal-vector-width"="0" "no-infs-fp-math"="false" "no-jump-tables"="false" "no-nans-fp-math"="false" "no-signed-zeros-fp-math"="false" "no-trapping-math"="true" "probe-stack"="__chkstk_darwin" "stack-protector-buffer-size"="8" "target-cpu"="apple-m1" "target-features"="+aes,+crc,+crypto,+dotprod,+fp-armv8,+fp16fml,+fullfp16,+lse,+neon,+ras,+rcpc,+rdm,+sha2,+sha3,+sm4,+v8.5a,+zcm,+zcz" "unsafe-fp-math"="false" "use-soft-float"="false" }
-attributes #1 = { "disable-tail-calls"="false" "frame-pointer"="non-leaf" "less-precise-fpmad"="false" "no-infs-fp-math"="false" "no-nans-fp-math"="false" "no-signed-zeros-fp-math"="false" "no-trapping-math"="true" "probe-stack"="__chkstk_darwin" "stack-protector-buffer-size"="8" "target-cpu"="apple-m1" "target-features"="+aes,+crc,+crypto,+dotprod,+fp-armv8,+fp16fml,+fullfp16,+lse,+neon,+ras,+rcpc,+rdm,+sha2,+sha3,+sm4,+v8.5a,+zcm,+zcz" "unsafe-fp-math"="false" "use-soft-float"="false" }
-attributes #2 = { allocsize(0) "disable-tail-calls"="false" "frame-pointer"="non-leaf" "less-precise-fpmad"="false" "no-infs-fp-math"="false" "no-nans-fp-math"="false" "no-signed-zeros-fp-math"="false" "no-trapping-math"="true" "probe-stack"="__chkstk_darwin" "stack-protector-buffer-size"="8" "target-cpu"="apple-m1" "target-features"="+aes,+crc,+crypto,+dotprod,+fp-armv8,+fp16fml,+fullfp16,+lse,+neon,+ras,+rcpc,+rdm,+sha2,+sha3,+sm4,+v8.5a,+zcm,+zcz" "unsafe-fp-math"="false" "use-soft-float"="false" }
-attributes #3 = { nofree nosync nounwind readnone speculatable willreturn }
-attributes #4 = { nounwind "disable-tail-calls"="false" "frame-pointer"="non-leaf" "less-precise-fpmad"="false" "no-infs-fp-math"="false" "no-nans-fp-math"="false" "no-signed-zeros-fp-math"="false" "no-trapping-math"="true" "probe-stack"="__chkstk_darwin" "stack-protector-buffer-size"="8" "target-cpu"="apple-m1" "target-features"="+aes,+crc,+crypto,+dotprod,+fp-armv8,+fp16fml,+fullfp16,+lse,+neon,+ras,+rcpc,+rdm,+sha2,+sha3,+sm4,+v8.5a,+zcm,+zcz" "unsafe-fp-math"="false" "use-soft-float"="false" }
-attributes #5 = { allocsize(0) }
-attributes #6 = { nounwind }
+!llvm.module.flags = !{!0}
+!llvm.ident = !{!1}
 
-!llvm.module.flags = !{!0, !1, !2, !3, !4, !5, !6}
-!llvm.ident = !{!7}
-
-!0 = !{i32 2, !"SDK Version", [2 x i32] [i32 12, i32 1]}
-!1 = !{i32 1, !"wchar_size", i32 4}
-!2 = !{i32 1, !"branch-target-enforcement", i32 0}
-!3 = !{i32 1, !"sign-return-address", i32 0}
-!4 = !{i32 1, !"sign-return-address-all", i32 0}
-!5 = !{i32 1, !"sign-return-address-with-bkey", i32 0}
-!6 = !{i32 7, !"PIC Level", i32 2}
-!7 = !{!"Apple clang version 13.0.0 (clang-1300.0.29.30)"}
+!0 = !{i32 1, !"wchar_size", i32 4}
+!1 = !{!"clang version 10.0.0-4ubuntu1 "}

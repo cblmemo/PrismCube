@@ -42,6 +42,7 @@ public class Memory {
     // io
     private InputStream inputStream;
     private PrintStream printStream;
+    private PrintStream debugStream;
 
     public Memory(String[] args) throws FileNotFoundException {
         globalScope = new GlobalScope(null);
@@ -113,6 +114,12 @@ public class Memory {
                     codegen = true;
                     // -emit-asm is default setup
                 }
+                case "-printV" -> {
+                    if (i == args.length - 1) err("missing argument");
+                    String arg1 = args[++i];
+                    debugStream = new PrintStream(arg1);
+                    ASMPrinter.enableVirtual();
+                }
                 case "-o" -> {
                     if (i == args.length - 1) err("missing argument");
                     String arg1 = args[++i];
@@ -142,6 +149,7 @@ public class Memory {
         InstructionSelector.enable();
         RegisterAllocator.enable();
         ASMPrinter.enable();
+        ASMPrinter.disableVirtual();
     }
 
     public void setParseTreeRoot(ParseTree parseTreeRoot) {
@@ -178,5 +186,9 @@ public class Memory {
 
     public PrintStream getPrintStream() {
         return printStream;
+    }
+
+    public PrintStream getDebugStream() {
+        return debugStream;
     }
 }

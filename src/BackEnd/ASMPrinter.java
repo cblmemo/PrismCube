@@ -14,6 +14,7 @@ public class ASMPrinter {
     private int functionCnt = 0;
 
     private static boolean print = false;
+    private static boolean printVirtual = false;
     private static final int commentAlignLength = 50;
     private static final int pseudoOptionsAlignLength = 10;
 
@@ -23,6 +24,14 @@ public class ASMPrinter {
 
     public static void disable() {
         print = false;
+    }
+
+    public static void enableVirtual() {
+        printVirtual = true;
+    }
+
+    public static void disableVirtual() {
+        printVirtual = false;
     }
 
     private void printWithIndent(String str) {
@@ -51,6 +60,13 @@ public class ASMPrinter {
     public void print(Memory memory) {
         if (print) {
             ps = memory.getPrintStream();
+            print(memory.getAsmModule());
+        }
+    }
+
+    public void printVirtual(Memory memory) {
+        if (printVirtual) {
+            ps = memory.getDebugStream();
             print(memory.getAsmModule());
         }
     }

@@ -10,10 +10,10 @@ def clear(case):
     if case == 1:
         exe("rm ./bin/b.ll")
         exe("rm ./bin/t.ll")
+        exe("rm ./bin/a.out")
     elif case == 2:
         # todo add asm clear
         exe("")
-    exe("rm ./bin/a.out")
 
 
 def build():
@@ -26,18 +26,20 @@ def build():
 
 def ir_gen_executable():
     exe("java -cp ./lib/antlr-4.9.1-complete.jar:./myout PrismCube -i ./bin/test.mx -o ./bin/test.ll -emit-llvm")
-    # exe("clang -S -emit-llvm ./builtin/builtin.c -o ./builtin/builtin.ll -O0")
     exe("scp ./builtin/builtin.ll ./bin/b.ll")
     exe("scp ./bin/test.ll ./bin/t.ll")
     exe("clang ./bin/b.ll ./bin/t.ll -o ./bin/a.out")
     print("ir generate and link finished.")
 
 
-def asm_gen_executable():
+def run_asm():
     exe("java -cp ./lib/antlr-4.9.1-complete.jar:./myout PrismCube -i ./bin/test.mx -o ./bin/test.s -emit-asm")
+    exe("rm ./bin/b.s")
+    exe("rm ./bin/t.s")
+    exe("scp ./builtin/builtin.s ./bin/b.s")
     exe("scp ./bin/test.s ./bin/t.s")
-    exe("clang ./bin/t.s -o ./bin/a.out")
-    print("asm generate and link finished.")
+    print("asm generate finished.")
+    exe("/Users/memory/Desktop/temp/compiler/bin/ravel ./bin/t.s ./bin/b.s")
 
 
 def run_executable():
@@ -49,7 +51,7 @@ def gen_riscv_asm():
     exe("rm bin/a.s")
     # exe("clang -emit-llvm -S bin/a.c -o bin/a.ll")
     exe("clang -emit-llvm -S bin/a.c -o bin/a.ll --target=riscv32 -O0")
-    exe("llc bin/a.ll -o bin/a.s -march=riscv32")
+    exe("llc bin/a.ll -o bin/a.s --mattr=+m -march=riscv32")
 
 
 def compile_test():
@@ -114,8 +116,7 @@ def run():
         run_executable()
         clear(case)
     elif case == 2:
-        asm_gen_executable()
-        run_executable()
+        run_asm()
         clear(case)
     elif case == 3:
         gen_riscv_asm()
