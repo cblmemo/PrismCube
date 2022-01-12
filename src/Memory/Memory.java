@@ -146,6 +146,7 @@ public class Memory {
         inputStream = System.in;
         ConstStringCollector.enable();
         IRBuilder.enable();
+        IRPrinter.disable();
         InstructionSelector.enable();
         RegisterAllocator.enable();
         ASMPrinter.enable();

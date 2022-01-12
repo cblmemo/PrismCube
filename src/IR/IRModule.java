@@ -1,6 +1,7 @@
 package IR;
 
 import FrontEnd.IRVisitor;
+import IR.Instruction.IRCallInstruction;
 import IR.Operand.IRConstString;
 import IR.TypeSystem.*;
 import Utility.Scope.GlobalScope;
@@ -8,6 +9,7 @@ import Utility.error.IRError;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Objects;
 
 import static Debug.MemoLog.log;
 
@@ -26,6 +28,7 @@ public class IRModule {
     private final HashMap<String, IRGlobalDefine> globalDefines = new HashMap<>();
     private final HashMap<String, IRConstString> strings = new HashMap<>();
     private int stringCnt = 0;
+    private IRFunction mainFunction;
     private final IRFunction globalConstructor;
     private final ArrayList<IRFunction> singleInitializeFunctions = new ArrayList<>();
 
@@ -182,7 +185,7 @@ public class IRModule {
     }
 
     public IRFunction generateSingleInitializeFunction() {
-        String initFuncName = globalInitializeFunctionName + "." + singleInitializeFunctions.size();
+        String initFuncName = globalInitializeFunctionName + "_" + singleInitializeFunctions.size();
         IRFunction initFunc = new IRFunction(initFuncName);
         initFunc.setReturnType(getIRType("void"));
         singleInitializeFunctions.add(initFunc);
@@ -209,6 +212,7 @@ public class IRModule {
     public void addFunction(IRFunction function) {
         if (functions.containsKey(function.getFunctionName())) throw new IRError("duplicated IR function name");
         functions.put(function.getFunctionName(), function);
+        if (Objects.equals(function.getFunctionName(), "main")) mainFunction = function;
     }
 
     public IRFunction getFunction(String name) {
@@ -269,6 +273,12 @@ public class IRModule {
 
     public ArrayList<IRFunction> getSingleInitializeFunctions() {
         return singleInitializeFunctions;
+    }
+
+    public void relocationInitializeFunctions() {
+        addFunction(globalConstructor);
+        singleInitializeFunctions.forEach(this::addFunction);
+        mainFunction.getEntryBlock().getInstructions().add(0, new IRCallInstruction(getIRType("void"), globalConstructor));
     }
 
     public void accept(IRVisitor visitor) {

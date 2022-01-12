@@ -1,9 +1,14 @@
 package BackEnd;
 
 import ASM.ASMBasicBlock;
+import ASM.Operand.ASMConstString;
 import ASM.ASMFunction;
 import ASM.ASMModule;
 import ASM.Instruction.ASMInstruction;
+import ASM.Operand.GlobalSymbol.ASMGlobalBoolean;
+import ASM.Operand.GlobalSymbol.ASMGlobalInteger;
+import ASM.Operand.GlobalSymbol.ASMGlobalString;
+import ASM.Operand.GlobalSymbol.ASMGlobalSymbol;
 import Memory.Memory;
 
 import java.io.PrintStream;
@@ -16,7 +21,11 @@ public class ASMPrinter {
     private static boolean print = false;
     private static boolean printVirtual = false;
     private static final int commentAlignLength = 50;
-    private static final int pseudoOptionsAlignLength = 10;
+    private static final int alignLength = 15;
+
+    public static int getAlignLength() {
+        return alignLength;
+    }
 
     public static void enable() {
         print = true;
@@ -46,7 +55,7 @@ public class ASMPrinter {
     }
 
     private String formatPseudoOptions(String option, String value) {
-        int spaceNum = pseudoOptionsAlignLength - option.length() - 1;
+        int spaceNum = alignLength - option.length() - 1;
         assert spaceNum > 0;
         return "." + option + " ".repeat(spaceNum) + value;
     }
@@ -77,7 +86,51 @@ public class ASMPrinter {
         printWithIndent(formatPseudoOptions("file", "\"src.mx\""));
         indentCnt--;
         module.getFunctions().values().forEach(this::print);
-        // todo print const string and global variable
+        module.getGlobals().values().forEach(this::print);
+        module.getStrings().values().forEach(this::print);
+    }
+
+    private void print(ASMGlobalSymbol symbol) {
+        String name = symbol.getSymbolName();
+        printWithIndent("");
+        indentCnt++;
+        printWithIndent(formatComment(" @" + name, formatPseudoOptions("type", name + ",@object")));
+        printWithIndent(formatPseudoOptions("section", ".sdata,\"aw\",@progits"));
+        printWithIndent(formatPseudoOptions("globl", symbol.getSymbolName()));
+        printWithIndent(formatPseudoOptions("p2align", "2"));
+        indentCnt--;
+        printWithIndent(name + ":");
+        indentCnt++;
+        if (symbol instanceof ASMGlobalBoolean) {
+            int value = ((ASMGlobalBoolean) symbol).getValue() ? 1 : 0;
+            printWithIndent(formatComment(" 0x" + value, formatPseudoOptions("byte", Integer.toString(value))));
+            printWithIndent(formatPseudoOptions("size", symbol.getSymbolName() + ", 1"));
+        } else if (symbol instanceof ASMGlobalInteger) {
+            int value = ((ASMGlobalInteger) symbol).getValue();
+            printWithIndent(formatComment(" 0x" + Integer.toUnsignedString(value, 16), formatPseudoOptions("word", Integer.toUnsignedString(value))));
+            printWithIndent(formatPseudoOptions("size", symbol.getSymbolName() + ", 4"));
+        } else {
+            int value = ((ASMGlobalString) symbol).getValue();
+            printWithIndent(formatPseudoOptions("word", Integer.toUnsignedString(value)));
+            printWithIndent(formatPseudoOptions("size", name + ", 4"));
+        }
+        indentCnt--;
+    }
+
+    private void print(ASMConstString string) {
+        String name = string.getName();
+        printWithIndent("");
+        indentCnt++;
+        printWithIndent(formatComment(" @" + name, formatPseudoOptions("type", name + ",@object")));
+        printWithIndent(formatPseudoOptions("section", ".rodata.str1.1,\"aMS\",@progbits,1"));
+        indentCnt--;
+        printWithIndent(name + ":");
+        indentCnt++;
+        String value = string.getValue();
+        int length = string.getLength();
+        printWithIndent(formatPseudoOptions("asciz", "\"" + value + "\""));
+        printWithIndent(formatPseudoOptions("size", name + ", " + (length + 1)));
+        indentCnt--;
     }
 
     private void print(ASMFunction function) {
@@ -105,8 +158,7 @@ public class ASMPrinter {
     }
 
     private void print(ASMInstruction inst) {
-        // todo delete this
-        if (inst == null) return;
+        if (inst == null) return; // used in printVirtual
         printWithIndent(inst.toString());
     }
 }

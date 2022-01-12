@@ -31,7 +31,7 @@ import java.io.PrintStream;
 public class IRPrinter implements IRVisitor {
     private PrintStream ps;
 
-    static boolean print = false;
+    private static boolean print = false;
 
     public static void enable() {
         print = true;
@@ -56,18 +56,18 @@ public class IRPrinter implements IRVisitor {
 
     @Override
     public void visit(IRModule module) {
-        ps.println(module.getLLVMDetails());
+        ps.println(IRModule.getLLVMDetails());
         module.getBuiltinFunctions().forEach((name, func) -> {
             if (func.hasCalled()) func.accept(this);
         });
-        module.getStrings().forEach((name, string) -> string.accept(this));
+        module.getStrings().values().forEach(string -> string.accept(this));
         if (module.getStrings().size() != 0) ps.println();
         module.getClasses().forEach(type -> type.accept(this));
         if (module.getClasses().size() != 0) ps.println();
-        module.getGlobalDefines().forEach((name, define) -> define.accept(this));
+        module.getGlobalDefines().values().forEach(define -> define.accept(this));
         ps.println(module.getLLVMGlobalConstructors());
         ps.println();
-        module.getFunctions().forEach((name, func) -> func.accept(this));
+        module.getFunctions().values().forEach(func -> func.accept(this));
         ps.println();
         module.getGlobalConstructor().accept(this);
         module.getSingleInitializeFunctions().forEach(func -> func.accept(this));
@@ -82,7 +82,6 @@ public class IRPrinter implements IRVisitor {
     public void visit(IRFunction function) {
         if (function.isDeclare()) ps.println(function.getDeclare());
         else {
-//            function.changeLabelToNumber();
             ps.println(function.getDefineAndPrefix());
             function.getBlocks().forEach(block -> block.accept(this));
             ps.println(function.getSuffix());

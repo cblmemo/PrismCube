@@ -10,6 +10,10 @@ public class IRGlobalVariableRegister extends IRRegister {
         this.globalVariableName = globalVariableName;
     }
 
+    public String getGlobalVariableName() {
+        return globalVariableName;
+    }
+
     @Override
     public String toString() {
         return "@" + globalVariableName;

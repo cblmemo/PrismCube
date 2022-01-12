@@ -1,9 +1,6 @@
-import BackEnd.ASMPrinter;
-import BackEnd.InstructionSelector;
-import BackEnd.RegisterAllocator;
-import Debug.ASTPrinter;
-import Debug.ScopePrinter;
 import FrontEnd.*;
+import BackEnd.*;
+import Debug.*;
 import Memory.Memory;
 import Utility.error.error;
 
@@ -33,7 +30,7 @@ public class PrismCube {
 
             new InstructionSelector().select(memory);
             new ASMPrinter().printVirtual(memory);
-            new RegisterAllocator().naiveAllocate(memory);
+            new RegisterAllocator().allocate(memory);
             new ASMPrinter().print(memory);
         } catch (error err) {
             System.err.println(err.toString());

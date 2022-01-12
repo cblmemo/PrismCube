@@ -30,7 +30,10 @@ Mx* is a simplified language from the mix of Standard C++ and Java. Details of M
  - [x] ConstStringCollector
  - [x] IRBuilder
  - [x] IRPrinter
- - [ ] CondeGen (developing...)
+ - [x] InstructionSelector (debugging...)
+ - [x] NaiveAllocator
+ - [ ] GraphColoringAllocator
+ - [x] ASMPrinter
 
 ## File Structure
 

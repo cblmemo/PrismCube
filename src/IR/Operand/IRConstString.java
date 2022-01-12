@@ -24,6 +24,10 @@ public class IRConstString extends IROperand {
         return id;
     }
 
+    public int getLength(){
+        return length;
+    }
+
     private String getConstStringIdentifier() {
         return "@.str." + id;
     }

@@ -1,15 +1,14 @@
 package ASM.Instruction;
 
 import ASM.Operand.ASMOperand;
+import BackEnd.ASMPrinter;
 
 import java.util.ArrayList;
 import java.util.Objects;
 
 abstract public class ASMInstruction {
-    static int alignLength = 10;
-
     private static String align(String inst) {
-        return inst + " ".repeat(alignLength - inst.length());
+        return inst + " ".repeat(ASMPrinter.getAlignLength() - inst.length());
     }
 
     private final ArrayList<ASMOperand> operands = new ArrayList<>();

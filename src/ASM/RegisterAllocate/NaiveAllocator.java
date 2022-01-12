@@ -66,11 +66,14 @@ public class NaiveAllocator {
                 newList.add(new ASMMemoryInstruction(ASMMemoryInstruction.InstType.lw, registers.get(0), vr2addr.get((ASMVirtualRegister) rs)));
                 inst.setOperand(0, registers.get(0));
             }
-            ASMOperand addr = inst.getOperands().get(1);
-            assert addr instanceof ASMAddress;
-            ASMAddress tempAddress = vr2addr.get((ASMVirtualRegister) ((ASMAddress) addr).getRegister());
-            newList.add(new ASMMemoryInstruction(ASMMemoryInstruction.InstType.lw, registers.get(1), tempAddress));
-            ((ASMAddress) addr).replaceRegister(registers.get(1));
+            ASMOperand address = inst.getOperands().get(1);
+            assert address instanceof ASMAddress;
+            if (((ASMAddress) address).getRegister() instanceof ASMVirtualRegister) {
+                ASMAddress tempAddress = vr2addr.get((ASMVirtualRegister) ((ASMAddress) address).getRegister());
+                newList.add(new ASMMemoryInstruction(ASMMemoryInstruction.InstType.lw, registers.get(1), tempAddress));
+                ((ASMAddress) address).replaceRegister(registers.get(1));
+            }
+            newList.add(inst);
         } else {
             for (int i = 1; i < inst.getOperands().size(); i++) {
                 ASMOperand rs = inst.getOperands().get(i);
@@ -78,9 +81,11 @@ public class NaiveAllocator {
                     newList.add(new ASMMemoryInstruction(ASMMemoryInstruction.InstType.lw, registers.get(i), vr2addr.get((ASMVirtualRegister) rs)));
                     inst.setOperand(i, registers.get(i));
                 } else if (rs instanceof ASMAddress) { // ir load
-                    ASMAddress tempAddress = vr2addr.get((ASMVirtualRegister) ((ASMAddress) rs).getRegister());
-                    newList.add(new ASMMemoryInstruction(ASMMemoryInstruction.InstType.lw, registers.get(i), tempAddress));
-                    ((ASMAddress) rs).replaceRegister(registers.get(i));
+                    if (((ASMAddress) rs).getRegister() instanceof ASMVirtualRegister) {
+                        ASMAddress tempAddress = vr2addr.get((ASMVirtualRegister) ((ASMAddress) rs).getRegister());
+                        newList.add(new ASMMemoryInstruction(ASMMemoryInstruction.InstType.lw, registers.get(i), tempAddress));
+                        ((ASMAddress) rs).replaceRegister(registers.get(i));
+                    }
                 }
             }
             newList.add(inst);

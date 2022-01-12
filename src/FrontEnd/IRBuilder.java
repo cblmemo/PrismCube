@@ -8,6 +8,7 @@ import AST.PrimaryNode.*;
 import AST.ProgramNode;
 import AST.StatementNode.*;
 import AST.TypeNode.*;
+import BackEnd.InstructionSelector;
 import IR.IRBasicBlock;
 import IR.IRFunction;
 import IR.IRGlobalDefine;
@@ -69,6 +70,7 @@ public class IRBuilder implements ASTVisitor {
             module = memory.getIRModule();
             module.initializeBuiltinFunction(globalScope);
             memory.getASTRoot().accept(this);
+            if (InstructionSelector.codegen()) module.relocationInitializeFunctions();
         }
     }
 
@@ -242,8 +244,8 @@ public class IRBuilder implements ASTVisitor {
                 IRRegister.resetAlloca();
                 node.getInitializeValue().accept(this);
                 // similar to ReturnStatementNode
-                IROperand returnValue = node.getInitializeValue().getIRResultValue();
-                appendInst(new IRStoreInstruction(variableIRType, variableRegister, returnValue));
+                IROperand initializeValue = node.getInitializeValue().getIRResultValue();
+                appendInst(new IRStoreInstruction(variableIRType, variableRegister, initializeValue));
                 currentFunction.getReturnBlock().setEscapeInstruction(new IRReturnInstruction(getVoidType(), null));
                 finishCurrentBasicBlock(new IRBrInstruction(null, currentFunction.getReturnBlock(), null, currentBasicBlock));
                 currentFunction.finishFunction();
