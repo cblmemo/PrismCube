@@ -92,11 +92,9 @@ public class InstructionSelector implements IRVisitor {
             return lr2vr.get((IRRegister) operand);
         }
         if (operand instanceof IRConstString) {
-            ASMVirtualRegister address = new ASMVirtualRegister("address");
-            appendPseudoInst(ASMPseudoInstruction.InstType.la, address, asmModule.getConstString(getIRConstStringName((IRConstString) operand)));
-            ASMVirtualRegister str = new ASMVirtualRegister("string");
-            appendInst(new ASMMemoryInstruction(ASMMemoryInstruction.InstType.lw, str, new ASMAddress(address, null)));
-            return str;
+            ASMVirtualRegister string = new ASMVirtualRegister("address");
+            appendPseudoInst(ASMPseudoInstruction.InstType.la, string, asmModule.getConstString(getIRConstStringName((IRConstString) operand)));
+            return string;
         }
         assert operand instanceof IRConstNumber;
         int imm = ((IRConstNumber) operand).getIntValue();
@@ -358,10 +356,6 @@ public class InstructionSelector implements IRVisitor {
     @Override
     public void visit(IRGetelementptrInstruction inst) {
         ASMRegister result = toRegister(inst.getResultRegister());
-//        if (inst.getPtrValue() instanceof IRGlobalVariableRegister) {
-//            appendPseudoInst(ASMPseudoInstruction.InstType.la, result, asmModule.getGlobal(((IRGlobalVariableRegister) inst.getPtrValue()).getName()));
-//            return;
-//        }
         switch (inst.getIndices().size()) {
             case 1 -> {
                 assert inst.getPtrValue() instanceof IRRegister;
