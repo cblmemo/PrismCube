@@ -16,7 +16,7 @@ import java.io.PrintStream;
 public class ASMPrinter {
     private PrintStream ps;
     private int indentCnt = 0;
-    private int functionCnt = 0;
+    private int functionCnt = 20;
 
     private static boolean print = false;
     private static boolean printVirtual = false;
