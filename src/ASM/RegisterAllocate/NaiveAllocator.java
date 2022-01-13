@@ -108,7 +108,7 @@ public class NaiveAllocator {
             }
             newList.add(inst);
         } else {
-            for (int i = 1; i < inst.getOperands().size(); i++) {
+            for (int i = inst.isBranchInstruction() ? 0 : 1; i < inst.getOperands().size(); i++) {
                 ASMOperand rs = inst.getOperands().get(i);
                 if (rs instanceof ASMVirtualRegister) {
                     newList.add(new ASMMemoryInstruction(ASMMemoryInstruction.InstType.lw, registers.get(i), vr2addr.get((ASMVirtualRegister) rs)));
@@ -122,7 +122,7 @@ public class NaiveAllocator {
                 }
             }
             newList.add(inst);
-            if (inst.getOperands().size() != 0) {
+            if (inst.getOperands().size() != 0 && !inst.isBranchInstruction()) {
                 ASMOperand rd = inst.getOperands().get(0);
                 if (rd instanceof ASMVirtualRegister) {
                     newList.add(new ASMMemoryInstruction(ASMMemoryInstruction.InstType.sw, registers.get(0), vr2addr.get((ASMVirtualRegister) rd)));
