@@ -5,6 +5,7 @@ import IR.TypeSystem.IRTypeSystem;
 
 public class IRConstString extends IROperand {
     private final String value;
+    private final String originalValue;
     private final int id;
     private final int length;
 
@@ -14,10 +15,15 @@ public class IRConstString extends IROperand {
         this.length = converted.length();
         this.value = convertToPlain(converted);
         this.id = id;
+        this.originalValue = value;
     }
 
     public String getValue() {
         return value;
+    }
+
+    public String getOriginalValue() {
+        return originalValue;
     }
 
     public int getId() {
