@@ -86,14 +86,20 @@ public class ASMPrinter {
         printWithIndent(formatPseudoOptions("file", "\"src.mx\""));
         indentCnt--;
         module.getFunctions().values().forEach(this::print);
-        indentCnt++;
-        printWithIndent(formatPseudoOptions("section", ".sdata,\"aw\",@progits"));
-        indentCnt--;
-        module.getGlobals().values().forEach(this::print);
-        indentCnt++;
-        printWithIndent(formatPseudoOptions("section", ".rodata.str1.1,\"aMS\",@progbits,1"));
-        indentCnt--;
-        module.getStrings().values().forEach(this::print);
+        if (module.getGlobals().values().size() != 0) {
+            indentCnt++;
+            printWithIndent("");
+            printWithIndent(formatPseudoOptions("section", ".sdata,\"aw\",@progits"));
+            indentCnt--;
+            module.getGlobals().values().forEach(this::print);
+        }
+        if (module.getStrings().values().size() != 0) {
+            indentCnt++;
+            printWithIndent("");
+            printWithIndent(formatPseudoOptions("section", ".rodata.str1.1,\"aMS\",@progbits,1"));
+            indentCnt--;
+            module.getStrings().values().forEach(this::print);
+        }
     }
 
     private void print(ASMGlobalSymbol symbol) {
