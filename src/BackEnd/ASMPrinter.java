@@ -90,6 +90,9 @@ public class ASMPrinter {
         printWithIndent(formatPseudoOptions("section", ".sdata,\"aw\",@progits"));
         indentCnt--;
         module.getGlobals().values().forEach(this::print);
+        indentCnt++;
+        printWithIndent(formatPseudoOptions("section", ".rodata.str1.1,\"aMS\",@progbits,1"));
+        indentCnt--;
         module.getStrings().values().forEach(this::print);
     }
 
@@ -124,12 +127,11 @@ public class ASMPrinter {
         printWithIndent("");
         indentCnt++;
         printWithIndent(formatComment(formatPseudoOptions("type", name + ",@object"), " @" + name));
-        printWithIndent(formatPseudoOptions("section", ".rodata.str1.1,\"aMS\",@progbits,1"));
         indentCnt--;
         printWithIndent(name + ":");
-        indentCnt++;
         String value = string.getValue();
         int length = string.getLength();
+        indentCnt++;
         printWithIndent(formatPseudoOptions("asciz", "\"" + value + "\""));
         printWithIndent(formatPseudoOptions("size", name + ", " + (length + 1)));
         indentCnt--;
