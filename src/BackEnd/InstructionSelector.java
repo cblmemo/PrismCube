@@ -47,10 +47,6 @@ public class InstructionSelector implements IRVisitor {
         select = false;
     }
 
-    public static boolean codegen() {
-        return select;
-    }
-
     public void select(Memory memory) {
         if (select) {
             asmModule = memory.getAsmModule();

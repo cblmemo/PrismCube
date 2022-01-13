@@ -34,6 +34,8 @@ public class NaiveAllocator {
     }
 
     public void allocate() {
+        // following code will store some value in s0 - s11, for we don't actually use physical registers except for t0, t1, t2
+        // and these save registers are callee save and will be saved by all builtin function we called
         log.Debugf("start allocate register for function %s\n", function.getFunctionName());
         // calculate frame size
         ASMPhysicalRegister sp = ASMPhysicalRegister.getPhysicalRegister(ASMPhysicalRegister.PhysicalRegisterName.sp);
@@ -44,8 +46,8 @@ public class NaiveAllocator {
                     log.Debugf("request a word at %d" + " ".repeat(6 - Integer.toString(offset).length()) + "for virtual register %s\n", offset, ((ASMVirtualRegister) operand).getName());
                     ASMAddress address;
                     // use s1 - s11 to store sp + 2048 * i
-                    if (!isValidImmediate(offset)) address = new ASMAddress(ASMPhysicalRegister.getStoreRegister(offset / 2048), new ASMImmediate(offset % 2048));
-                    else address = new ASMAddress(sp, new ASMImmediate(offset));
+                    if (isValidImmediate(offset)) address = new ASMAddress(sp, new ASMImmediate(offset));
+                    else address = new ASMAddress(ASMPhysicalRegister.getStoreRegister(offset / 2048), new ASMImmediate(offset % 2048));
                     vr2addr.put((ASMVirtualRegister) operand, address);
                 }
             });

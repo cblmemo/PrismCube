@@ -47,7 +47,8 @@ public class IRBuilder implements ASTVisitor {
     private IRBasicBlock currentBasicBlock;
     private int labelCnt = 0;
 
-    static boolean build = false;
+    private static boolean build = false;
+    private static final boolean useCharToStoreBool = false;
 
     public static void enable() {
         build = true;
@@ -70,7 +71,7 @@ public class IRBuilder implements ASTVisitor {
             module = memory.getIRModule();
             module.initializeBuiltinFunction(globalScope);
             memory.getASTRoot().accept(this);
-            if (InstructionSelector.codegen()) module.relocationInitializeFunctions();
+            if (Memory.codegen()) module.relocationInitializeFunctions();
         }
     }
 
@@ -821,12 +822,17 @@ public class IRBuilder implements ASTVisitor {
         IRRegister resultRegister;
         if (resultType.isBool()) {
             assert Objects.equals(node.getOp(), "!");
-            IRRegister rhsCharVal = new IRRegister(getCharType(), "rhs_char");
-            appendInst(new IRZextInstruction(rhsCharVal, rhsVal, getCharType()));
-            IRRegister resultCharVal = new IRRegister(getCharType(), "res_char");
-            resultRegister = new IRRegister(resultType, "res");
-            appendInst(new IRBinaryInstruction("xor", resultCharVal, new IRConstChar(getCharType(), 1), rhsCharVal));
-            appendInst(new IRTruncInstruction(resultRegister, resultCharVal, getBoolType()));
+            if (useCharToStoreBool) {
+                IRRegister rhsCharVal = new IRRegister(getCharType(), "rhs_char");
+                appendInst(new IRZextInstruction(rhsCharVal, rhsVal, getCharType()));
+                IRRegister resultCharVal = new IRRegister(getCharType(), "res_char");
+                resultRegister = new IRRegister(resultType, "res");
+                appendInst(new IRBinaryInstruction("xor", resultCharVal, new IRConstChar(getCharType(), 1), rhsCharVal));
+                appendInst(new IRTruncInstruction(resultRegister, resultCharVal, getBoolType()));
+            } else {
+                resultRegister = new IRRegister(resultType, "res");
+                appendInst(new IRBinaryInstruction("xor", resultRegister, new IRConstChar(getBoolType(), 1), rhsVal));
+            }
         } else {
             assert resultType.isInt();
             if (Objects.equals(node.getOp(), "++") || Objects.equals(node.getOp(), "--")) {
@@ -876,8 +882,14 @@ public class IRBuilder implements ASTVisitor {
     public void visit(BinaryExpressionNode node) {
         if (node.getExpressionType().isBool() && (Objects.equals(node.getOp(), "&&") || Objects.equals(node.getOp(), "||"))) {
             // logic short-circuit
-            IRRegister logicResultCharPtr = new IRRegister(new IRPointerType(getCharType()), "logic_short_circuit_result", true);
-            appendInst(new IRAllocaInstruction(getCharType(), logicResultCharPtr));
+            IRRegister logicResultCharPtr = null, logicResultPtr = null;
+            if (useCharToStoreBool) {
+                logicResultCharPtr = new IRRegister(new IRPointerType(getCharType()), "logic_short_circuit_result", true);
+                appendInst(new IRAllocaInstruction(getCharType(), logicResultCharPtr));
+            } else {
+                logicResultPtr = new IRRegister(new IRPointerType(getBoolType()), "logic_short_circuit_result", true);
+                appendInst(new IRAllocaInstruction(getBoolType(), logicResultPtr));
+            }
             int id = labelCnt++;
             String opName = Objects.equals(node.getOp(), "&&") ? "and" : "or";
             IRBasicBlock shortCircuitBlock = new IRBasicBlock(currentFunction, id + "_" + opName + "_logic_short_circuit");
@@ -895,26 +907,42 @@ public class IRBuilder implements ASTVisitor {
             // false && xxx -> short circuit
             boolean val = Objects.equals(node.getOp(), "||");
             IROperand logicShortCircuitResult = new IRConstBool(getBoolType(), val);
-            IRRegister logicShortCircuitCharResult = new IRRegister(getCharType(), "char_res");
-            appendInst(new IRZextInstruction(logicShortCircuitCharResult, logicShortCircuitResult, getCharType()));
-            appendInst(new IRStoreInstruction(getCharType(), logicResultCharPtr, logicShortCircuitCharResult));
+            if (useCharToStoreBool) {
+                IRRegister logicShortCircuitCharResult = new IRRegister(getCharType(), "char_res");
+                appendInst(new IRZextInstruction(logicShortCircuitCharResult, logicShortCircuitResult, getCharType()));
+                appendInst(new IRStoreInstruction(getCharType(), logicResultCharPtr, logicShortCircuitCharResult));
+            } else {
+                appendInst(new IRStoreInstruction(getBoolType(), logicResultPtr, logicShortCircuitResult));
+            }
             finishCurrentBasicBlock(new IRBrInstruction(null, terminateBlock, null, currentBasicBlock));
             currentBasicBlock = nonShortCircuitBlock;
             node.getRhs().accept(this);
             IROperand rhsVal = node.getRhs().getIRResultValue();
-            IRRegister lhsCharVal = new IRRegister(getCharType(), "lhs_char");
-            appendInst(new IRZextInstruction(lhsCharVal, lhsVal, getCharType()));
-            IRRegister rhsCharVal = new IRRegister(getCharType(), "rhs_char");
-            appendInst(new IRZextInstruction(rhsCharVal, rhsVal, getCharType()));
-            IRRegister resultCharVal = new IRRegister(getCharType(), "char_res");
-            appendInst(new IRBinaryInstruction(Objects.equals(node.getOp(), "&&") ? "and" : "or", resultCharVal, lhsCharVal, rhsCharVal));
-            appendInst(new IRStoreInstruction(getCharType(), logicResultCharPtr, resultCharVal));
+            if (useCharToStoreBool) {
+                IRRegister lhsCharVal = new IRRegister(getCharType(), "lhs_char");
+                appendInst(new IRZextInstruction(lhsCharVal, lhsVal, getCharType()));
+                IRRegister rhsCharVal = new IRRegister(getCharType(), "rhs_char");
+                appendInst(new IRZextInstruction(rhsCharVal, rhsVal, getCharType()));
+                IRRegister resultCharVal = new IRRegister(getCharType(), "char_res");
+                appendInst(new IRBinaryInstruction(Objects.equals(node.getOp(), "&&") ? "and" : "or", resultCharVal, lhsCharVal, rhsCharVal));
+                appendInst(new IRStoreInstruction(getCharType(), logicResultCharPtr, resultCharVal));
+            } else {
+                IRRegister resultVal = new IRRegister(getBoolType(), "bool_res");
+                appendInst(new IRBinaryInstruction(Objects.equals(node.getOp(), "&&") ? "and" : "or", resultVal, lhsVal, rhsVal));
+                appendInst(new IRStoreInstruction(getBoolType(), logicResultPtr, resultVal));
+            }
             finishCurrentBasicBlock(new IRBrInstruction(null, terminateBlock, null, currentBasicBlock));
             currentBasicBlock = terminateBlock;
-            IRRegister logicCharResult = new IRRegister(getCharType(), "char_res");
-            appendInst(new IRLoadInstruction(getCharType(), logicCharResult, logicResultCharPtr));
-            IRRegister logicResult = new IRRegister(getBoolType(), "bool_res");
-            appendInst(new IRTruncInstruction(logicResult, logicCharResult, getBoolType()));
+            IRRegister logicResult;
+            if (useCharToStoreBool) {
+                IRRegister logicCharResult = new IRRegister(getCharType(), "char_res");
+                appendInst(new IRLoadInstruction(getCharType(), logicCharResult, logicResultCharPtr));
+                logicResult = new IRRegister(getBoolType(), "bool_res");
+                appendInst(new IRTruncInstruction(logicResult, logicCharResult, getBoolType()));
+            } else {
+                logicResult = new IRRegister(getBoolType(), "bool_res");
+                appendInst(new IRLoadInstruction(getBoolType(), logicResult, logicResultPtr));
+            }
             node.setIRResultValue(logicResult);
             return;
         }
