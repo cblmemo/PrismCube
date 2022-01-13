@@ -89,14 +89,14 @@ public class ASMPrinter {
         if (module.getGlobals().values().size() != 0) {
             indentCnt++;
             printWithIndent("");
-            printWithIndent(formatPseudoOptions("section", ".sdata,\"aw\",@progits"));
+            printWithIndent(formatPseudoOptions("section", ".sdata, \"aw\", @progbits"));
             indentCnt--;
             module.getGlobals().values().forEach(this::print);
         }
         if (module.getStrings().values().size() != 0) {
             indentCnt++;
             printWithIndent("");
-            printWithIndent(formatPseudoOptions("section", ".rodata.str1.1,\"aMS\",@progbits,1"));
+            printWithIndent(formatPseudoOptions("section", ".rodata.str1.1, \"aMS\", @progbits, 1"));
             indentCnt--;
             module.getStrings().values().forEach(this::print);
         }
@@ -106,7 +106,7 @@ public class ASMPrinter {
         String name = symbol.getSymbolName();
         printWithIndent("");
         indentCnt++;
-        printWithIndent(formatComment(formatPseudoOptions("type", name + ",@object"), " @" + name));
+        printWithIndent(formatComment(formatPseudoOptions("type", name + ", @object"), " @" + name));
         printWithIndent(formatPseudoOptions("globl", symbol.getSymbolName()));
         printWithIndent(formatPseudoOptions("p2align", "2"));
         indentCnt--;
@@ -132,7 +132,7 @@ public class ASMPrinter {
         String name = string.getName();
         printWithIndent("");
         indentCnt++;
-        printWithIndent(formatComment(formatPseudoOptions("type", name + ",@object"), " @" + name));
+        printWithIndent(formatComment(formatPseudoOptions("type", name + ", @object"), " @" + name));
         indentCnt--;
         printWithIndent(name + ":");
         String value = string.getValue();
@@ -148,7 +148,7 @@ public class ASMPrinter {
         indentCnt++;
         printWithIndent(formatComment(formatPseudoOptions("globl", funcName), " -- Begin Function " + funcName));
         printWithIndent(formatPseudoOptions("p2align", "2"));
-        printWithIndent(formatPseudoOptions("type", funcName + ",@function"));
+        printWithIndent(formatPseudoOptions("type", funcName + ", @function"));
         indentCnt--;
         printWithIndent(formatComment(funcName + ":", " @" + funcName));
         function.getBlocks().forEach(this::print);
