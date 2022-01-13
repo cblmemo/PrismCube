@@ -48,7 +48,7 @@ public class ASMPrinter {
         ps.println(str);
     }
 
-    private String formatComment(String comment, String str) {
+    private String formatComment(String str, String comment) {
         int spaceNum = commentAlignLength - str.length() - 4 * indentCnt;
         assert spaceNum > 0;
         return str + " ".repeat(spaceNum) + "#" + comment;
@@ -86,6 +86,9 @@ public class ASMPrinter {
         printWithIndent(formatPseudoOptions("file", "\"src.mx\""));
         indentCnt--;
         module.getFunctions().values().forEach(this::print);
+        indentCnt++;
+        printWithIndent(formatPseudoOptions("section", ".sdata,\"aw\",@progits"));
+        indentCnt--;
         module.getGlobals().values().forEach(this::print);
         module.getStrings().values().forEach(this::print);
     }
@@ -94,20 +97,19 @@ public class ASMPrinter {
         String name = symbol.getSymbolName();
         printWithIndent("");
         indentCnt++;
-        printWithIndent(formatComment(" @" + name, formatPseudoOptions("type", name + ",@object")));
-        printWithIndent(formatPseudoOptions("section", ".sdata,\"aw\",@progits"));
-//        printWithIndent(formatPseudoOptions("globl", symbol.getSymbolName()));
-//        printWithIndent(formatPseudoOptions("p2align", "2"));
+        printWithIndent(formatComment(formatPseudoOptions("type", name + ",@object"), " @" + name));
+        printWithIndent(formatPseudoOptions("globl", symbol.getSymbolName()));
+        printWithIndent(formatPseudoOptions("p2align", "2"));
         indentCnt--;
         printWithIndent(name + ":");
         indentCnt++;
         if (symbol instanceof ASMGlobalBoolean) {
             int value = ((ASMGlobalBoolean) symbol).getValue() ? 1 : 0;
-            printWithIndent(formatComment(" 0x" + value, formatPseudoOptions("byte", Integer.toString(value))));
+            printWithIndent(formatComment(formatPseudoOptions("byte", Integer.toString(value)), " 0x" + value));
             printWithIndent(formatPseudoOptions("size", symbol.getSymbolName() + ", 1"));
         } else if (symbol instanceof ASMGlobalInteger) {
             int value = ((ASMGlobalInteger) symbol).getValue();
-            printWithIndent(formatComment(" 0x" + Integer.toUnsignedString(value, 16), formatPseudoOptions("word", Integer.toUnsignedString(value))));
+            printWithIndent(formatComment(formatPseudoOptions("word", Integer.toUnsignedString(value)), " 0x" + Integer.toUnsignedString(value, 16)));
             printWithIndent(formatPseudoOptions("size", symbol.getSymbolName() + ", 4"));
         } else {
             int value = ((ASMGlobalString) symbol).getValue();
@@ -121,7 +123,7 @@ public class ASMPrinter {
         String name = string.getName();
         printWithIndent("");
         indentCnt++;
-        printWithIndent(formatComment(" @" + name, formatPseudoOptions("type", name + ",@object")));
+        printWithIndent(formatComment(formatPseudoOptions("type", name + ",@object"), " @" + name));
         printWithIndent(formatPseudoOptions("section", ".rodata.str1.1,\"aMS\",@progbits,1"));
         indentCnt--;
         printWithIndent(name + ":");
@@ -136,18 +138,18 @@ public class ASMPrinter {
     private void print(ASMFunction function) {
         String funcName = function.getFunctionName();
         indentCnt++;
-        printWithIndent(formatComment(" -- Begin Function " + funcName, formatPseudoOptions("globl", funcName)));
+        printWithIndent(formatComment(formatPseudoOptions("globl", funcName), " -- Begin Function " + funcName));
         printWithIndent(formatPseudoOptions("p2align", "2"));
         printWithIndent(formatPseudoOptions("type", funcName + ",@function"));
         indentCnt--;
-        printWithIndent(formatComment(" @" + funcName, funcName + ":"));
+        printWithIndent(formatComment(funcName + ":", " @" + funcName));
         function.getBlocks().forEach(this::print);
         String endLabel = ".Lfunc_end" + (functionCnt++);
         printWithIndent(endLabel + ":");
         indentCnt++;
         printWithIndent(formatPseudoOptions("size", funcName + ", " + endLabel + "-" + funcName));
         indentCnt--;
-        printWithIndent(formatComment(" -- End Function", ""));
+        printWithIndent(formatComment("", " -- End Function"));
     }
 
     private void print(ASMBasicBlock block) {

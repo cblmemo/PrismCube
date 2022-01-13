@@ -11,8 +11,9 @@ import IR.Operand.IRRegister;
 
 import java.util.HashMap;
 
+import static Debug.MemoLog.log;
+
 public class ASMStackFrame {
-    private int requestNumber = 0;
     private int requestSize = 0;
     private int maxArgumentNumber = -1;
     private int argumentSize = 0;
@@ -24,9 +25,17 @@ public class ASMStackFrame {
         argumentSize = maxArgumentNumber > 8 ? 4 * (maxArgumentNumber - 8) : 0;
     }
 
+    private int upperPowerOf2(int num) {
+        int ret = 1;
+        while (ret < num) ret <<= 1;
+        return ret;
+    }
+
     public void requestAlloca(IRAllocaInstruction inst) {
         alloca2offset.put(inst.getAllocaTarget(), argumentSize + allocaSize);
-        allocaSize += inst.getAllocaType().sizeof();
+        int instructionAllocaSize = upperPowerOf2(inst.getAllocaType().sizeof());
+        log.Tracef("request alloca: %d", instructionAllocaSize);
+        allocaSize += instructionAllocaSize;
     }
 
     public int getAllocaRegisterOffset(IRRegister register) {
@@ -35,7 +44,6 @@ public class ASMStackFrame {
     }
 
     public int requestWord() {
-        requestNumber++;
         requestSize += 4;
         return argumentSize + allocaSize + requestSize - 4;
     }
