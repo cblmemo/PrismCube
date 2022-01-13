@@ -96,7 +96,7 @@ public class ASMPrinter {
         indentCnt++;
         printWithIndent(formatComment(" @" + name, formatPseudoOptions("type", name + ",@object")));
         printWithIndent(formatPseudoOptions("section", ".sdata,\"aw\",@progits"));
-        printWithIndent(formatPseudoOptions("globl", symbol.getSymbolName()));
+//        printWithIndent(formatPseudoOptions("globl", symbol.getSymbolName()));
         printWithIndent(formatPseudoOptions("p2align", "2"));
         indentCnt--;
         printWithIndent(name + ":");
