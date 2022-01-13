@@ -117,7 +117,7 @@ public class Memory {
                 }
                 case "-arch" -> {
                     if (!(i + 1 < args.length && (Objects.equals(args[i + 1], "x86_64") || Objects.equals(args[i + 1], "x86_32")))) err("wrong arch argument");
-                    architecture = Objects.equals(args[i + 1], "x86_64") ? Architecture.x86_64 : Architecture.x86_32;
+                    architecture = Objects.equals(args[i++], "x86_64") ? Architecture.x86_64 : Architecture.x86_32;
                 }
                 case "-o" -> {
                     if (i == args.length - 1) err("missing argument");
