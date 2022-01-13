@@ -28,7 +28,7 @@ public class IRAllocaInstruction extends IRInstruction {
 
     @Override
     public String toString() {
-        return allocaTarget + " = alloca " + allocaType + ", align " + allocaType.sizeof();
+        return allocaTarget + " = alloca " + allocaType + (IRInstruction.useAlign() ? (", align " + allocaType.sizeof()) : "");
     }
 
     @Override

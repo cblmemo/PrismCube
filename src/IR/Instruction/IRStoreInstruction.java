@@ -35,7 +35,7 @@ public class IRStoreInstruction extends IRInstruction {
 
     @Override
     public String toString() {
-        return "store " + storeType + " " + storeValue + ", " + storeType + "* " + storeTarget + ", align " + storeType.sizeof();
+        return "store " + storeType + " " + storeValue + ", " + storeType + "* " + storeTarget + (IRInstruction.useAlign() ? (", align " + storeType.sizeof()) : "");
     }
 
     @Override

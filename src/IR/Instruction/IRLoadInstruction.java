@@ -36,7 +36,7 @@ public class IRLoadInstruction extends IRInstruction {
 
     @Override
     public String toString() {
-        return loadTarget + " = load " + loadType + ", " + loadValue.getIRType() + " " + loadValue + ", align " + loadType.sizeof();
+        return loadTarget + " = load " + loadType + ", " + loadValue.getIRType() + " " + loadValue + (IRInstruction.useAlign() ? ", align " + loadType.sizeof() : "");
     }
 
     @Override
