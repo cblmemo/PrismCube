@@ -55,64 +55,42 @@ public class Memory {
         throw new ArgumentParseError(message);
     }
 
+    private enum Mode {
+        NONE, SYNTAX, CODEGEN
+    }
+
+    private Mode mode = Mode.NONE;
+
     private void parseArgument(String[] args) throws FileNotFoundException {
-        // todo use enum mode to avoid chaos enable and disable
-        boolean syntaxOnly = false, setLogLevel = false, setLogFile = false, emitLLVM = false, codegen = false;
         useDefaultSetup();
         for (int i = 0; i < args.length; i++) {
             String arg0 = args[i];
             if (!Objects.equals(arg0.charAt(0), '-')) err("wrong argument format");
             switch (arg0) {
                 case "-fsyntax-only" -> {
-                    if (emitLLVM || codegen) err("argument conflict");
-                    syntaxOnly = true;
-                    ConstStringCollector.disable();
-                    IRBuilder.disable();
-                    InstructionSelector.disable();
-                    RegisterAllocator.disable();
-                    ASMPrinter.disable();
+                    if (mode != Mode.NONE) err("argument conflict");
+                    mode = Mode.SYNTAX;
                 }
-                case "-log" -> {
+                case "-log-o" -> {
                     if (i == args.length - 1) err("missing argument");
-                    String arg1 = args[++i];
-                    if (!Objects.equals(arg1.charAt(0), '-')) err("wrong argument format");
-                    switch (arg1) {
-                        case "-o" -> {
-                            if (setLogFile) err("already set log file");
-                            if (i == args.length - 1) err("missing argument");
-                            String arg2 = args[++i];
-                            log.SetOutPutFile(arg2);
-                            setLogFile = true;
-                        }
-                        case "-level" -> {
-                            if (setLogLevel) err("already set log level");
-                            if (i == args.length - 1) err("missing argument");
-                            String arg2 = args[++i];
-                            switch (arg2) {
-                                case "trace" -> log.SetLogLevel(MemoLog.LogLevel.TraceLevel);
-                                case "debug" -> log.SetLogLevel(MemoLog.LogLevel.DebugLevel);
-                                case "info" -> log.SetLogLevel(MemoLog.LogLevel.InfoLevel);
-                                case "error" -> log.SetLogLevel(MemoLog.LogLevel.ErrorLevel);
-                                case "fatal" -> log.SetLogLevel(MemoLog.LogLevel.FatalLevel);
-                                default -> err("wrong argument format");
-                            }
-                            setLogLevel = true;
-                        }
+                    String arg = args[++i];
+                    log.SetOutPutFile(arg);
+                }
+                case "-log-level" -> {
+                    String arg = args[++i];
+                    switch (arg) {
+                        case "trace" -> log.SetLogLevel(MemoLog.LogLevel.TraceLevel);
+                        case "debug" -> log.SetLogLevel(MemoLog.LogLevel.DebugLevel);
+                        case "info" -> log.SetLogLevel(MemoLog.LogLevel.InfoLevel);
+                        case "error" -> log.SetLogLevel(MemoLog.LogLevel.ErrorLevel);
+                        case "fatal" -> log.SetLogLevel(MemoLog.LogLevel.FatalLevel);
                         default -> err("wrong argument format");
                     }
                 }
-                case "-emit-llvm" -> {
-                    if (syntaxOnly || codegen) err("argument conflict");
-                    IRPrinter.enable();
-                    InstructionSelector.disable();
-                    RegisterAllocator.disable();
-                    ASMPrinter.disable();
-                    emitLLVM = true;
-                }
+                case "-emit-llvm" -> IRPrinter.enable();
                 case "-emit-asm" -> {
-                    if (syntaxOnly || emitLLVM) err("argument conflict");
-                    codegen = true;
-                    // -emit-asm is default setup
+                    if (mode != Mode.NONE) err("argument conflict");
+                    mode = Mode.CODEGEN;
                 }
                 case "-printV" -> {
                     if (i == args.length - 1) err("missing argument");
@@ -138,18 +116,30 @@ public class Memory {
                 default -> err("wrong argument format");
             }
         }
+        switch (mode) {
+            case NONE -> err("missing mode");
+            case SYNTAX -> {
+                ConstStringCollector.disable();
+                IRBuilder.disable();
+                InstructionSelector.disable();
+                RegisterAllocator.disable();
+                ASMPrinter.disable();
+            }
+            case CODEGEN -> {
+                ConstStringCollector.enable();
+                IRBuilder.enable();
+                InstructionSelector.enable();
+                RegisterAllocator.enable();
+                ASMPrinter.enable();
+            }
+        }
     }
 
     public void useDefaultSetup() {
         log.disableLog();
         printStream = System.out;
         inputStream = System.in;
-        ConstStringCollector.enable();
-        IRBuilder.enable();
         IRPrinter.disable();
-        InstructionSelector.enable();
-        RegisterAllocator.enable();
-        ASMPrinter.enable();
         ASMPrinter.disableVirtual();
     }
 

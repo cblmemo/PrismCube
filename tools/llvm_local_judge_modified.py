@@ -25,11 +25,10 @@ test_codegen = True
 use_llvm = True
 llc_cmd = 'llc'
 
-
-
 color_red = "\033[0;31m"
 color_green = "\033[0;32m"
 color_none = "\033[0m"
+
 
 def collect_test_cases():
     test_cases = []
@@ -38,7 +37,8 @@ def collect_test_cases():
             test_cases.append(f)
     print(len(test_cases))
     for s in excluded_test_cases:
-        if s in test_cases: test_cases.remove(s)
+        if s in test_cases:
+            test_cases.remove(s)
     test_cases.sort()
     return test_cases
 
@@ -59,17 +59,19 @@ def parse_test_case(test_case_path):
 
     return src_text, input_text, output_text
 
+
 def clear():
     os.system("rm test.*")
     os.system("rm *.out")
     os.system("rm *.ll")
+
 
 def main():
     if os.system(compile_cmd):
         print(color_red + "Fail when building your compiler...")
         return
     test_cases = collect_test_cases()
-#     os.system('clang -S -emit-llvm builtin/builtin.c -o builtin/builtin.ll')
+    #     os.system('clang -S -emit-llvm builtin/builtin.c -o builtin/builtin.ll')
     os.system('cp %s ./builtin.ll' % builtin_path)
     total = 0
     passed = 0
@@ -90,7 +92,7 @@ def main():
 
         print(t + ':', end='')
         for i in range(len(t), max_len):
-            print(end = ' ')
+            print(end=' ')
         start = time.time()
         if os.system('%s < ./test.mx > test.ll' % "bash ./ir.bash"):
             print(color_red + "Compilation failed" + color_none)
@@ -107,6 +109,7 @@ def main():
         continue_fail = 0
 
     print("total {}, passed {}, ratio {}".format(total, passed, passed / total))
+
 
 if __name__ == '__main__':
     main()
