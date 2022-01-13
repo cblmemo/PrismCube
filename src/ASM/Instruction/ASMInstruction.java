@@ -35,6 +35,10 @@ abstract public class ASMInstruction {
         return Objects.equals(instStr, "sb") || Objects.equals(instStr, "sw");
     }
 
+    public boolean isBranchInstruction() {
+        return Objects.equals(instStr, "beqz");
+    }
+
     @Override
     public String toString() {
         StringBuilder builder = new StringBuilder();

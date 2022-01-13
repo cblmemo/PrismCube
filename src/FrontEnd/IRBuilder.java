@@ -426,6 +426,7 @@ public class IRBuilder implements ASTVisitor {
         int id = labelCnt++;
         IRBasicBlock conditionBlock = new IRBasicBlock(currentFunction, id + "_for_condition");
         IRBasicBlock bodyBlock = new IRBasicBlock(currentFunction, id + "_for_body");
+        IRBasicBlock stepBlock = node.hasStepExpression() ? new IRBasicBlock(currentFunction, id + "_for_step") : null;
         IRBasicBlock terminateBlock = new IRBasicBlock(currentFunction, id + "_for_terminate");
         if (node.hasInitializeStatement()) node.getInitializeStatement().accept(this);
         finishCurrentBasicBlock(new IRBrInstruction(null, conditionBlock, null, currentBasicBlock));
@@ -439,6 +440,7 @@ public class IRBuilder implements ASTVisitor {
         currentBasicBlock = bodyBlock;
         LoopScope loopScope = currentScope.getLoopScope();
         loopScope.setLoopConditionBlock(conditionBlock);
+        loopScope.setLoopStepBlock(stepBlock);
         loopScope.setLoopTerminateBlock(terminateBlock);
         node.getLoopBody().accept(this);
         if (currentScope.hasEncounteredFlow()) {
@@ -446,7 +448,12 @@ public class IRBuilder implements ASTVisitor {
             currentScope.getParentScope().inheritEncounteredFlowMark(currentScope);
             currentScope.getParentScope().eraseEncounteredLoopFlowMark();
         } else {
-            if (node.hasStepExpression()) node.getStepExpression().accept(this);
+            if (node.hasStepExpression()) {
+                assert stepBlock != null;
+                finishCurrentBasicBlock(new IRBrInstruction(null, stepBlock, null, currentBasicBlock));
+                currentBasicBlock = stepBlock;
+                node.getStepExpression().accept(this);
+            }
             currentBasicBlock.setEscapeInstruction(new IRBrInstruction(null, conditionBlock, null, currentBasicBlock));
         }
         currentScope = currentScope.getParentScope();
@@ -509,7 +516,7 @@ public class IRBuilder implements ASTVisitor {
     public void visit(ContinueStatementNode node) {
         if (currentScope.hasEncounteredFlow()) return;
         LoopScope loopScope = currentScope.getLoopScope();
-        currentBasicBlock.setEscapeInstruction(new IRBrInstruction(null, loopScope.getLoopConditionBlock(), null, currentBasicBlock));
+        currentBasicBlock.setEscapeInstruction(new IRBrInstruction(null, loopScope.getContinueTarget(), null, currentBasicBlock));
         currentScope.setAsEncounteredFlow(Scope.flowStatementType.continueType);
     }
 
