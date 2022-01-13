@@ -3,6 +3,7 @@ package IR.TypeSystem;
 import BackEnd.InstructionSelector;
 import IR.Operand.IRNull;
 import IR.Operand.IROperand;
+import Memory.Memory;
 
 public class IRPointerType extends IRTypeSystem {
     private final IRTypeSystem baseType;
@@ -33,6 +34,6 @@ public class IRPointerType extends IRTypeSystem {
     @Override
     public int sizeof() {
         // ravel: 32-bit, my computer: 64-bit
-        return InstructionSelector.codegen() ? 4 : 8;
+        return Memory.getArchitecture() == Memory.Architecture.x86_32 ? 4 : 8;
     }
 }

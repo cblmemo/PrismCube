@@ -57,7 +57,17 @@ public class Memory {
         NONE, SYNTAX, LLVM, CODEGEN
     }
 
-    private Mode mode = Mode.NONE;
+    private static Mode mode = Mode.NONE;
+
+    public enum Architecture {
+        x86_64, x86_32
+    }
+
+    private static Architecture architecture = Architecture.x86_64;
+
+    public static Architecture getArchitecture() {
+        return architecture;
+    }
 
     public Memory parse(String[] args) throws FileNotFoundException {
         useDefaultSetup();
@@ -104,6 +114,10 @@ public class Memory {
                     String arg = i + 1 < args.length && args[i + 1].charAt(0) == '-' ? "./bin/virtual.s" : args[++i];
                     PrintStream virtualStream = new PrintStream(arg);
                     ASMPrinter.enableVirtual(virtualStream);
+                }
+                case "-arch" -> {
+                    if (!(i + 1 < args.length && (Objects.equals(args[i + 1], "x86_64") || Objects.equals(args[i + 1], "x86_32")))) err("wrong arch argument");
+                    architecture = Objects.equals(args[i + 1], "x86_64") ? Architecture.x86_64 : Architecture.x86_32;
                 }
                 case "-o" -> {
                     if (i == args.length - 1) err("missing argument");

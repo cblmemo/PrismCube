@@ -36,7 +36,7 @@ def run_asm(debug):
     if debug:
         exe("java -cp ./lib/antlr-4.9.1-complete.jar:./myout PrismCube -i ./bin/test.mx -o ./bin/test.s -emit-asm -emit-llvm ./bin/test.ll -log-o ./bin/log.txt -log-level debug -printV ./bin/virtual.s -print-reg-name")
     else:
-        exe("java -cp ./lib/antlr-4.9.1-complete.jar:./myout PrismCube -i ./bin/test.mx -o ./bin/test.s")
+        exe("java -cp ./lib/antlr-4.9.1-complete.jar:./myout PrismCube -i ./bin/test.mx -o ./bin/test.s -emit-asm")
     exe("rm ./bin/b.s")
     exe("rm ./bin/t.s")
     exe("scp ./builtin/builtin.s ./bin/b.s")
