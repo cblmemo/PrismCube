@@ -29,12 +29,6 @@ public class IRRegister extends IROperand {
         this.name = name;
     }
 
-    public IRRegister(IRTypeSystem irType, int id) {
-        super(irType);
-        this.id = id;
-        this.name = null;
-    }
-
     public IRRegister(IRTypeSystem irType, String name, boolean isAlloca) {
         super(irType);
         this.id = -(++allocaCnt);
