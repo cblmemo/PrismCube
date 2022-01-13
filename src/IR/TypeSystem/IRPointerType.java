@@ -1,5 +1,6 @@
 package IR.TypeSystem;
 
+import BackEnd.InstructionSelector;
 import IR.Operand.IRNull;
 import IR.Operand.IROperand;
 
@@ -31,6 +32,7 @@ public class IRPointerType extends IRTypeSystem {
 
     @Override
     public int sizeof() {
-        return 8;
+        // ravel: 32-bit, my computer: 64-bit
+        return InstructionSelector.codegen() ? 4 : 8;
     }
 }
