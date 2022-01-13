@@ -27,10 +27,6 @@ public class ASMPhysicalRegister extends ASMRegister {
         public boolean isSave() {
             return s0.ordinal() <= ordinal() && ordinal() <= s1.ordinal() || s2.ordinal() <= ordinal() && ordinal() <= s11.ordinal();
         }
-        
-        public boolean isSp() {
-            return ordinal() == sp.ordinal();
-        }
     }
 
     static private final HashMap<PhysicalRegisterName, ASMPhysicalRegister> PhysicalRegisters = new HashMap<>();
@@ -52,6 +48,11 @@ public class ASMPhysicalRegister extends ASMRegister {
 
     static public ASMPhysicalRegister getArgumentRegister(int i) {
         return PhysicalRegisters.get(PhysicalRegisterName.values()[PhysicalRegisterName.a0.ordinal() + i]);
+    }
+
+    static public ASMPhysicalRegister getStoreRegister(int i) {
+        if (i <= 1) return PhysicalRegisters.get(PhysicalRegisterName.values()[PhysicalRegisterName.s0.ordinal() + i]);
+        return PhysicalRegisters.get(PhysicalRegisterName.values()[PhysicalRegisterName.s2.ordinal() + i - 2]);
     }
 
     static public ArrayList<ASMPhysicalRegister> getCallerSaveRegisters() {

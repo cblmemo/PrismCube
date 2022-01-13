@@ -89,7 +89,7 @@ def asm_test(dir):
     exe("java -cp ./lib/antlr-4.9.1-complete.jar:./myout PrismCube -i ./bin/test.mx -o ./bin/test.s -emit-asm -log-o ./bin/log.txt -log-level trace")
     exe("scp ./builtin/builtin.s ./bin/b.s")
     exe("/Users/memory/Desktop/temp/compiler/bin/ravel ./bin/test.s ./bin/b.s --input-file=./bin/std.in")
-    exe("code ./bin/std.out")
+    # exe("code ./bin/std.out")
 
 
 def run():

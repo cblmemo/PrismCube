@@ -5,6 +5,7 @@ import ASM.ASMFunction;
 import ASM.Instruction.ASMArithmeticInstruction;
 import ASM.Instruction.ASMInstruction;
 import ASM.Instruction.ASMMemoryInstruction;
+import ASM.Instruction.ASMPseudoInstruction;
 import ASM.Operand.*;
 
 import java.util.ArrayList;
@@ -28,6 +29,10 @@ public class NaiveAllocator {
         this.function = function;
     }
 
+    private boolean isValidImmediate(int imm) {
+        return -2048 <= imm && imm <= 2047;
+    }
+
     public void allocate() {
         log.Debugf("start allocate register for function %s\n", function.getFunctionName());
         // calculate frame size
@@ -36,8 +41,11 @@ public class NaiveAllocator {
             if (inst != null) inst.getOperands().forEach(operand -> {
                 if (operand instanceof ASMVirtualRegister && !vr2addr.containsKey(((ASMVirtualRegister) operand))) {
                     int offset = function.getStackFrame().requestWord();
-                    log.Debugf("request a word at %d " + " ".repeat(5 - Integer.toString(offset).length()) + "for virtual register %s\n", offset, ((ASMVirtualRegister) operand).getName());
-                    ASMAddress address = new ASMAddress(sp, new ASMImmediate(offset));
+                    log.Debugf("request a word at %d" + " ".repeat(6 - Integer.toString(offset).length()) + "for virtual register %s\n", offset, ((ASMVirtualRegister) operand).getName());
+                    ASMAddress address;
+                    // use s1 - s11 to store sp + 2048 * i
+                    if (!isValidImmediate(offset)) address = new ASMAddress(ASMPhysicalRegister.getStoreRegister(offset / 2048), new ASMImmediate(offset % 2048));
+                    else address = new ASMAddress(sp, new ASMImmediate(offset));
                     vr2addr.put((ASMVirtualRegister) operand, address);
                 }
             });
@@ -45,13 +53,34 @@ public class NaiveAllocator {
         // minus & plus sp
         int frameSize = function.getStackFrame().getFrameSize();
         ASMBasicBlock entry = function.getBlocks().get(0), escape = function.getBlocks().get(function.getBlocks().size() - 1);
-        int indexOfMinusSp = entry.getInstructions().indexOf(null);
-        ASMArithmeticInstruction minusSp = new ASMArithmeticInstruction(ASMArithmeticInstruction.InstType.addi);
-        minusSp.addOperand(sp).addOperand(sp).addOperand(new ASMImmediate(-frameSize));
+        int indexOfMinusSp = entry.getInstructions().indexOf(null), indexOfPlusSp = escape.getInstructions().indexOf(null);
+        ASMArithmeticInstruction minusSp, plusSp;
+        if (isValidImmediate(frameSize)) {
+            minusSp = new ASMArithmeticInstruction(ASMArithmeticInstruction.InstType.addi);
+            minusSp.addOperand(sp).addOperand(sp).addOperand(new ASMImmediate(-frameSize));
+            plusSp = new ASMArithmeticInstruction(ASMArithmeticInstruction.InstType.addi);
+            plusSp.addOperand(sp).addOperand(sp).addOperand(new ASMImmediate(frameSize));
+        } else {
+            // use s0 to store frame size
+            ASMPseudoInstruction li = new ASMPseudoInstruction(ASMPseudoInstruction.InstType.li);
+            li.addOperand(ASMPhysicalRegister.getPhysicalRegister(ASMPhysicalRegister.PhysicalRegisterName.s0)).addOperand(new ASMImmediate(-frameSize));
+            minusSp = new ASMArithmeticInstruction(ASMArithmeticInstruction.InstType.add);
+            minusSp.addOperand(sp).addOperand(sp).addOperand(ASMPhysicalRegister.getPhysicalRegister(ASMPhysicalRegister.PhysicalRegisterName.s0));
+            entry.getInstructions().add(indexOfMinusSp++, li);
+            plusSp = new ASMArithmeticInstruction(ASMArithmeticInstruction.InstType.add);
+            plusSp.addOperand(sp).addOperand(sp).addOperand(ASMPhysicalRegister.getPhysicalRegister(ASMPhysicalRegister.PhysicalRegisterName.s0));
+            // si in s1 - s11 stores sp + 2048 * i
+            int indexOfInitializeStore = indexOfMinusSp + 1;
+            for (int i = 1; i <= frameSize / 2048; i++) {
+                ASMPseudoInstruction li2si = new ASMPseudoInstruction(ASMPseudoInstruction.InstType.li);
+                li2si.addOperand(ASMPhysicalRegister.getStoreRegister(i)).addOperand(new ASMImmediate(i * 2048));
+                entry.getInstructions().add(indexOfInitializeStore++, li2si);
+                ASMArithmeticInstruction add2si = new ASMArithmeticInstruction(ASMArithmeticInstruction.InstType.add);
+                add2si.addOperand(ASMPhysicalRegister.getStoreRegister(i)).addOperand(sp).addOperand(ASMPhysicalRegister.getStoreRegister(i));
+                entry.getInstructions().add(indexOfInitializeStore++, add2si);
+            }
+        }
         entry.getInstructions().set(indexOfMinusSp, minusSp);
-        int indexOfPlusSp = escape.getInstructions().indexOf(null);
-        ASMArithmeticInstruction plusSp = new ASMArithmeticInstruction(ASMArithmeticInstruction.InstType.addi);
-        plusSp.addOperand(sp).addOperand(sp).addOperand(new ASMImmediate(frameSize));
         escape.getInstructions().set(indexOfPlusSp, plusSp);
         // step into block
         function.getBlocks().forEach(this::allocateBlock);
