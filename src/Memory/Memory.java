@@ -54,7 +54,7 @@ public class Memory {
     }
 
     private enum Mode {
-        NONE, SYNTAX, CODEGEN
+        NONE, SYNTAX, LLVM, CODEGEN
     }
 
     private Mode mode = Mode.NONE;
@@ -92,6 +92,10 @@ public class Memory {
                     PrintStream irStream = new PrintStream(arg);
                     IRPrinter.enable(irStream);
                 }
+                case "-llvm-only" -> {
+                    if (mode != Mode.NONE) err("argument conflict");
+                    mode = Mode.LLVM;
+                }
                 case "-emit-asm" -> {
                     if (mode != Mode.NONE) err("argument conflict");
                     mode = Mode.CODEGEN;
@@ -124,6 +128,14 @@ public class Memory {
             case SYNTAX -> {
                 ConstStringCollector.disable();
                 IRBuilder.disable();
+                InstructionSelector.disable();
+                RegisterAllocator.disable();
+                ASMPrinter.disable();
+            }
+            case LLVM -> {
+                ConstStringCollector.enable();
+                IRBuilder.enable();
+                IRPrinter.enable(printStream);
                 InstructionSelector.disable();
                 RegisterAllocator.disable();
                 ASMPrinter.disable();

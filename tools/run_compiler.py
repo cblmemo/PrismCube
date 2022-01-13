@@ -25,7 +25,7 @@ def build():
 
 
 def ir_gen_executable():
-    exe("java -cp ./lib/antlr-4.9.1-complete.jar:./myout PrismCube -i ./bin/test.mx -o ./bin/test.ll -emit-llvm")
+    exe("java -cp ./lib/antlr-4.9.1-complete.jar:./myout PrismCube -i ./bin/test.mx -o ./bin/test.ll -llvm-only")
     exe("scp ./builtin/builtin.ll ./bin/b.ll")
     exe("scp ./bin/test.ll ./bin/t.ll")
     exe("clang ./bin/b.ll ./bin/t.ll -o ./bin/a.out")
@@ -34,7 +34,7 @@ def ir_gen_executable():
 
 def run_asm(debug):
     if debug:
-        exe("java -cp ./lib/antlr-4.9.1-complete.jar:./myout PrismCube -i ./bin/test.mx -o ./bin/test.s -emit-asm -emit-llvm ./bin/test.ll -log-o ./bin/log.txt -log-level debug -printV ./bin/virtual.s")
+        exe("java -cp ./lib/antlr-4.9.1-complete.jar:./myout PrismCube -i ./bin/test.mx -o ./bin/test.s -emit-asm -emit-llvm ./bin/test.ll -log-o ./bin/log.txt -log-level debug -printV ./bin/virtual.s -print-reg-name")
     else:
         exe("java -cp ./lib/antlr-4.9.1-complete.jar:./myout PrismCube -i ./bin/test.mx -o ./bin/test.s")
     exe("rm ./bin/b.s")
@@ -89,7 +89,7 @@ def asm_test(dir):
     exe("java -cp ./lib/antlr-4.9.1-complete.jar:./myout PrismCube -i ./bin/test.mx -o ./bin/test.s -emit-asm -log-o ./bin/log.txt -log-level trace")
     exe("scp ./builtin/builtin.s ./bin/b.s")
     exe("/Users/memory/Desktop/temp/compiler/bin/ravel ./bin/test.s ./bin/b.s --input-file=./bin/std.in")
-    # exe("code ./bin/std.out")
+    exe("code ./bin/std.out")
 
 
 def run():
