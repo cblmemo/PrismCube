@@ -258,8 +258,10 @@ public class InstructionSelector implements IRVisitor {
             appendPseudoInst(ASMPseudoInstruction.InstType.la, address, asmModule.getGlobal(((IRGlobalVariableRegister) inst.getLoadValue()).getGlobalVariableName()));
             loadSource = new ASMAddress(address, null);
         } else {
-            int offset = currentFunction.getStackFrame().getAllocaRegisterOffset((IRRegister) inst.getLoadValue());
-            loadSource = new ASMAddress(ASMPhysicalRegister.getPhysicalRegister(ASMPhysicalRegister.PhysicalRegisterName.sp), new ASMImmediate(offset));
+            if (currentFunction.getStackFrame().isAllocaRegister((IRRegister) inst.getLoadValue())) {
+                int offset = currentFunction.getStackFrame().getAllocaRegisterOffset((IRRegister) inst.getLoadValue());
+                loadSource = new ASMAddress(ASMPhysicalRegister.getPhysicalRegister(ASMPhysicalRegister.PhysicalRegisterName.sp), new ASMImmediate(offset));
+            } else loadSource = new ASMAddress(toRegister(inst.getLoadValue()), null);
         }
         ASMMemoryInstruction.InstType loadType = inst.getLoadType().sizeof() == 1 ? ASMMemoryInstruction.InstType.lb : ASMMemoryInstruction.InstType.lw;
         appendInst(new ASMMemoryInstruction(loadType, loadTarget, loadSource));
@@ -291,9 +293,10 @@ public class InstructionSelector implements IRVisitor {
             appendPseudoInst(ASMPseudoInstruction.InstType.la, address, asmModule.getGlobal(((IRGlobalVariableRegister) inst.getStoreTarget()).getGlobalVariableName()));
             storeTarget = new ASMAddress(address, null);
         } else {
-            int offset = currentFunction.getStackFrame().getAllocaRegisterOffset((IRRegister) inst.getStoreTarget());
-
-            storeTarget = new ASMAddress(ASMPhysicalRegister.getPhysicalRegister(ASMPhysicalRegister.PhysicalRegisterName.sp), new ASMImmediate(offset));
+            if (currentFunction.getStackFrame().isAllocaRegister((IRRegister) inst.getStoreTarget())) {
+                int offset = currentFunction.getStackFrame().getAllocaRegisterOffset((IRRegister) inst.getStoreTarget());
+                storeTarget = new ASMAddress(ASMPhysicalRegister.getPhysicalRegister(ASMPhysicalRegister.PhysicalRegisterName.sp), new ASMImmediate(offset));
+            } else storeTarget = new ASMAddress(toRegister(inst.getStoreTarget()), null);
         }
         ASMMemoryInstruction.InstType storeType = inst.getStoreType().sizeof() == 1 ? ASMMemoryInstruction.InstType.sb : ASMMemoryInstruction.InstType.sw;
         appendInst(new ASMMemoryInstruction(storeType, storeValue, storeTarget));

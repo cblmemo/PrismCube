@@ -42,8 +42,10 @@ def run_asm(debug):
     exe("scp ./builtin/builtin.s ./bin/b.s")
     exe("scp ./bin/test.s ./bin/t.s")
     print("asm generate finished.")
-    exe("/Users/memory/Desktop/temp/compiler/bin/ravel ./bin/t.s ./bin/b.s")
-    # exe("/Users/memory/Desktop/temp/compiler/bin/ravel ./bin/t.s ./bin/b.s --input-file=./bin/std.in")
+    if debug:
+        exe("/Users/memory/Desktop/temp/compiler/bin/ravel ./bin/t.s ./bin/b.s --input-file=./bin/std.in")
+    else:
+        exe("/Users/memory/Desktop/temp/compiler/bin/ravel ./bin/t.s ./bin/b.s")
 
 
 def run_executable():
