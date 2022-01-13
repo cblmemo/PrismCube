@@ -369,12 +369,12 @@ public class InstructionSelector implements IRVisitor {
             case 2 -> { // member access
                 assert inst.getPtrValue() instanceof IRRegister;
                 assert inst.getElementType() instanceof IRPointerType;
-                assert ((IRPointerType) inst.getElementType()).getBaseType() instanceof IRStructureType;
+                assert inst.getElementType() instanceof IRStructureType;
                 assert inst.getIndices().get(0) instanceof IRConstInt;
                 assert ((IRConstInt) inst.getIndices().get(0)).getIntValue() == 0;
                 assert inst.getIndices().get(1) instanceof IRConstInt;
                 int index = ((IRConstInt) inst.getIndices().get(1)).getIntValue();
-                IRStructureType classType = (IRStructureType) ((IRPointerType) inst.getElementType()).getBaseType();
+                IRStructureType classType = (IRStructureType) inst.getElementType();
                 int offset = classType.getMemberOffset(index);
                 parseArith(ASMArithmeticInstruction.InstType.add, result, inst.getPtrValue(), new IRConstInt(null, offset), false);
             }
