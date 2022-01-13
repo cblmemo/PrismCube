@@ -172,7 +172,14 @@ public class InstructionSelector implements IRVisitor {
         function.getBlocks().forEach(block -> block.getInstructions().forEach(inst -> {
             if (inst instanceof IRCallInstruction) currentFunction.getStackFrame().updateMaxArgumentNumber(((IRCallInstruction) inst).getArgumentNumber());
         }));
-        function.getEntryBlock().getAllocas().forEach(alloca -> alloca.accept(this));
+        if (!RegisterAllocator.naive()) {
+            // callee save register backup
+            ASMPhysicalRegister.getCalleeSaveRegisters().forEach(reg -> {
+                ASMVirtualRegister calleeSave = new ASMVirtualRegister(reg + "_backup");
+                appendPseudoInst(ASMPseudoInstruction.InstType.mv, calleeSave, reg);
+                currentFunction.addCalleeSave(reg, calleeSave);
+            });
+        }
         // get arguments
         for (int i = 0; i < Integer.min(function.getParameterNumber(), 8); i++)
             appendPseudoInst(ASMPseudoInstruction.InstType.mv, toRegister(function.getParameters().get(i)), ASMPhysicalRegister.getArgumentRegister(i));
@@ -180,20 +187,6 @@ public class InstructionSelector implements IRVisitor {
             ASMAddress argumentAddress = new ASMAddress(ASMPhysicalRegister.getPhysicalRegister(ASMPhysicalRegister.PhysicalRegisterName.sp), new ASMImmediate(4 * (i - 8)));
             argumentAddress.markAsNeedAddFrameSize(currentFunction.getStackFrame());
             appendInst(new ASMMemoryInstruction(ASMMemoryInstruction.InstType.lw, toRegister(function.getParameters().get(i)), argumentAddress));
-        }
-        if (RegisterAllocator.naive()) {
-            // naive allocator doesn't need to back up callee save  except for ra since it store all value on stack
-            ASMPhysicalRegister ra = ASMPhysicalRegister.getPhysicalRegister(ASMPhysicalRegister.PhysicalRegisterName.ra);
-            ASMVirtualRegister raBackup = new ASMVirtualRegister("ra_backup");
-            appendPseudoInst(ASMPseudoInstruction.InstType.mv, raBackup, ra);
-            currentFunction.addCalleeSave(ra, raBackup);
-        } else {
-            // callee save register backup
-            ASMPhysicalRegister.getCalleeSaveRegisters().forEach(reg -> {
-                ASMVirtualRegister calleeSave = new ASMVirtualRegister(reg + "_backup");
-                appendPseudoInst(ASMPseudoInstruction.InstType.mv, calleeSave, reg);
-                currentFunction.addCalleeSave(reg, calleeSave);
-            });
         }
         function.getBlocks().forEach(block -> block.accept(this));
     }
@@ -222,7 +215,13 @@ public class InstructionSelector implements IRVisitor {
     @Override
     public void visit(IRCallInstruction inst) {
         HashMap<ASMPhysicalRegister, ASMVirtualRegister> callerSaves = new HashMap<>();
-        if (!RegisterAllocator.naive()) {
+        if (RegisterAllocator.naive()) {
+            // naive allocator doesn't need to back up callee save  except for ra since it store all value on stack
+            ASMPhysicalRegister ra = ASMPhysicalRegister.getPhysicalRegister(ASMPhysicalRegister.PhysicalRegisterName.ra);
+            ASMVirtualRegister raBackup = new ASMVirtualRegister("ra_backup");
+            appendPseudoInst(ASMPseudoInstruction.InstType.mv, raBackup, ra);
+            currentFunction.addCalleeSave(ra, raBackup);
+        } else {
             // caller save register backup
             ASMPhysicalRegister.getCallerSaveRegisters().forEach(reg -> {
                 ASMVirtualRegister callerSave = new ASMVirtualRegister(reg + "_backup");
@@ -240,7 +239,11 @@ public class InstructionSelector implements IRVisitor {
         ASMLabel functionLabel = getFunctionLabel(inst.getCallFunction().getFunctionName());
         appendPseudoInst(ASMPseudoInstruction.InstType.call, functionLabel);
         if (inst.haveReturnValue()) appendPseudoInst(ASMPseudoInstruction.InstType.mv, toRegister(inst.getResultRegister()), ASMPhysicalRegister.getPhysicalRegister(ASMPhysicalRegister.PhysicalRegisterName.a0));
-        if (!RegisterAllocator.naive()) {
+        if (RegisterAllocator.naive()) {
+            ASMPhysicalRegister ra = ASMPhysicalRegister.getPhysicalRegister(ASMPhysicalRegister.PhysicalRegisterName.ra);
+            ASMVirtualRegister raBackup = currentFunction.getCalleeSave(ra);
+            appendPseudoInst(ASMPseudoInstruction.InstType.mv, ra, raBackup);
+        } else {
             // retrieve callee save register
             ASMPhysicalRegister.getCallerSaveRegisters().forEach(reg -> appendPseudoInst(ASMPseudoInstruction.InstType.mv, reg, callerSaves.get(reg)));
         }
@@ -264,11 +267,7 @@ public class InstructionSelector implements IRVisitor {
 
     @Override
     public void visit(IRReturnInstruction inst) {
-        if (RegisterAllocator.naive()) {
-            ASMPhysicalRegister ra = ASMPhysicalRegister.getPhysicalRegister(ASMPhysicalRegister.PhysicalRegisterName.ra);
-            ASMVirtualRegister raBackup = currentFunction.getCalleeSave(ra);
-            appendPseudoInst(ASMPseudoInstruction.InstType.mv, ra, raBackup);
-        } else {
+        if (!RegisterAllocator.naive()) {
             // retrieve callee save register
             ASMPhysicalRegister.getCalleeSaveRegisters().forEach(reg -> appendPseudoInst(ASMPseudoInstruction.InstType.mv, reg, currentFunction.getCalleeSave(reg)));
         }
@@ -293,6 +292,7 @@ public class InstructionSelector implements IRVisitor {
             storeTarget = new ASMAddress(address, null);
         } else {
             int offset = currentFunction.getStackFrame().getAllocaRegisterOffset((IRRegister) inst.getStoreTarget());
+
             storeTarget = new ASMAddress(ASMPhysicalRegister.getPhysicalRegister(ASMPhysicalRegister.PhysicalRegisterName.sp), new ASMImmediate(offset));
         }
         ASMMemoryInstruction.InstType storeType = inst.getStoreType().sizeof() == 1 ? ASMMemoryInstruction.InstType.sb : ASMMemoryInstruction.InstType.sw;

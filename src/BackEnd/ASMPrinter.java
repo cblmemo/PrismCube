@@ -18,6 +18,7 @@ public class ASMPrinter {
     private int indentCnt = 0;
     private int functionCnt = 0;
 
+    private static PrintStream virtualStream = null;
     private static boolean print = false;
     private static boolean printVirtual = false;
     private static final int commentAlignLength = 50;
@@ -35,7 +36,8 @@ public class ASMPrinter {
         print = false;
     }
 
-    public static void enableVirtual() {
+    public static void enableVirtual(PrintStream virtualStream) {
+        ASMPrinter.virtualStream = virtualStream;
         printVirtual = true;
     }
 
@@ -75,7 +77,8 @@ public class ASMPrinter {
 
     public void printVirtual(Memory memory) {
         if (printVirtual) {
-            ps = memory.getDebugStream();
+            assert virtualStream != null;
+            ps = virtualStream;
             print(memory.getAsmModule());
         }
     }

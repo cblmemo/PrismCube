@@ -33,13 +33,15 @@ public class ASMStackFrame {
 
     public void requestAlloca(IRAllocaInstruction inst) {
         alloca2offset.put(inst.getAllocaTarget(), argumentSize + allocaSize);
-        int instructionAllocaSize = upperPowerOf2(inst.getAllocaType().sizeof());
-        log.Tracef("request alloca: %d", instructionAllocaSize);
+        // at least alloca a word
+        int instructionAllocaSize = Math.max(4, upperPowerOf2(inst.getAllocaType().sizeof()));
+        log.Debugf("request alloca: size %d at %d\n", instructionAllocaSize, argumentSize + allocaSize);
         allocaSize += instructionAllocaSize;
     }
 
     public int getAllocaRegisterOffset(IRRegister register) {
         assert alloca2offset.containsKey(register);
+        assert alloca2offset.get(register) != null;
         return alloca2offset.get(register);
     }
 

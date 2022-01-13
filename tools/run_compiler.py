@@ -32,14 +32,18 @@ def ir_gen_executable():
     print("ir generate and link finished.")
 
 
-def run_asm():
-    exe("java -cp ./lib/antlr-4.9.1-complete.jar:./myout PrismCube -i ./bin/test.mx -o ./bin/test.s -emit-asm")
+def run_asm(debug):
+    if debug:
+        exe("java -cp ./lib/antlr-4.9.1-complete.jar:./myout PrismCube -i ./bin/test.mx -o ./bin/test.s -emit-asm -emit-llvm ./bin/test.ll -log-o ./bin/log.txt -log-level debug -printV ./bin/virtual.s")
+    else:
+        exe("java -cp ./lib/antlr-4.9.1-complete.jar:./myout PrismCube -i ./bin/test.mx -o ./bin/test.s")
     exe("rm ./bin/b.s")
     exe("rm ./bin/t.s")
     exe("scp ./builtin/builtin.s ./bin/b.s")
     exe("scp ./bin/test.s ./bin/t.s")
     print("asm generate finished.")
     exe("/Users/memory/Desktop/temp/compiler/bin/ravel ./bin/t.s ./bin/b.s")
+    # exe("/Users/memory/Desktop/temp/compiler/bin/ravel ./bin/t.s ./bin/b.s --input-file=./bin/std.in")
 
 
 def run_executable():
@@ -74,15 +78,15 @@ def parse_test_case(test_case_path):
 
 def asm_test(dir):
     src_txt, in_txt, out_txt = parse_test_case(dir)
-    with open("./bin/case.mx", "w") as f:
+    with open("./bin/test.mx", "w") as f:
         f.write(src_txt)
-    with open("./bin/case.in", "w") as f:
+    with open("./bin/std.in", "w") as f:
         f.write(in_txt)
     with open("./bin/std.out", "w") as f:
         f.write(out_txt)
-    exe("java -cp ./lib/antlr-4.9.1-complete.jar:./myout PrismCube -i ./bin/case.mx -o ./bin/case.s -emit-asm -log-o ./bin/log.txt -log-level trace")
+    exe("java -cp ./lib/antlr-4.9.1-complete.jar:./myout PrismCube -i ./bin/test.mx -o ./bin/test.s -emit-asm -log-o ./bin/log.txt -log-level trace")
     exe("scp ./builtin/builtin.s ./bin/b.s")
-    exe("/Users/memory/Desktop/temp/compiler/bin/ravel ./bin/case.s ./bin/b.s --input-file=./bin/case.in")
+    exe("/Users/memory/Desktop/temp/compiler/bin/ravel ./bin/test.s ./bin/b.s --input-file=./bin/std.in")
     exe("code ./bin/std.out")
 
 
@@ -91,6 +95,7 @@ def run():
     case = 0
     conflict = False
     case_dir = "./testcases/codegen/"
+    asm_debug = False
     while i < len(sys.argv):
         arg = sys.argv[i]
         if arg == "--help" or arg == "-h":
@@ -122,6 +127,9 @@ def run():
             else:
                 conflict = True
             case = 2
+            if i + 1 < len(sys.argv) and sys.argv[i + 1] == "debug":
+                i = i + 1
+                asm_debug = True
         elif arg == "-emit-asm":
             if conflict:
                 print("error: mode conflict")
@@ -157,7 +165,7 @@ def run():
         run_executable()
         clear(case)
     elif case == 2:
-        run_asm()
+        run_asm(asm_debug)
         clear(case)
     elif case == 3:
         gen_riscv_asm()

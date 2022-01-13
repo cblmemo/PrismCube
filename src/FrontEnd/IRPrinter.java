@@ -32,8 +32,10 @@ public class IRPrinter implements IRVisitor {
     private PrintStream ps;
 
     private static boolean print = false;
+    private static PrintStream irStream = null;
 
-    public static void enable() {
+    public static void enable(PrintStream irStream) {
+        IRPrinter.irStream = irStream;
         print = true;
     }
 
@@ -49,7 +51,7 @@ public class IRPrinter implements IRVisitor {
      */
     public void print(Memory memory) {
         if (print) {
-            ps = memory.getPrintStream();
+            ps = irStream;
             memory.getIRModule().accept(this);
         }
     }

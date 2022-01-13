@@ -306,7 +306,7 @@ public class IRBuilder implements ASTVisitor {
         VariableEntity parameterEntity = currentScope.getVariableEntityRecursively(currentFunction.getParameterName().get(0));
         parameterEntity.setCurrentRegister(parameterRegister);
         appendInst(new IRAllocaInstruction(parameterType, parameterRegister));
-        appendInst(new IRStoreInstruction(parameterType, parameterRegister, new IRRegister(parameterType, 0)));
+        appendInst(new IRStoreInstruction(parameterType, parameterRegister, currentFunction.getParameters().get(0)));
         node.getStatements().forEach(statement -> statement.accept(this));
         currentFunction.getReturnBlock().setEscapeInstruction(new IRReturnInstruction(getVoidType(), null));
         if (!currentBasicBlock.hasEscapeInstruction()) currentBasicBlock.setEscapeInstruction(new IRBrInstruction(null, currentFunction.getReturnBlock(), null, currentBasicBlock));
@@ -344,7 +344,7 @@ public class IRBuilder implements ASTVisitor {
             IRTypeSystem parameterType = currentFunction.getParameterType().get(i);
             VariableEntity parameterEntity = currentScope.getVariableEntityRecursively(currentFunction.getParameterName().get(i));
             IRRegister targetRegister = parameterEntity.getCurrentRegister();
-            IRRegister srcRegister = new IRRegister(parameterType, i);
+            IRRegister srcRegister = currentFunction.getParameters().get(i);
             appendInst(new IRStoreInstruction(parameterType, targetRegister, srcRegister));
             if (i == 0) currentFunction.setThisRegister(targetRegister);
         }

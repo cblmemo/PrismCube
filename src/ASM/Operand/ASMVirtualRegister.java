@@ -9,6 +9,10 @@ public class ASMVirtualRegister extends ASMRegister {
         this.name = name + "_" + cnt++;
     }
 
+    public String getName() {
+        return name;
+    }
+
     @Override
     public String toString() {
         return "$" + name;

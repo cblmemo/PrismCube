@@ -42,13 +42,11 @@ public class Memory {
     // io
     private InputStream inputStream;
     private PrintStream printStream;
-    private PrintStream debugStream;
 
-    public Memory(String[] args) throws FileNotFoundException {
+    public Memory() {
         globalScope = new GlobalScope(null);
         irModule = new IRModule();
         asmModule = new ASMModule();
-        parseArgument(args);
     }
 
     private void err(String message) {
@@ -61,7 +59,7 @@ public class Memory {
 
     private Mode mode = Mode.NONE;
 
-    private void parseArgument(String[] args) throws FileNotFoundException {
+    public Memory parse(String[] args) throws FileNotFoundException {
         useDefaultSetup();
         for (int i = 0; i < args.length; i++) {
             String arg0 = args[i];
@@ -75,6 +73,7 @@ public class Memory {
                     if (i == args.length - 1) err("missing argument");
                     String arg = args[++i];
                     log.SetOutPutFile(arg);
+                    log.enableLog();
                 }
                 case "-log-level" -> {
                     String arg = args[++i];
@@ -86,27 +85,31 @@ public class Memory {
                         case "fatal" -> log.SetLogLevel(MemoLog.LogLevel.FatalLevel);
                         default -> err("wrong argument format");
                     }
+                    log.enableLog();
                 }
-                case "-emit-llvm" -> IRPrinter.enable();
+                case "-emit-llvm" -> {
+                    String arg = i + 1 < args.length && args[i + 1].charAt(0) == '-' ? "./bin/test.ll" : args[++i];
+                    PrintStream irStream = new PrintStream(arg);
+                    IRPrinter.enable(irStream);
+                }
                 case "-emit-asm" -> {
                     if (mode != Mode.NONE) err("argument conflict");
                     mode = Mode.CODEGEN;
                 }
                 case "-printV" -> {
-                    if (i == args.length - 1) err("missing argument");
-                    String arg1 = args[++i];
-                    debugStream = new PrintStream(arg1);
-                    ASMPrinter.enableVirtual();
+                    String arg = i + 1 < args.length && args[i + 1].charAt(0) == '-' ? "./bin/virtual.s" : args[++i];
+                    PrintStream virtualStream = new PrintStream(arg);
+                    ASMPrinter.enableVirtual(virtualStream);
                 }
                 case "-o" -> {
                     if (i == args.length - 1) err("missing argument");
-                    String arg1 = args[++i];
-                    printStream = new PrintStream(arg1);
+                    String arg = args[++i];
+                    printStream = new PrintStream(arg);
                 }
                 case "-i" -> {
                     if (i == args.length - 1) err("missing argument");
-                    String arg1 = args[++i];
-                    inputStream = new FileInputStream(arg1);
+                    String arg = args[++i];
+                    inputStream = new FileInputStream(arg);
                 }
                 case "-debug" -> {
                     ASTPrinter.enable();
@@ -133,6 +136,7 @@ public class Memory {
                 ASMPrinter.enable();
             }
         }
+        return this;
     }
 
     public void useDefaultSetup() {
@@ -177,9 +181,5 @@ public class Memory {
 
     public PrintStream getPrintStream() {
         return printStream;
-    }
-
-    public PrintStream getDebugStream() {
-        return debugStream;
     }
 }

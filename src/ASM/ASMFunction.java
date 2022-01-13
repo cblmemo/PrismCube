@@ -9,6 +9,8 @@ import IR.IRFunction;
 import java.util.ArrayList;
 import java.util.HashMap;
 
+import static Debug.MemoLog.log;
+
 public class ASMFunction {
     private final String functionName;
     private final ArrayList<ASMBasicBlock> blocks = new ArrayList<>();
@@ -25,6 +27,7 @@ public class ASMFunction {
             blockMap.put(irBlock, asmBlock);
             blocks.add(asmBlock);
         });
+        log.Debugf("start request alloca for function %s\n", functionName);
         function.getEntryBlock().getAllocas().forEach(stackFrame::requestAlloca);
         this.entryBlock = blockMap.get(function.getEntryBlock());
         this.label = new ASMLabel(function.getFunctionName());

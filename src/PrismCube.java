@@ -14,7 +14,7 @@ import Utility.error.error;
 public class PrismCube {
     public static void main(String[] args) throws Exception {
         try {
-            Memory memory = new Memory(args);
+            Memory memory = new Memory().parse(args);
 
             new Preprocessor().preprocess(memory);
             new ASTBuilder().build(memory);

@@ -11,6 +11,8 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 
+import static Debug.MemoLog.log;
+
 public class NaiveAllocator {
     private static final ArrayList<ASMPhysicalRegister> registers = new ArrayList<>(Arrays.asList(
             ASMPhysicalRegister.getPhysicalRegister(ASMPhysicalRegister.PhysicalRegisterName.t0),
@@ -27,12 +29,14 @@ public class NaiveAllocator {
     }
 
     public void allocate() {
+        log.Debugf("start allocate register for function %s\n", function.getFunctionName());
         // calculate frame size
         ASMPhysicalRegister sp = ASMPhysicalRegister.getPhysicalRegister(ASMPhysicalRegister.PhysicalRegisterName.sp);
         function.getBlocks().forEach(block -> block.getInstructions().forEach(inst -> {
             if (inst != null) inst.getOperands().forEach(operand -> {
                 if (operand instanceof ASMVirtualRegister && !vr2addr.containsKey(((ASMVirtualRegister) operand))) {
                     int offset = function.getStackFrame().requestWord();
+                    log.Debugf("request a word at %d " + " ".repeat(5 - Integer.toString(offset).length()) + "for virtual register %s\n", offset, ((ASMVirtualRegister) operand).getName());
                     ASMAddress address = new ASMAddress(sp, new ASMImmediate(offset));
                     vr2addr.put((ASMVirtualRegister) operand, address);
                 }
