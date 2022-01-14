@@ -538,7 +538,7 @@ public class IRBuilder implements ASTVisitor {
         IROperand length = newArrayDimensionLength.get(posOnArray);
         IRRegister arrayLength = new IRRegister(getIntType(), "arr_size");
         // length of array
-        appendInst(new IRBinaryInstruction("mul", arrayLength, length, new IRConstInt(getIntType(), elementType.sizeof())));
+        appendInst(new IRBinaryInstruction("mul", arrayLength, length, new IRConstInt(getIntType(), new IRPointerType(null).sizeof())));
         IRRegister mallocSize = new IRRegister(getIntType(), "malloc_size");
         // 4 byte for address to array length
         appendInst(new IRBinaryInstruction("add", mallocSize, arrayLength, new IRConstInt(getIntType(), 4)));

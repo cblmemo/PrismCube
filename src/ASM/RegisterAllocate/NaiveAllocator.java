@@ -42,7 +42,7 @@ public class NaiveAllocator {
         function.getBlocks().forEach(block -> block.getInstructions().forEach(inst -> {
             if (inst != null) inst.getOperands().forEach(operand -> {
                 if (operand instanceof ASMVirtualRegister && !vr2addr.containsKey(((ASMVirtualRegister) operand))) {
-                    int offset = function.getStackFrame().requestWord();
+                    int offset = function.getStackFrame().spillRegister();
                     log.Debugf("request a word at %d" + " ".repeat(6 - Integer.toString(offset).length()) + "for virtual register %s\n", offset, ((ASMVirtualRegister) operand).getName());
                     ASMAddress address;
                     // use s1 - s11 to store sp + 2048 * i

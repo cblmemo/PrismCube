@@ -45,11 +45,11 @@ public class ASMStackFrame {
         return alloca2offset.get(register);
     }
 
-    public boolean isAllocaRegister(IRRegister register){
+    public boolean isAllocaRegister(IRRegister register) {
         return alloca2offset.containsKey(register);
     }
 
-    public int requestWord() {
+    public int spillRegister() {
         requestSize += 4;
         return argumentSize + allocaSize + requestSize - 4;
     }
