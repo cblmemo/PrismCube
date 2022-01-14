@@ -168,17 +168,15 @@ public class InstructionSelector implements IRVisitor {
         function.getBlocks().forEach(block -> block.getInstructions().forEach(inst -> {
             if (inst instanceof IRCallInstruction) currentFunction.getStackFrame().updateMaxArgumentNumber(((IRCallInstruction) inst).getArgumentNumber());
         }));
-        if (!RegisterAllocator.naive()) {
-            // callee save register backup
-            ASMPhysicalRegister.getCalleeSaveRegisters().forEach(reg -> {
-                ASMVirtualRegister calleeSave = new ASMVirtualRegister(reg + "_backup");
-                appendPseudoInst(ASMPseudoInstruction.InstType.mv, calleeSave, reg);
-                currentFunction.addCalleeSave(reg, calleeSave);
-            });
-        }
+        // callee save register backup
+        ASMPhysicalRegister.getCalleeSaveRegisters().forEach(reg -> {
+            ASMVirtualRegister calleeSave = new ASMVirtualRegister(reg + "_backup");
+            appendPseudoInst(ASMPseudoInstruction.InstType.mv, calleeSave, reg);
+            currentFunction.addCalleeSave(reg, calleeSave);
+        });
         // get arguments
         for (int i = 0; i < Integer.min(function.getParameterNumber(), 8); i++) {
-//            appendPseudoInst(ASMPseudoInstruction.InstType.mv, toRegister(function.getParameters().get(i)), ASMPhysicalRegister.getArgumentRegister(i));
+            // directly use a0 - a7 as register of parameter
             lr2r.put(function.getParameters().get(i), ASMPhysicalRegister.getArgumentRegister(i));
         }
         for (int i = 8; i < function.getParameterNumber(); i++) {
@@ -214,17 +212,17 @@ public class InstructionSelector implements IRVisitor {
     public void visit(IRCallInstruction inst) {
         HashMap<ASMPhysicalRegister, ASMVirtualRegister> callerSaves = new HashMap<>();
         if (RegisterAllocator.naive()) {
-            // naive allocator doesn't need to back up callee save  except for ra since it store all value on stack
+            // naive allocator doesn't need to back up callee save except for ra since it store all value on stack
             ASMPhysicalRegister ra = ASMPhysicalRegister.getPhysicalRegister(ASMPhysicalRegister.PhysicalRegisterName.ra);
             ASMVirtualRegister raBackup = new ASMVirtualRegister("ra_backup");
             appendPseudoInst(ASMPseudoInstruction.InstType.mv, raBackup, ra);
-            currentFunction.addCalleeSave(ra, raBackup);
+            callerSaves.put(ra, raBackup);
         } else {
             // caller save register backup
             ASMPhysicalRegister.getCallerSaveRegisters().forEach(reg -> {
-                ASMVirtualRegister callerSave = new ASMVirtualRegister(reg + "_backup");
-                appendPseudoInst(ASMPseudoInstruction.InstType.mv, callerSave, reg);
-                callerSaves.put(reg, callerSave);
+                ASMVirtualRegister backup = new ASMVirtualRegister(reg + "_backup");
+                appendPseudoInst(ASMPseudoInstruction.InstType.mv, backup, reg);
+                callerSaves.put(reg, backup);
             });
         }
         // put arguments in register, if more than 8 put in stack
@@ -237,14 +235,8 @@ public class InstructionSelector implements IRVisitor {
         ASMLabel functionLabel = getFunctionLabel(inst.getCallFunction().getFunctionName());
         appendPseudoInst(ASMPseudoInstruction.InstType.call, functionLabel);
         if (inst.haveReturnValue()) appendPseudoInst(ASMPseudoInstruction.InstType.mv, toRegister(inst.getResultRegister()), ASMPhysicalRegister.getPhysicalRegister(ASMPhysicalRegister.PhysicalRegisterName.a0));
-        if (RegisterAllocator.naive()) {
-            ASMPhysicalRegister ra = ASMPhysicalRegister.getPhysicalRegister(ASMPhysicalRegister.PhysicalRegisterName.ra);
-            ASMVirtualRegister raBackup = currentFunction.getCalleeSave(ra);
-            appendPseudoInst(ASMPseudoInstruction.InstType.mv, ra, raBackup);
-        } else {
-            // retrieve callee save register
-            ASMPhysicalRegister.getCallerSaveRegisters().forEach(reg -> appendPseudoInst(ASMPseudoInstruction.InstType.mv, reg, callerSaves.get(reg)));
-        }
+        // retrieve caller save register
+        callerSaves.forEach((reg, backup) -> appendPseudoInst(ASMPseudoInstruction.InstType.mv, reg, backup));
     }
 
     @Override
@@ -267,10 +259,8 @@ public class InstructionSelector implements IRVisitor {
 
     @Override
     public void visit(IRReturnInstruction inst) {
-        if (!RegisterAllocator.naive()) {
-            // retrieve callee save register
-            ASMPhysicalRegister.getCalleeSaveRegisters().forEach(reg -> appendPseudoInst(ASMPseudoInstruction.InstType.mv, reg, currentFunction.getCalleeSave(reg)));
-        }
+        // retrieve callee save register
+        currentFunction.getCalleeSaves().forEach((reg, backup) -> appendPseudoInst(ASMPseudoInstruction.InstType.mv, reg, backup));
         // put return value in a0
         if (inst.hasReturnValue()) appendPseudoInst(ASMPseudoInstruction.InstType.mv, ASMPhysicalRegister.getPhysicalRegister(ASMPhysicalRegister.PhysicalRegisterName.a0), toRegister(inst.getReturnValue()));
         appendInst(null); // will be replaced by "sp += frame size"

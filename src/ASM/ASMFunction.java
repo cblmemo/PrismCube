@@ -49,6 +49,10 @@ public class ASMFunction {
         return calleeSaves.get(reg);
     }
 
+    public HashMap<ASMPhysicalRegister, ASMVirtualRegister> getCalleeSaves() {
+        return calleeSaves;
+    }
+
     public ASMLabel getBasicBlockLabel(IRBasicBlock block) {
         assert blockMap.containsKey(block);
         return blockMap.get(block).getLabel();
