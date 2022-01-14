@@ -34,8 +34,8 @@ public class InstructionSelector implements IRVisitor {
     private HashMap<String, ASMFunction> builtinFunctions;
     private HashMap<String, ASMFunction> functions;
 
-    // llvm Register to Virtual Register
-    private final HashMap<IRRegister, ASMVirtualRegister> lr2vr = new HashMap<>();
+    // llvm Register to ASM Register
+    private final HashMap<IRRegister, ASMRegister> lr2r = new HashMap<>();
 
     private static boolean select = false;
 
@@ -84,8 +84,8 @@ public class InstructionSelector implements IRVisitor {
 
     private ASMRegister toRegister(IROperand operand) {
         if (operand instanceof IRRegister) {
-            if (!lr2vr.containsKey((IRRegister) operand)) lr2vr.put((IRRegister) operand, new ASMVirtualRegister(((IRRegister) operand).getName()));
-            return lr2vr.get((IRRegister) operand);
+            if (!lr2r.containsKey((IRRegister) operand)) lr2r.put((IRRegister) operand, new ASMVirtualRegister(((IRRegister) operand).getName()));
+            return lr2r.get((IRRegister) operand);
         }
         if (operand instanceof IRConstString) {
             ASMVirtualRegister string = new ASMVirtualRegister("address");
@@ -177,8 +177,10 @@ public class InstructionSelector implements IRVisitor {
             });
         }
         // get arguments
-        for (int i = 0; i < Integer.min(function.getParameterNumber(), 8); i++)
-            appendPseudoInst(ASMPseudoInstruction.InstType.mv, toRegister(function.getParameters().get(i)), ASMPhysicalRegister.getArgumentRegister(i));
+        for (int i = 0; i < Integer.min(function.getParameterNumber(), 8); i++) {
+//            appendPseudoInst(ASMPseudoInstruction.InstType.mv, toRegister(function.getParameters().get(i)), ASMPhysicalRegister.getArgumentRegister(i));
+            lr2r.put(function.getParameters().get(i), ASMPhysicalRegister.getArgumentRegister(i));
+        }
         for (int i = 8; i < function.getParameterNumber(); i++) {
             ASMAddress argumentAddress = new ASMAddress(ASMPhysicalRegister.getPhysicalRegister(ASMPhysicalRegister.PhysicalRegisterName.sp), new ASMImmediate(4 * (i - 8)));
             argumentAddress.markAsNeedAddFrameSize(currentFunction.getStackFrame());
