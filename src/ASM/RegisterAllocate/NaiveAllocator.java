@@ -40,16 +40,20 @@ public class NaiveAllocator {
     public void allocate() {
         // following code will store some value in s0 - s11, for we don't actually use physical registers except for t0, t1, t2
         // and these save registers are callee save and will be saved by all builtin function we called
+        // simultaneously we need to back up these register as well
+        ASMPhysicalRegister sp = ASMPhysicalRegister.getPhysicalRegister(ASMPhysicalRegister.PhysicalRegisterName.sp);
+        ArrayList<ASMAddress> sBackup = new ArrayList<>();
+        sBackup.add(null); // don't need to back up s0
+        for (int i = 1; i <= 11; i++) sBackup.add(new ASMAddress(sp, new ASMImmediate(function.getStackFrame().spillToStack())));
         log.Debugf("start allocate register for function %s\n", function.getFunctionName());
         // calculate frame size
-        ASMPhysicalRegister sp = ASMPhysicalRegister.getPhysicalRegister(ASMPhysicalRegister.PhysicalRegisterName.sp);
         function.getBlocks().forEach(block -> block.getInstructions().forEach(inst -> {
             if (inst != null) inst.getOperands().forEach(operand -> {
                 if (operand instanceof ASMVirtualRegister && !vr2addr.containsKey(((ASMVirtualRegister) operand))) {
-                    int offset = function.getStackFrame().spillRegister();
+                    int offset = function.getStackFrame().spillToStack();
                     log.Debugf("request a word at %d" + " ".repeat(6 - Integer.toString(offset).length()) + "for virtual register %s\n", offset, ((ASMVirtualRegister) operand).getName());
                     ASMAddress address;
-                    // use s1 - s5 to store sp + 2048 * i
+                    // use si to store sp + 2048 * i
                     if (isValidImmediate(offset)) address = new ASMAddress(sp, new ASMImmediate(offset));
                     else address = new ASMAddress(s(offset / 2048), new ASMImmediate(offset % 2048));
                     vr2addr.put((ASMVirtualRegister) operand, address);
@@ -77,17 +81,16 @@ public class NaiveAllocator {
             plusSp = new ASMArithmeticInstruction(ASMArithmeticInstruction.InstType.add);
             plusSp.addOperand(sp).addOperand(sp).addOperand(s(0));
             escape.getInstructions().add(indexOfPlusSp++, liPositive);
-            // si in s1 - s5 stores sp + 2048 * i
+            // si stores sp + 2048 * i
             int indexOfInitializeStore = indexOfMinusSp + 1;
-            int indexOfRetrieveBackup = indexOfPlusSp + 1;
+            int indexOfRetrieveBackup = indexOfPlusSp - 1;
             for (int i = 1; i <= frameSize / 2048; i++) {
-                // backup s1 - s5 to s6 - s10
-                ASMPseudoInstruction backup = new ASMPseudoInstruction(ASMPseudoInstruction.InstType.mv);
-                backup.addOperand(s(i + 5)).addOperand(s(i));
+                // backup si to stack
+                ASMMemoryInstruction backup = new ASMMemoryInstruction(ASMMemoryInstruction.InstType.sw, s(i), sBackup.get(i));
                 entry.getInstructions().add(indexOfInitializeStore++, backup);
-                ASMPseudoInstruction retrieve = new ASMPseudoInstruction(ASMPseudoInstruction.InstType.mv);
-                retrieve.addOperand(s(i)).addOperand(s(i + 5));
+                ASMMemoryInstruction retrieve = new ASMMemoryInstruction(ASMMemoryInstruction.InstType.lw, s(i), sBackup.get(i));
                 escape.getInstructions().add(indexOfRetrieveBackup++, retrieve);
+                indexOfPlusSp++;
                 // store sp + 2048 * i to si
                 ASMPseudoInstruction li2si = new ASMPseudoInstruction(ASMPseudoInstruction.InstType.li);
                 li2si.addOperand(ASMPhysicalRegister.getStoreRegister(i)).addOperand(new ASMImmediate(i * 2048));

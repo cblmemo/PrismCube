@@ -3,19 +3,19 @@ package ASM;
 import ASM.Operand.ASMConstString;
 import ASM.Operand.GlobalSymbol.ASMGlobalSymbol;
 
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 
 public class ASMModule {
-    private final HashMap<String, ASMFunction> builtinFunctions = new HashMap<>();
-    private final HashMap<String, ASMFunction> functions = new HashMap<>();
-    private final HashMap<String, ASMGlobalSymbol> globals = new HashMap<>();
-    private final HashMap<String, ASMConstString> strings = new HashMap<>();
+    private final LinkedHashMap<String, ASMFunction> builtinFunctions = new LinkedHashMap<>();
+    private final LinkedHashMap<String, ASMFunction> functions = new LinkedHashMap<>();
+    private final LinkedHashMap<String, ASMGlobalSymbol> globals = new LinkedHashMap<>();
+    private final LinkedHashMap<String, ASMConstString> strings = new LinkedHashMap<>();
 
-    public HashMap<String, ASMFunction> getFunctions() {
+    public LinkedHashMap<String, ASMFunction> getFunctions() {
         return functions;
     }
 
-    public HashMap<String, ASMFunction> getBuiltinFunctions() {
+    public LinkedHashMap<String, ASMFunction> getBuiltinFunctions() {
         return builtinFunctions;
     }
 
@@ -37,11 +37,11 @@ public class ASMModule {
         strings.put(name, string);
     }
 
-    public HashMap<String, ASMGlobalSymbol> getGlobals() {
+    public LinkedHashMap<String, ASMGlobalSymbol> getGlobals() {
         return globals;
     }
 
-    public HashMap<String, ASMConstString> getStrings() {
+    public LinkedHashMap<String, ASMConstString> getStrings() {
         return strings;
     }
 }

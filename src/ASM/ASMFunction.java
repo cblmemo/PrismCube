@@ -7,16 +7,16 @@ import IR.IRBasicBlock;
 import IR.IRFunction;
 
 import java.util.ArrayList;
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 
 import static Debug.MemoLog.log;
 
 public class ASMFunction {
     private final String functionName;
     private final ArrayList<ASMBasicBlock> blocks = new ArrayList<>();
-    private final HashMap<IRBasicBlock, ASMBasicBlock> blockMap = new HashMap<>();
+    private final LinkedHashMap<IRBasicBlock, ASMBasicBlock> blockMap = new LinkedHashMap<>();
     private final ASMBasicBlock entryBlock;
-    private final HashMap<ASMPhysicalRegister, ASMVirtualRegister> calleeSaves = new HashMap<>();
+    private final LinkedHashMap<ASMPhysicalRegister, ASMVirtualRegister> calleeSaves = new LinkedHashMap<>();
     private final ASMStackFrame stackFrame = new ASMStackFrame();
     private final ASMLabel label;
 
@@ -44,7 +44,7 @@ public class ASMFunction {
         calleeSaves.put(reg, calleeSave);
     }
 
-    public HashMap<ASMPhysicalRegister, ASMVirtualRegister> getCalleeSaves() {
+    public LinkedHashMap<ASMPhysicalRegister, ASMVirtualRegister> getCalleeSaves() {
         return calleeSaves;
     }
 

@@ -23,7 +23,7 @@ import IR.TypeSystem.IRTypeSystem;
 import Memory.Memory;
 import Utility.error.ASMError;
 
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.Map;
 
 public class InstructionSelector implements IRVisitor {
@@ -31,11 +31,11 @@ public class InstructionSelector implements IRVisitor {
     private ASMFunction currentFunction;
     private ASMBasicBlock currentBasicBlock;
 
-    private HashMap<String, ASMFunction> builtinFunctions;
-    private HashMap<String, ASMFunction> functions;
+    private LinkedHashMap<String, ASMFunction> builtinFunctions;
+    private LinkedHashMap<String, ASMFunction> functions;
 
     // llvm Register to ASM Register
-    private final HashMap<IRRegister, ASMRegister> lr2r = new HashMap<>();
+    private final LinkedHashMap<IRRegister, ASMRegister> lr2r = new LinkedHashMap<>();
 
     private static boolean select = false;
 
@@ -211,7 +211,7 @@ public class InstructionSelector implements IRVisitor {
 
     @Override
     public void visit(IRCallInstruction inst) {
-        HashMap<ASMPhysicalRegister, ASMVirtualRegister> callerSaves = new HashMap<>();
+        LinkedHashMap<ASMPhysicalRegister, ASMVirtualRegister> callerSaves = new LinkedHashMap<>();
         if (RegisterAllocator.naive()) {
             // naive allocator doesn't need to back up callee save except for ra since it store all value on stack
             ASMPhysicalRegister ra = ASMPhysicalRegister.getPhysicalRegister(ASMPhysicalRegister.PhysicalRegisterName.ra);
@@ -292,7 +292,7 @@ public class InstructionSelector implements IRVisitor {
         appendInst(new ASMMemoryInstruction(storeType, storeValue, storeTarget));
     }
 
-    private static final HashMap<String, ASMArithmeticInstruction.InstType> ir2asm = new HashMap<>(Map.of(
+    private static final LinkedHashMap<String, ASMArithmeticInstruction.InstType> ir2asm = new LinkedHashMap<>(Map.of(
             "add", ASMArithmeticInstruction.InstType.add,
             "sub nsw", ASMArithmeticInstruction.InstType.sub,
             "mul", ASMArithmeticInstruction.InstType.mul,
