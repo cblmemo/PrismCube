@@ -33,6 +33,10 @@ public class NaiveAllocator {
         return -2048 <= imm && imm <= 2047;
     }
 
+    private ASMPhysicalRegister s(int i) {
+        return ASMPhysicalRegister.getStoreRegister(i);
+    }
+
     public void allocate() {
         // following code will store some value in s0 - s11, for we don't actually use physical registers except for t0, t1, t2
         // and these save registers are callee save and will be saved by all builtin function we called
@@ -45,9 +49,9 @@ public class NaiveAllocator {
                     int offset = function.getStackFrame().spillRegister();
                     log.Debugf("request a word at %d" + " ".repeat(6 - Integer.toString(offset).length()) + "for virtual register %s\n", offset, ((ASMVirtualRegister) operand).getName());
                     ASMAddress address;
-                    // use s1 - s11 to store sp + 2048 * i
+                    // use s1 - s5 to store sp + 2048 * i
                     if (isValidImmediate(offset)) address = new ASMAddress(sp, new ASMImmediate(offset));
-                    else address = new ASMAddress(ASMPhysicalRegister.getStoreRegister(offset / 2048), new ASMImmediate(offset % 2048));
+                    else address = new ASMAddress(s(offset / 2048), new ASMImmediate(offset % 2048));
                     vr2addr.put((ASMVirtualRegister) operand, address);
                 }
             });
@@ -63,17 +67,28 @@ public class NaiveAllocator {
             plusSp = new ASMArithmeticInstruction(ASMArithmeticInstruction.InstType.addi);
             plusSp.addOperand(sp).addOperand(sp).addOperand(new ASMImmediate(frameSize));
         } else {
-            // use s0 to store frame size
-            ASMPseudoInstruction li = new ASMPseudoInstruction(ASMPseudoInstruction.InstType.li);
-            li.addOperand(ASMPhysicalRegister.getPhysicalRegister(ASMPhysicalRegister.PhysicalRegisterName.s0)).addOperand(new ASMImmediate(-frameSize));
+            ASMPseudoInstruction liNegative = new ASMPseudoInstruction(ASMPseudoInstruction.InstType.li);
+            liNegative.addOperand(s(0)).addOperand(new ASMImmediate(-frameSize));
             minusSp = new ASMArithmeticInstruction(ASMArithmeticInstruction.InstType.add);
-            minusSp.addOperand(sp).addOperand(sp).addOperand(ASMPhysicalRegister.getPhysicalRegister(ASMPhysicalRegister.PhysicalRegisterName.s0));
-            entry.getInstructions().add(indexOfMinusSp++, li);
+            minusSp.addOperand(sp).addOperand(sp).addOperand(s(0));
+            entry.getInstructions().add(indexOfMinusSp++, liNegative);
+            ASMPseudoInstruction liPositive = new ASMPseudoInstruction(ASMPseudoInstruction.InstType.li);
+            liPositive.addOperand(s(0)).addOperand(new ASMImmediate(frameSize));
             plusSp = new ASMArithmeticInstruction(ASMArithmeticInstruction.InstType.add);
-            plusSp.addOperand(sp).addOperand(sp).addOperand(ASMPhysicalRegister.getPhysicalRegister(ASMPhysicalRegister.PhysicalRegisterName.s0));
-            // si in s1 - s11 stores sp + 2048 * i
+            plusSp.addOperand(sp).addOperand(sp).addOperand(s(0));
+            escape.getInstructions().add(indexOfPlusSp++, liPositive);
+            // si in s1 - s5 stores sp + 2048 * i
             int indexOfInitializeStore = indexOfMinusSp + 1;
+            int indexOfRetrieveBackup = indexOfPlusSp + 1;
             for (int i = 1; i <= frameSize / 2048; i++) {
+                // backup s1 - s5 to s6 - s10
+                ASMPseudoInstruction backup = new ASMPseudoInstruction(ASMPseudoInstruction.InstType.mv);
+                backup.addOperand(s(i + 5)).addOperand(s(i));
+                entry.getInstructions().add(indexOfInitializeStore++, backup);
+                ASMPseudoInstruction retrieve = new ASMPseudoInstruction(ASMPseudoInstruction.InstType.mv);
+                retrieve.addOperand(s(i)).addOperand(s(i + 5));
+                escape.getInstructions().add(indexOfRetrieveBackup++, retrieve);
+                // store sp + 2048 * i to si
                 ASMPseudoInstruction li2si = new ASMPseudoInstruction(ASMPseudoInstruction.InstType.li);
                 li2si.addOperand(ASMPhysicalRegister.getStoreRegister(i)).addOperand(new ASMImmediate(i * 2048));
                 entry.getInstructions().add(indexOfInitializeStore++, li2si);

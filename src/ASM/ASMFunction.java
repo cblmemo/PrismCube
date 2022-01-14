@@ -44,11 +44,6 @@ public class ASMFunction {
         calleeSaves.put(reg, calleeSave);
     }
 
-    public ASMVirtualRegister getCalleeSave(ASMPhysicalRegister reg) {
-        assert calleeSaves.containsKey(reg);
-        return calleeSaves.get(reg);
-    }
-
     public HashMap<ASMPhysicalRegister, ASMVirtualRegister> getCalleeSaves() {
         return calleeSaves;
     }

@@ -168,12 +168,13 @@ public class InstructionSelector implements IRVisitor {
         function.getBlocks().forEach(block -> block.getInstructions().forEach(inst -> {
             if (inst instanceof IRCallInstruction) currentFunction.getStackFrame().updateMaxArgumentNumber(((IRCallInstruction) inst).getArgumentNumber());
         }));
-        // callee save register backup
-        ASMPhysicalRegister.getCalleeSaveRegisters().forEach(reg -> {
-            ASMVirtualRegister calleeSave = new ASMVirtualRegister(reg + "_backup");
-            appendPseudoInst(ASMPseudoInstruction.InstType.mv, calleeSave, reg);
-            currentFunction.addCalleeSave(reg, calleeSave);
-        });
+        if (!RegisterAllocator.naive())
+            // callee save register backup
+            ASMPhysicalRegister.getCalleeSaveRegisters().forEach(reg -> {
+                ASMVirtualRegister calleeSave = new ASMVirtualRegister(reg + "_backup");
+                appendPseudoInst(ASMPseudoInstruction.InstType.mv, calleeSave, reg);
+                currentFunction.addCalleeSave(reg, calleeSave);
+            });
         // get arguments
         for (int i = 0; i < Integer.min(function.getParameterNumber(), 8); i++) {
             // directly use a0 - a7 as register of parameter
@@ -259,8 +260,9 @@ public class InstructionSelector implements IRVisitor {
 
     @Override
     public void visit(IRReturnInstruction inst) {
-        // retrieve callee save register
-        currentFunction.getCalleeSaves().forEach((reg, backup) -> appendPseudoInst(ASMPseudoInstruction.InstType.mv, reg, backup));
+        if (!RegisterAllocator.naive())
+            // retrieve callee save register
+            currentFunction.getCalleeSaves().forEach((reg, backup) -> appendPseudoInst(ASMPseudoInstruction.InstType.mv, reg, backup));
         // put return value in a0
         if (inst.hasReturnValue()) appendPseudoInst(ASMPseudoInstruction.InstType.mv, ASMPhysicalRegister.getPhysicalRegister(ASMPhysicalRegister.PhysicalRegisterName.a0), toRegister(inst.getReturnValue()));
         appendInst(null); // will be replaced by "sp += frame size"
