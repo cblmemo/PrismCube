@@ -3,7 +3,7 @@ package ASM.RegisterAllocate;
 import ASM.ASMFunction;
 
 public class GraphColoringAllocator {
-    private ASMFunction function;
+    private final ASMFunction function;
 
     public GraphColoringAllocator(ASMFunction function) {
         this.function = function;

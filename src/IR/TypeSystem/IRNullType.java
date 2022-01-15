@@ -2,7 +2,7 @@ package IR.TypeSystem;
 
 import IR.Operand.IROperand;
 
-public class IRNullType extends IRTypeSystem{
+public class IRNullType extends IRTypeSystem {
     @Override
     public String toString() {
         return "null";

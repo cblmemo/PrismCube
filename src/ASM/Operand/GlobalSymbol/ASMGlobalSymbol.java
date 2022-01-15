@@ -13,6 +13,8 @@ abstract public class ASMGlobalSymbol extends ASMOperand {
         return symbolName;
     }
 
+    abstract public int getValue();
+
     @Override
     public String toString() {
         return symbolName;

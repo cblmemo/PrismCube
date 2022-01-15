@@ -408,14 +408,9 @@ public class ASTBuilder extends MxStarBaseVisitor<ASTNode> {
         TypeNode nonArrayType = (TypeNode) visit(ctx.nonArrayType());
         NewTypeExpressionNode ret = new NewTypeExpressionNode(nonArrayType, false, new Cursor(ctx));
         // calculate dimension
-        for (var c : ctx.getText().toCharArray()) {
-            if (c == '[') {
-                ret.increaseDimension();
-            }
-        }
-        ctx.expression().forEach(innerCtx -> {
-            ret.addDimensionExpression((ExpressionNode) visit(innerCtx));
-        });
+        for (var c : ctx.getText().toCharArray())
+            if (c == '[') ret.increaseDimension();
+        ctx.expression().forEach(innerCtx -> ret.addDimensionExpression((ExpressionNode) visit(innerCtx)));
         return ret;
     }
 

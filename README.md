@@ -30,7 +30,7 @@ Mx* is a simplified language from the mix of Standard C++ and Java. Details of M
  - [x] ConstStringCollector
  - [x] IRBuilder
  - [x] IRPrinter
- - [x] InstructionSelector (debugging...)
+ - [x] InstructionSelector
  - [x] NaiveAllocator
  - [ ] GraphColoringAllocator
  - [x] ASMPrinter
@@ -39,6 +39,33 @@ Mx* is a simplified language from the mix of Standard C++ and Java. Details of M
 
 ```
 📦src
+ ┣ 📂ASM
+ ┃ ┣ 📂Instruction
+ ┃ ┃ ┣ 📜ASMArithmeticInstruction.java
+ ┃ ┃ ┣ 📜ASMInstruction.java
+ ┃ ┃ ┣ 📜ASMMemoryInstruction.java
+ ┃ ┃ ┗ 📜ASMPseudoInstruction.java
+ ┃ ┣ 📂Operand
+ ┃ ┃ ┣ 📂GlobalSymbol
+ ┃ ┃ ┃ ┣ 📜ASMGlobalBoolean.java
+ ┃ ┃ ┃ ┣ 📜ASMGlobalInteger.java
+ ┃ ┃ ┃ ┣ 📜ASMGlobalString.java
+ ┃ ┃ ┃ ┗ 📜ASMGlobalSymbol.java
+ ┃ ┃ ┣ 📜ASMAddress.java
+ ┃ ┃ ┣ 📜ASMConstString.java
+ ┃ ┃ ┣ 📜ASMImmediate.java
+ ┃ ┃ ┣ 📜ASMLabel.java
+ ┃ ┃ ┣ 📜ASMOperand.java
+ ┃ ┃ ┣ 📜ASMPhysicalRegister.java
+ ┃ ┃ ┣ 📜ASMRegister.java
+ ┃ ┃ ┗ 📜ASMVirtualRegister.java
+ ┃ ┣ 📂RegisterAllocate
+ ┃ ┃ ┣ 📜GraphColoringAllocator.java
+ ┃ ┃ ┗ 📜NaiveAllocator.java
+ ┃ ┣ 📜ASMBasicBlock.java
+ ┃ ┣ 📜ASMFunction.java
+ ┃ ┣ 📜ASMModule.java
+ ┃ ┗ 📜ASMStackFrame.java
  ┣ 📂AST
  ┃ ┣ 📂DefineNode
  ┃ ┃ ┣ 📜ClassDefineNode.java
@@ -89,6 +116,10 @@ Mx* is a simplified language from the mix of Standard C++ and Java. Details of M
  ┃ ┣ 📜ASTNode.java
  ┃ ┣ 📜ASTVisitor.java
  ┃ ┗ 📜ProgramNode.java
+ ┣ 📂BackEnd
+ ┃ ┣ 📜ASMPrinter.java
+ ┃ ┣ 📜InstructionSelector.java
+ ┃ ┗ 📜RegisterAllocator.java
  ┣ 📂Debug
  ┃ ┣ 📜ASTPrinter.java
  ┃ ┣ 📜MemoLog.java
@@ -98,6 +129,7 @@ Mx* is a simplified language from the mix of Standard C++ and Java. Details of M
  ┃ ┣ 📜ConstStringCollector.java
  ┃ ┣ 📜IRBuilder.java
  ┃ ┣ 📜IRPrinter.java
+ ┃ ┣ 📜IRVisitor.java
  ┃ ┣ 📜Preprocessor.java
  ┃ ┣ 📜SemanticChecker.java
  ┃ ┗ 📜SymbolCollector.java
@@ -120,6 +152,7 @@ Mx* is a simplified language from the mix of Standard C++ and Java. Details of M
  ┃ ┃ ┣ 📜IRConstBool.java
  ┃ ┃ ┣ 📜IRConstChar.java
  ┃ ┃ ┣ 📜IRConstInt.java
+ ┃ ┃ ┣ 📜IRConstNumber.java
  ┃ ┃ ┣ 📜IRConstString.java
  ┃ ┃ ┣ 📜IRGlobalVariableRegister.java
  ┃ ┃ ┣ 📜IRLabel.java
@@ -128,7 +161,6 @@ Mx* is a simplified language from the mix of Standard C++ and Java. Details of M
  ┃ ┃ ┣ 📜IRRegister.java
  ┃ ┃ ┗ 📜IRZeroInitializer.java
  ┃ ┣ 📂TypeSystem
- ┃ ┃ ┣ 📜IRArrayType.java
  ┃ ┃ ┣ 📜IRIntType.java
  ┃ ┃ ┣ 📜IRNullType.java
  ┃ ┃ ┣ 📜IRPointerType.java
@@ -138,8 +170,7 @@ Mx* is a simplified language from the mix of Standard C++ and Java. Details of M
  ┃ ┣ 📜IRBasicBlock.java
  ┃ ┣ 📜IRFunction.java
  ┃ ┣ 📜IRGlobalDefine.java
- ┃ ┣ 📜IRModule.java
- ┃ ┗ 📜IRVisitor.java
+ ┃ ┗ 📜IRModule.java
  ┣ 📂Memory
  ┃ ┗ 📜Memory.java
  ┣ 📂Parser
@@ -161,13 +192,6 @@ Mx* is a simplified language from the mix of Standard C++ and Java. Details of M
  ┃ ┃ ┣ 📜FunctionEntity.java
  ┃ ┃ ┣ 📜MethodEntity.java
  ┃ ┃ ┗ 📜VariableEntity.java
- ┃ ┣ 📂error
- ┃ ┃ ┣ 📜ArgumentParseError.java
- ┃ ┃ ┣ 📜error.java
- ┃ ┃ ┣ 📜IRError.java
- ┃ ┃ ┣ 📜LogError.java
- ┃ ┃ ┣ 📜SemanticError.java
- ┃ ┃ ┗ 📜SyntaxError.java
  ┃ ┣ 📂Scope
  ┃ ┃ ┣ 📜BlockScope.java
  ┃ ┃ ┣ 📜BracesScope.java
@@ -183,6 +207,14 @@ Mx* is a simplified language from the mix of Standard C++ and Java. Details of M
  ┃ ┃ ┣ 📜ArrayType.java
  ┃ ┃ ┣ 📜ClassType.java
  ┃ ┃ ┗ 📜Type.java
+ ┃ ┣ 📂error
+ ┃ ┃ ┣ 📜ASMError.java
+ ┃ ┃ ┣ 📜ArgumentParseError.java
+ ┃ ┃ ┣ 📜IRError.java
+ ┃ ┃ ┣ 📜LogError.java
+ ┃ ┃ ┣ 📜SemanticError.java
+ ┃ ┃ ┣ 📜SyntaxError.java
+ ┃ ┃ ┗ 📜error.java
  ┃ ┣ 📜Cursor.java
  ┃ ┗ 📜MxStarErrorListener.java
  ┗ 📜PrismCube.java

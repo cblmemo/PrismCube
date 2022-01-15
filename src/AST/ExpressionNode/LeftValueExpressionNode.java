@@ -15,10 +15,6 @@ abstract public class LeftValueExpressionNode extends ExpressionNode {
         this.leftValuePointer = leftValuePointer;
     }
 
-    public boolean hasLeftValuePointer() {
-        return leftValuePointer != null;
-    }
-
     public IRRegister getLeftValuePointer() {
         return leftValuePointer;
     }

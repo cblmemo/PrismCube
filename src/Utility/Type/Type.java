@@ -3,7 +3,6 @@ package Utility.Type;
 import IR.IRModule;
 import IR.TypeSystem.IRPointerType;
 import IR.TypeSystem.IRTypeSystem;
-import Utility.error.IRError;
 
 import java.util.Objects;
 

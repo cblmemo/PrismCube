@@ -25,10 +25,6 @@ public class LoopScope extends BlockScope {
         this.loopStepBlock = loopStepBlock;
     }
 
-    public IRBasicBlock getLoopStepBlock() {
-        return loopStepBlock;
-    }
-
     public void setLoopTerminateBlock(IRBasicBlock loopTerminateBlock) {
         this.loopTerminateBlock = loopTerminateBlock;
     }

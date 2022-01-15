@@ -1,6 +1,5 @@
 package IR.TypeSystem;
 
-import BackEnd.InstructionSelector;
 import IR.Operand.IRNull;
 import IR.Operand.IROperand;
 import Memory.Memory;

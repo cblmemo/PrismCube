@@ -46,9 +46,7 @@ public class SemanticChecker implements ASTVisitor {
 
     @Override
     public void visit(ProgramNode node) {
-        node.getDefines().forEach(define -> {
-            define.accept(this);
-        });
+        node.getDefines().forEach(define -> define.accept(this));
     }
 
     @Override
@@ -58,12 +56,8 @@ public class SemanticChecker implements ASTVisitor {
             throwError("cannot find classes. maybe symbol collector has some bugs.", node);
         currentScope = globalScope.getClass(node.getClassName()).getClassScope();
         if (node.hasCustomConstructor()) node.getConstructor().accept(this);
-        node.getMembers().forEach(member -> {
-            member.accept(this);
-        });
-        node.getMethods().forEach(method -> {
-            method.accept(this);
-        });
+        node.getMembers().forEach(member -> member.accept(this));
+        node.getMethods().forEach(method -> method.accept(this));
         currentScope = currentScope.getParentScope();
     }
 
@@ -76,9 +70,7 @@ public class SemanticChecker implements ASTVisitor {
             if (!globalScope.hasThisClass(node.getType().getTypeName()))
                 throwError("undefined type", node);
         }
-        node.getSingleDefines().forEach(singleDefine -> {
-            singleDefine.accept(this);
-        });
+        node.getSingleDefines().forEach(singleDefine -> singleDefine.accept(this));
     }
 
     @Override
@@ -114,9 +106,7 @@ public class SemanticChecker implements ASTVisitor {
     public void visit(ConstructorDefineNode node) {
         // visit ConstructorDefineNode represent class has custom constructor
         currentScope = ((ClassScope) currentScope).getConstructor().getConstructorScope();
-        node.getStatements().forEach(statement -> {
-            statement.accept(this);
-        });
+        node.getStatements().forEach(statement -> statement.accept(this));
         currentScope = currentScope.getParentScope();
     }
 
@@ -129,9 +119,7 @@ public class SemanticChecker implements ASTVisitor {
             if (Objects.equals(function.getEntityName(), ((ClassScope) currentScope).getClassName()))
                 throwError("constructor cannot have return type", node);
         currentScope = function.getFunctionScope();
-        node.getStatements().forEach(statement -> {
-            statement.accept(this);
-        });
+        node.getStatements().forEach(statement -> statement.accept(this));
         currentScope = currentScope.getParentScope();
     }
 
@@ -143,9 +131,7 @@ public class SemanticChecker implements ASTVisitor {
     @Override
     public void visit(BlockStatementNode node) {
         currentScope = currentScope.createBracesScope(node);
-        node.getStatements().forEach(statement -> {
-            statement.accept(this);
-        });
+        node.getStatements().forEach(statement -> statement.accept(this));
         currentScope = currentScope.getParentScope();
     }
 
@@ -285,9 +271,7 @@ public class SemanticChecker implements ASTVisitor {
                     throwError("void type parameter", node);
                 ((FunctionScope) currentScope).addParameter(new VariableEntity(parameter.getType().toType(globalScope), parameter.getParameterName(), parameter.getCursor()));
             });
-            node.getArguments().forEach(argument -> {
-                argument.accept(this);
-            });
+            node.getArguments().forEach(argument -> argument.accept(this));
             for (int i = 0; i < node.getParameters().size(); i++) {
                 if (!(node.getArgument(i).getExpressionType().isNull() && ((FunctionScope) currentScope).getParameter(i).getVariableType().isNullAssignable()))
                     if (!((FunctionScope) currentScope).getParameter(i).getVariableType().equal(node.getArgument(i).getExpressionType()))
@@ -297,9 +281,7 @@ public class SemanticChecker implements ASTVisitor {
             if (node.getArguments().size() != 0)
                 throwError("call non-parameter lambda function with arguments", node);
         }
-        node.getStatements().forEach(statement -> {
-            statement.accept(this);
-        });
+        node.getStatements().forEach(statement -> statement.accept(this));
         // infer expression type from return statement inside
         node.setExpressionType(((FunctionScope) currentScope).getReturnType());
         currentScope = currentScope.getParentScope();
@@ -310,16 +292,14 @@ public class SemanticChecker implements ASTVisitor {
         if (node.isInvalid())
             throwError("function call with function expression neither member access nor identifier", node);
         node.getFunction().accept(this);
-        node.getArguments().forEach(argument -> {
-            argument.accept(this);
-        });
+        node.getArguments().forEach(argument -> argument.accept(this));
         FunctionEntity function;
         // get function entity
         if (node.isClassMethod()) {
             if (node.getInstance().getExpressionType() instanceof ClassType) {
-                ClassType methodClass = (ClassType) node.getInstance().getExpressionType();
-                node.setExpressionType(methodClass.getClassScope().getFunctionReturnType(node.getFunctionName()));
-                function = methodClass.getClassScope().getFunction(node.getFunctionName());
+                ClassScope classScope = ((ClassType) node.getInstance().getExpressionType()).getClassScope();
+                node.setExpressionType(classScope.getFunctionReturnType(node.getFunctionName()));
+                function = classScope.getFunction(node.getFunctionName());
             } else {
                 if (!Objects.equals(node.getFunctionName(), "size"))
                     throwError("call non-size function (" + node.getFunctionName() + ") to array type", node);
@@ -335,9 +315,9 @@ public class SemanticChecker implements ASTVisitor {
         // check function existence and parameters
         if (function == null)
             throwError("undefined function " + node.getFunctionName(), node);
-        if (function.getFunctionScope().getParameters().size() != node.getArguments().size())
+        if (function.getFunctionScope().getParameterNumber() != node.getArguments().size())
             throwError("function call with unmatched argument number", node);
-        for (int i = 0; i < function.getFunctionScope().getParameters().size(); i++) {
+        for (int i = 0; i < function.getFunctionScope().getParameterNumber(); i++) {
             if (!(node.getArgument(i).getExpressionType().isNull() && function.getParameter(i).getVariableType().isNullAssignable()))
                 if (!function.getParameter(i).getVariableType().equal(node.getArgument(i).getExpressionType()))
                     throwError("function call " + i + "-th argument has (" + node.getArgument(i).getExpressionType().getTypeName() + ") type, unmatched with (" + function.getParameter(i).getVariableType().getTypeName() + ")", node);

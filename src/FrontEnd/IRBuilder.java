@@ -8,7 +8,6 @@ import AST.PrimaryNode.*;
 import AST.ProgramNode;
 import AST.StatementNode.*;
 import AST.TypeNode.*;
-import BackEnd.InstructionSelector;
 import IR.IRBasicBlock;
 import IR.IRFunction;
 import IR.IRGlobalDefine;

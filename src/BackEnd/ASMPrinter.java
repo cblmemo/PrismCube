@@ -7,11 +7,18 @@ import ASM.ASMModule;
 import ASM.Instruction.ASMInstruction;
 import ASM.Operand.GlobalSymbol.ASMGlobalBoolean;
 import ASM.Operand.GlobalSymbol.ASMGlobalInteger;
-import ASM.Operand.GlobalSymbol.ASMGlobalString;
 import ASM.Operand.GlobalSymbol.ASMGlobalSymbol;
 import Memory.Memory;
 
 import java.io.PrintStream;
+
+/**
+ * This class print rv32i assembly to output file.
+ * Some format were based on clang.
+ *
+ * @author rainy memory
+ * @version 1.0.0
+ */
 
 public class ASMPrinter {
     private PrintStream ps;
@@ -63,7 +70,7 @@ public class ASMPrinter {
     }
 
     /**
-     * This method print RISCV asm to PrintStream
+     * This method print rv32i asm to PrintStream
      * specified by Memory.
      *
      * @see Memory
@@ -115,16 +122,14 @@ public class ASMPrinter {
         indentCnt--;
         printWithIndent(name + ":");
         indentCnt++;
+        int value = symbol.getValue();
         if (symbol instanceof ASMGlobalBoolean) {
-            int value = ((ASMGlobalBoolean) symbol).getValue() ? 1 : 0;
             printWithIndent(formatComment(formatPseudoOptions("byte", Integer.toString(value)), " 0x" + value));
             printWithIndent(formatPseudoOptions("size", symbol.getSymbolName() + ", 1"));
         } else if (symbol instanceof ASMGlobalInteger) {
-            int value = ((ASMGlobalInteger) symbol).getValue();
             printWithIndent(formatComment(formatPseudoOptions("word", Integer.toUnsignedString(value)), " 0x" + Integer.toUnsignedString(value, 16)));
             printWithIndent(formatPseudoOptions("size", symbol.getSymbolName() + ", 4"));
         } else {
-            int value = ((ASMGlobalString) symbol).getValue();
             printWithIndent(formatPseudoOptions("word", Integer.toUnsignedString(value)));
             printWithIndent(formatPseudoOptions("size", name + ", 4"));
         }

@@ -112,10 +112,10 @@ public class ScopePrinter {
 
     private void printScope(FunctionScope scope) {
         enter("Function Scope");
-        if (scope.getParameters().size() == 0) {
+        if (scope.getParameterNumber() == 0) {
             printf("this function has no parameter.\n");
         } else {
-            printf("parameters: (%d)\n", scope.getParameters().size());
+            printf("parameters: (%d)\n", scope.getParameterNumber());
             printf("%-" + (tabletLength - indentCnt * 4) + "s%s\n", "parameter type", "parameter name");
             scope.getParameters().forEach(parameter -> printf("%-" + (tabletLength - indentCnt * 4) + "s%s\n", parameter.getVariableType().getTypeName(), parameter.getEntityName()));
         }

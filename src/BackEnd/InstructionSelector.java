@@ -26,6 +26,16 @@ import Utility.error.ASMError;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
+/**
+ * This class select appropriate instruction in
+ * rv32i instructions (and pseudo instructions).
+ * For all pseudo instruction used,
+ * @see ASMPseudoInstruction.InstType
+ *
+ * @author rainy memory
+ * @version 1.0.0
+ */
+
 public class InstructionSelector implements IRVisitor {
     private ASMModule asmModule;
     private ASMFunction currentFunction;
@@ -203,7 +213,7 @@ public class InstructionSelector implements IRVisitor {
     public void visit(IRBrInstruction inst) {
         // br l1         -> j l1
         //
-        // br %0 l1 l2   -> beqz l2
+        // br %0 l1 l2   -> beqz %0 l2
         //                  j l1
         if (inst.isBranch()) appendPseudoInst(ASMPseudoInstruction.InstType.beqz, toRegister(inst.getCondition()), currentFunction.getBasicBlockLabel(inst.getElseBlock()));
         appendPseudoInst(ASMPseudoInstruction.InstType.j, currentFunction.getBasicBlockLabel(inst.getThenBlock()));

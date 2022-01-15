@@ -75,9 +75,7 @@ public class SymbolCollector implements ASTVisitor {
             if (node.isInvalid())
                 throwError("main function error: " + node.getMessage(), node);
         }
-        node.getDefines().forEach(define -> {
-            define.accept(this);
-        });
+        node.getDefines().forEach(define -> define.accept(this));
     }
 
     @Override
@@ -94,9 +92,7 @@ public class SymbolCollector implements ASTVisitor {
             if (node.hasCustomConstructor()) {
                 node.getConstructor().accept(this);
             }
-            node.getMethods().forEach(function -> {
-                function.accept(this);
-            });
+            node.getMethods().forEach(function -> function.accept(this));
             currentClass.setClassScope((ClassScope) currentScope);
             currentScope = currentScope.getParentScope();
             globalScope.addClass(node.getClassName(), currentClass);
@@ -104,16 +100,10 @@ public class SymbolCollector implements ASTVisitor {
             if (globalScope.hasVariable(node.getClassName()))
                 throwError("class name conflict with existed variable", node);
             ClassType currentClass = globalScope.getClass(node.getClassName());
-            node.getMembers().forEach(member -> {
-                member.getSingleDefines().forEach(singleDefine -> {
-                    currentClass.addMember(new VariableEntity(singleDefine.getType().toType(globalScope), singleDefine.getVariableNameStr(), singleDefine.getCursor()));
-                });
-            });
+            node.getMembers().forEach(member -> member.getSingleDefines().forEach(singleDefine -> currentClass.addMember(new VariableEntity(singleDefine.getType().toType(globalScope), singleDefine.getVariableNameStr(), singleDefine.getCursor()))));
             // enter new scope helps define member variables and methods inside class scope.
             currentScope = globalScope.getClass(node.getClassName()).getClassScope();
-            node.getMethods().forEach(function -> {
-                function.accept(this);
-            });
+            node.getMethods().forEach(function -> function.accept(this));
             currentScope = currentScope.getParentScope();
         }
     }

@@ -1,7 +1,6 @@
 package IR.Instruction;
 
 import FrontEnd.IRVisitor;
-import IR.Operand.IRConstNumber;
 import IR.Operand.IROperand;
 import IR.Operand.IRRegister;
 

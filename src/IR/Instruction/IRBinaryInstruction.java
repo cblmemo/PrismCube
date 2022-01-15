@@ -1,11 +1,8 @@
 package IR.Instruction;
 
 import FrontEnd.IRVisitor;
-import IR.Operand.IRConstNumber;
 import IR.Operand.IROperand;
 import IR.Operand.IRRegister;
-
-import java.util.Objects;
 
 public class IRBinaryInstruction extends IRInstruction {
     private final String op;

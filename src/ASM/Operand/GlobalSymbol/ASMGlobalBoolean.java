@@ -8,7 +8,7 @@ public class ASMGlobalBoolean extends ASMGlobalSymbol {
         super(symbolName);
     }
 
-    public boolean getValue() {
-        return value;
+    public int getValue() {
+        return value ? 1 : 0;
     }
 }

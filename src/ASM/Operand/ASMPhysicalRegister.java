@@ -51,7 +51,7 @@ public class ASMPhysicalRegister extends ASMRegister {
     }
 
     static public ASMPhysicalRegister getStoreRegister(int i) {
-        if (i <= 1) return PhysicalRegisters.get(PhysicalRegisterName.values()[PhysicalRegisterName.s0.ordinal() + i]);
+        if (i == 0 || i == 1) return PhysicalRegisters.get(PhysicalRegisterName.values()[PhysicalRegisterName.s0.ordinal() + i]);
         return PhysicalRegisters.get(PhysicalRegisterName.values()[PhysicalRegisterName.s2.ordinal() + i - 2]);
     }
 
