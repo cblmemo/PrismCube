@@ -1,6 +1,8 @@
 import os
 import sys
 
+ravel_path = "/Users/memory/Documents/workplace/IdeaProjects/PrismCube/lib/ravel"
+
 
 def exe(cmd):
     os.system(cmd)
@@ -43,9 +45,9 @@ def run_asm(debug):
     exe("scp ./bin/test.s ./bin/t.s")
     print("asm generate finished.")
     if debug:
-        exe("/Users/memory/Desktop/temp/compiler/bin/ravel ./bin/t.s ./bin/b.s --input-file=./bin/std.in")
+        exe("{} ./bin/t.s ./bin/b.s --input-file=./bin/std.in".format(ravel_path))
     else:
-        exe("/Users/memory/Desktop/temp/compiler/bin/ravel ./bin/t.s ./bin/b.s")
+        exe("{} ./bin/t.s ./bin/b.s".format(ravel_path))
 
 
 def run_executable():
@@ -88,7 +90,7 @@ def asm_test(dir):
         f.write(out_txt)
     exe("java -cp ./lib/antlr-4.9.1-complete.jar:./myout PrismCube -i ./bin/test.mx -o ./bin/test.s -emit-asm -log-o ./bin/log.txt -log-level trace -arch x86_32")
     exe("scp ./builtin/builtin.s ./bin/b.s")
-    exe("/Users/memory/Desktop/temp/compiler/bin/ravel ./bin/test.s ./bin/b.s --input-file=./bin/std.in")
+    exe("{} ./bin/test.s ./bin/b.s --input-file=./bin/std.in".format(ravel_path))
     # exe("code ./bin/std.out")
 
 
