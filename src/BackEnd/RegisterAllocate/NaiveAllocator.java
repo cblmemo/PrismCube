@@ -29,11 +29,11 @@ public class NaiveAllocator {
         this.function = function;
     }
 
-    private boolean isValidImmediate(int imm) {
+    static private boolean isValidImmediate(int imm) {
         return -2048 <= imm && imm <= 2047;
     }
 
-    private ASMPhysicalRegister s(int i) {
+    static private ASMPhysicalRegister s(int i) {
         return ASMPhysicalRegister.getStoreRegister(i);
     }
 

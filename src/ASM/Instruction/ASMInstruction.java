@@ -76,8 +76,8 @@ abstract public class ASMInstruction {
     }
 
     public void replaceRegistersWithColor(LinkedHashMap<ASMRegister, ASMPhysicalRegister> color) {
-        for (int i = 0; i < operands.size(); i++)
-            if (operands.get(i) instanceof ASMRegister) operands.set(i, color.get((ASMRegister) operands.get(i)));
+        for (ASMOperand operand : operands)
+            if (operand instanceof ASMVirtualRegister) replaceRegister((ASMVirtualRegister) operand, color.get((ASMRegister) operand));
     }
 
     private void setOperand(int index, ASMOperand operand) {
@@ -115,7 +115,7 @@ abstract public class ASMInstruction {
                 replaceDef(0, oldReg, newReg);
                 for (int i = 1; i < getOperands().size(); i++) replaceUse(i, oldReg, newReg);
             }
-        } else {
+        } else { // this instanceof ASMMemoryInstruction
             if (isStoreInstruction()) replaceUse(0, oldReg, newReg);
             else replaceDef(0, oldReg, newReg);
             if (((ASMAddress) getOperands().get(1)).getRegister() == oldReg) {

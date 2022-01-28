@@ -2,13 +2,8 @@ package BackEnd.RegisterAllocate;
 
 import ASM.ASMBasicBlock;
 import ASM.ASMFunction;
-import ASM.Instruction.ASMArithmeticInstruction;
-import ASM.Instruction.ASMInstruction;
-import ASM.Instruction.ASMMoveInstruction;
-import ASM.Operand.ASMImmediate;
-import ASM.Operand.ASMPhysicalRegister;
-import ASM.Operand.ASMRegister;
-import ASM.Operand.ASMVirtualRegister;
+import ASM.Instruction.*;
+import ASM.Operand.*;
 import org.antlr.v4.runtime.misc.Pair;
 
 import java.util.*;
@@ -88,6 +83,7 @@ public class GraphColoringAllocator {
             initial.addAll(inst.getDefs());
             initial.addAll(inst.getUses());
         }));
+        ASMPhysicalRegister.getPreColoredRegisters().forEach(initial::remove);
 
         // initialize other LinkedHashSet
         initial.forEach(reg -> {
@@ -352,6 +348,7 @@ public class GraphColoringAllocator {
     private void assignColors() {
         while (!selectStack.isEmpty()) {
             ASMRegister n = selectStack.pop();
+            assert n instanceof ASMVirtualRegister;
             LinkedHashSet<ASMPhysicalRegister> okColors = new LinkedHashSet<>(ASMPhysicalRegister.getPreColoredRegisters());
             LinkedHashSet<ASMRegister> adjN = adjacent(n);
             adjN.forEach(w -> {
@@ -379,10 +376,45 @@ public class GraphColoringAllocator {
         block.setInstructions(newInstructions);
     }
 
+    static private boolean isValidImmediate(int imm) {
+        return -2048 <= imm && imm <= 2047;
+    }
+
+    static private final ASMPhysicalRegister sp = ASMPhysicalRegister.getPhysicalRegister(ASMPhysicalRegister.PhysicalRegisterName.sp);
+    static private final ASMPhysicalRegister t0 = ASMPhysicalRegister.getPhysicalRegister(ASMPhysicalRegister.PhysicalRegisterName.t0);
+
     private void rewriteInstruction(ASMInstruction inst) {
         if (inst == null) return;
-        // todo add lw && sw
+        ArrayList<ASMRegister> use = new ArrayList<>(inst.getUses()), def = new ArrayList<>(inst.getDefs());
+        for (ASMRegister v : use) {
+            if (spilledNodes.contains(v)) {
+                assert v instanceof ASMVirtualRegister;
+                ASMRegister vi = v2vi.get(v);
+                int loc = memoryLocation.get(v);
+                if (isValidImmediate(loc)) newInstructions.add(new ASMMemoryInstruction(ASMMemoryInstruction.InstType.lw, vi, new ASMAddress(sp, new ASMImmediate(loc))));
+                else {
+                    newInstructions.add(new ASMPseudoInstruction(ASMPseudoInstruction.InstType.li).addOperand(vi).addOperand(new ASMImmediate(loc)));
+                    newInstructions.add(new ASMArithmeticInstruction(ASMArithmeticInstruction.InstType.add).addOperand(vi).addOperand(sp).addOperand(vi));
+                    newInstructions.add(new ASMMemoryInstruction(ASMMemoryInstruction.InstType.lw, vi, new ASMAddress(vi, null)));
+                }
+                inst.replaceRegister((ASMVirtualRegister) v, vi);
+            }
+        }
         newInstructions.add(inst);
+        for (ASMRegister v : def) {
+            if (spilledNodes.contains(v)) {
+                assert v instanceof ASMVirtualRegister;
+                ASMRegister vi = v2vi.get(v);
+                int loc = memoryLocation.get(v);
+                if (isValidImmediate(loc)) newInstructions.add(new ASMMemoryInstruction(ASMMemoryInstruction.InstType.sw, vi, new ASMAddress(sp, new ASMImmediate(loc))));
+                else {
+                    newInstructions.add(new ASMPseudoInstruction(ASMPseudoInstruction.InstType.li).addOperand(vi).addOperand(new ASMImmediate(loc)));
+                    newInstructions.add(new ASMArithmeticInstruction(ASMArithmeticInstruction.InstType.add).addOperand(vi).addOperand(sp).addOperand(vi));
+                    newInstructions.add(new ASMMemoryInstruction(ASMMemoryInstruction.InstType.sw, vi, new ASMAddress(vi, null)));
+                }
+                inst.replaceRegister((ASMVirtualRegister) v, vi);
+            }
+        }
     }
 
     private void rewriteProgram() {
@@ -417,15 +449,23 @@ public class GraphColoringAllocator {
         ASMPhysicalRegister sp = ASMPhysicalRegister.getPhysicalRegister(ASMPhysicalRegister.PhysicalRegisterName.sp);
         ASMBasicBlock entry = function.getBlocks().get(0), escape = function.getBlocks().get(function.getBlocks().size() - 1);
         int indexOfMinusSp = entry.getInstructions().indexOf(null), indexOfPlusSp = escape.getInstructions().indexOf(null);
-        ASMArithmeticInstruction minusSp, plusSp;
+        ASMInstruction minusSp, plusSp;
         int frameSize = function.getStackFrame().getFrameSize();
-        minusSp = new ASMArithmeticInstruction(ASMArithmeticInstruction.InstType.addi);
-        minusSp.addOperand(sp).addOperand(sp).addOperand(new ASMImmediate(-frameSize));
-        plusSp = new ASMArithmeticInstruction(ASMArithmeticInstruction.InstType.addi);
-        plusSp.addOperand(sp).addOperand(sp).addOperand(new ASMImmediate(frameSize));
+        if (isValidImmediate(frameSize)) {
+            minusSp = new ASMArithmeticInstruction(ASMArithmeticInstruction.InstType.addi).addOperand(sp).addOperand(sp).addOperand(new ASMImmediate(-frameSize));
+            plusSp = new ASMArithmeticInstruction(ASMArithmeticInstruction.InstType.addi).addOperand(sp).addOperand(sp).addOperand(new ASMImmediate(frameSize));
+        } else {
+            entry.getInstructions().add(indexOfMinusSp++, new ASMPseudoInstruction(ASMPseudoInstruction.InstType.li).addOperand(t0).addOperand(new ASMImmediate(-frameSize)));
+            minusSp = new ASMArithmeticInstruction(ASMArithmeticInstruction.InstType.add).addOperand(sp).addOperand(sp).addOperand(t0);
+            escape.getInstructions().add(indexOfPlusSp++, new ASMPseudoInstruction(ASMPseudoInstruction.InstType.li).addOperand(t0).addOperand(new ASMImmediate(frameSize)));
+            plusSp = new ASMArithmeticInstruction(ASMArithmeticInstruction.InstType.add).addOperand(sp).addOperand(sp).addOperand(t0);
+        }
         entry.getInstructions().set(indexOfMinusSp, minusSp);
         escape.getInstructions().set(indexOfPlusSp, plusSp);
         function.getBlocks().forEach(block -> block.getInstructions().forEach(inst -> inst.replaceRegistersWithColor(color)));
+        function.getBlocks().forEach(block -> block.getInstructions().removeIf(inst ->
+                inst instanceof ASMMoveInstruction && ((ASMMoveInstruction) inst).getRd() == ((ASMMoveInstruction) inst).getRs()
+        ));
     }
 
     public void allocate() {
