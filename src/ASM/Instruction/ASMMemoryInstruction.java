@@ -18,12 +18,15 @@ public class ASMMemoryInstruction extends ASMInstruction {
     @Override
     public void replaceRegister(ASMVirtualRegister oldReg, ASMRegister newReg) {
         if (isStoreInstruction()) {
-            for (int i = 0; i < getOperands().size(); i++) {
-                if (getOperands().get(i) == oldReg) {
-                    setOperand(i, newReg);
-                    removeUse(oldReg);
-                    addUse(newReg);
-                }
+            if (getOperands().get(0) == oldReg) {
+                setOperand(0, newReg);
+                removeUse(oldReg);
+                addUse(newReg);
+            }
+            if (((ASMAddress) getOperands().get(1)).getRegister() == oldReg) {
+                ((ASMAddress) getOperands().get(1)).replaceRegister(newReg);
+                removeUse(oldReg);
+                addUse(newReg);
             }
         } else {
             if (getOperands().get(0) == oldReg) {
@@ -31,12 +34,10 @@ public class ASMMemoryInstruction extends ASMInstruction {
                 removeDef(oldReg);
                 addDef(newReg);
             }
-            for (int i = 1; i < getOperands().size(); i++) {
-                if (getOperands().get(i) == oldReg) {
-                    setOperand(i, newReg);
-                    removeUse(oldReg);
-                    addUse(newReg);
-                }
+            if (((ASMAddress) getOperands().get(1)).getRegister() == oldReg) {
+                ((ASMAddress) getOperands().get(1)).replaceRegister(newReg);
+                removeUse(oldReg);
+                addUse(newReg);
             }
         }
     }
