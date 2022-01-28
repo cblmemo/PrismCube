@@ -2,7 +2,7 @@ package Memory;
 
 import ASM.ASMModule;
 import AST.ProgramNode;
-import BackEnd.ASMPrinter;
+import BackEnd.ASMEmitter;
 import BackEnd.InstructionSelector;
 import BackEnd.RegisterAllocator;
 import Debug.ASTPrinter;
@@ -10,7 +10,7 @@ import Debug.MemoLog;
 import Debug.ScopePrinter;
 import FrontEnd.ConstStringCollector;
 import FrontEnd.IRBuilder;
-import FrontEnd.IRPrinter;
+import FrontEnd.IREmitter;
 import IR.IRModule;
 import IR.Operand.IRRegister;
 import Utility.Scope.GlobalScope;
@@ -104,7 +104,7 @@ public class Memory {
                 case "-emit-llvm" -> {
                     String arg = i + 1 < args.length && args[i + 1].charAt(0) == '-' ? "./bin/test.ll" : args[++i];
                     PrintStream irStream = new PrintStream(arg);
-                    IRPrinter.enable(irStream);
+                    IREmitter.enable(irStream);
                 }
                 case "-llvm-only" -> {
                     if (mode != Mode.NONE) err("argument conflict");
@@ -117,7 +117,7 @@ public class Memory {
                 case "-printV" -> {
                     String arg = i + 1 < args.length && args[i + 1].charAt(0) == '-' ? "./bin/virtual.s" : args[++i];
                     PrintStream virtualStream = new PrintStream(arg);
-                    ASMPrinter.enableVirtual(virtualStream);
+                    ASMEmitter.enableVirtual(virtualStream);
                 }
                 case "-arch" -> {
                     if (!(i + 1 < args.length && (Objects.equals(args[i + 1], "x86_64") || Objects.equals(args[i + 1], "x86_32")))) err("wrong arch argument");
@@ -148,22 +148,22 @@ public class Memory {
                 IRBuilder.disable();
                 InstructionSelector.disable();
                 RegisterAllocator.disable();
-                ASMPrinter.disable();
+                ASMEmitter.disable();
             }
             case LLVM -> {
                 ConstStringCollector.enable();
                 IRBuilder.enable();
-                IRPrinter.enable(printStream);
+                IREmitter.enable(printStream);
                 InstructionSelector.disable();
                 RegisterAllocator.disable();
-                ASMPrinter.disable();
+                ASMEmitter.disable();
             }
             case CODEGEN -> {
                 ConstStringCollector.enable();
                 IRBuilder.enable();
                 InstructionSelector.enable();
                 RegisterAllocator.enable();
-                ASMPrinter.enable();
+                ASMEmitter.enable();
             }
         }
         return this;
@@ -173,8 +173,8 @@ public class Memory {
         log.disableLog();
         printStream = System.out;
         inputStream = System.in;
-        IRPrinter.disable();
-        ASMPrinter.disableVirtual();
+        IREmitter.disable();
+        ASMEmitter.disableVirtual();
     }
 
     public void setParseTreeRoot(ParseTree parseTreeRoot) {

@@ -20,7 +20,7 @@ import java.io.PrintStream;
  * @version 1.0.0
  */
 
-public class ASMPrinter {
+public class ASMEmitter {
     private PrintStream ps;
     private int indentCnt = 0;
     private int functionCnt = 0;
@@ -44,7 +44,7 @@ public class ASMPrinter {
     }
 
     public static void enableVirtual(PrintStream virtualStream) {
-        ASMPrinter.virtualStream = virtualStream;
+        ASMEmitter.virtualStream = virtualStream;
         printVirtual = true;
     }
 
@@ -75,44 +75,44 @@ public class ASMPrinter {
      *
      * @see Memory
      */
-    public void print(Memory memory) {
+    public void emit(Memory memory) {
         if (print) {
             ps = memory.getPrintStream();
-            print(memory.getAsmModule());
+            emit(memory.getAsmModule());
         }
     }
 
-    public void printVirtual(Memory memory) {
+    public void emitVirtual(Memory memory) {
         if (printVirtual) {
             assert virtualStream != null;
             ps = virtualStream;
-            print(memory.getAsmModule());
+            emit(memory.getAsmModule());
         }
     }
 
-    private void print(ASMModule module) {
+    private void emit(ASMModule module) {
         indentCnt++;
         printWithIndent(".text");
         printWithIndent(formatPseudoOptions("file", "\"src.mx\""));
         indentCnt--;
-        module.getFunctions().values().forEach(this::print);
+        module.getFunctions().values().forEach(this::emit);
         if (module.getGlobals().values().size() != 0) {
             indentCnt++;
             printWithIndent("");
             printWithIndent(formatPseudoOptions("section", ".sdata, \"aw\", @progbits"));
             indentCnt--;
-            module.getGlobals().values().forEach(this::print);
+            module.getGlobals().values().forEach(this::emit);
         }
         if (module.getStrings().values().size() != 0) {
             indentCnt++;
             printWithIndent("");
             printWithIndent(formatPseudoOptions("section", ".rodata.str1.1, \"aMS\", @progbits, 1"));
             indentCnt--;
-            module.getStrings().values().forEach(this::print);
+            module.getStrings().values().forEach(this::emit);
         }
     }
 
-    private void print(ASMGlobalSymbol symbol) {
+    private void emit(ASMGlobalSymbol symbol) {
         String name = symbol.getSymbolName();
         printWithIndent("");
         indentCnt++;
@@ -136,7 +136,7 @@ public class ASMPrinter {
         indentCnt--;
     }
 
-    private void print(ASMConstString string) {
+    private void emit(ASMConstString string) {
         String name = string.getName();
         printWithIndent("");
         indentCnt++;
@@ -151,7 +151,8 @@ public class ASMPrinter {
         indentCnt--;
     }
 
-    private void print(ASMFunction function) {
+    private void emit(ASMFunction function) {
+        printWithIndent("");
         String funcName = function.getFunctionName();
         indentCnt++;
         printWithIndent(formatComment(formatPseudoOptions("globl", funcName), " -- Begin Function " + funcName));
@@ -159,7 +160,7 @@ public class ASMPrinter {
         printWithIndent(formatPseudoOptions("type", funcName + ", @function"));
         indentCnt--;
         printWithIndent(formatComment(funcName + ":", " @" + funcName));
-        function.getBlocks().forEach(this::print);
+        function.getBlocks().forEach(this::emit);
         String endLabel = ".Lfunc_end" + (functionCnt++);
         printWithIndent(endLabel + ":");
         indentCnt++;
@@ -168,14 +169,14 @@ public class ASMPrinter {
         printWithIndent(formatComment("", " -- End Function"));
     }
 
-    private void print(ASMBasicBlock block) {
+    private void emit(ASMBasicBlock block) {
         printWithIndent(block.getLabel() + ":");
         indentCnt++;
-        block.getInstructions().forEach(this::print);
+        block.getInstructions().forEach(this::emit);
         indentCnt--;
     }
 
-    private void print(ASMInstruction inst) {
+    private void emit(ASMInstruction inst) {
         if (inst == null) return; // used in printVirtual
         printWithIndent(inst.toString());
     }

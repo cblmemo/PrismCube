@@ -26,12 +26,12 @@ public class PrismCube {
 
             new ConstStringCollector().collect(memory);
             new IRBuilder().build(memory);
-            new IRPrinter().print(memory);
+            new IREmitter().emit(memory);
 
             new InstructionSelector().select(memory);
-            new ASMPrinter().printVirtual(memory);
+            new ASMEmitter().emitVirtual(memory);
             new RegisterAllocator().allocate(memory);
-            new ASMPrinter().print(memory);
+            new ASMEmitter().emit(memory);
         } catch (error err) {
             System.err.println(err.toString());
             throw new RuntimeException();

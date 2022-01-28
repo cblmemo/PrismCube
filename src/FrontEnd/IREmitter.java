@@ -28,14 +28,14 @@ import java.io.PrintStream;
  * @version 1.0.0
  */
 
-public class IRPrinter implements IRVisitor {
+public class IREmitter implements IRVisitor {
     private PrintStream ps;
 
     private static boolean print = false;
     private static PrintStream irStream = null;
 
     public static void enable(PrintStream irStream) {
-        IRPrinter.irStream = irStream;
+        IREmitter.irStream = irStream;
         print = true;
     }
 
@@ -49,7 +49,7 @@ public class IRPrinter implements IRVisitor {
      *
      * @see Memory
      */
-    public void print(Memory memory) {
+    public void emit(Memory memory) {
         if (print) {
             ps = irStream;
             memory.getIRModule().accept(this);
