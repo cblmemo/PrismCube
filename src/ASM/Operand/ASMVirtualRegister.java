@@ -17,4 +17,9 @@ public class ASMVirtualRegister extends ASMRegister {
     public String toString() {
         return "$" + name;
     }
+
+    @Override
+    public boolean countAsDefUse() {
+        return true;
+    }
 }

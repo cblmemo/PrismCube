@@ -30,10 +30,10 @@ import java.util.Map;
  * This class select appropriate instruction in
  * rv32i instructions (and pseudo instructions).
  * For all pseudo instruction used,
- * @see ASMPseudoInstruction.InstType
  *
  * @author rainy memory
  * @version 1.0.0
+ * @see ASMPseudoInstruction.InstType
  */
 
 public class InstructionSelector implements IRVisitor {
@@ -71,7 +71,7 @@ public class InstructionSelector implements IRVisitor {
     }
 
     private void appendPseudoInst(ASMPseudoInstruction.InstType type, ASMOperand... operands) {
-        ASMPseudoInstruction pseudoInst = new ASMPseudoInstruction(type);
+        ASMPseudoInstruction pseudoInst = type.isMove() ? new ASMMoveInstruction(type) : new ASMPseudoInstruction(type);
         for (ASMOperand operand : operands) pseudoInst.addOperand(operand);
         appendInst(pseudoInst);
     }
@@ -110,12 +110,17 @@ public class InstructionSelector implements IRVisitor {
         return reg;
     }
 
+    private boolean isValidImmediate(int imm) {
+        return -2048 <= imm && imm <= 2047;
+    }
+
     private ASMOperand toOperand(IROperand operand) {
         if (operand instanceof IRRegister) return toRegister(operand);
         assert operand instanceof IRConstNumber;
         int value = ((IRConstNumber) operand).getIntValue();
         if (value == 0) return ASMPhysicalRegister.getPhysicalRegister(ASMPhysicalRegister.PhysicalRegisterName.zero);
-        return new ASMImmediate(value);
+        if (isValidImmediate(value)) return new ASMImmediate(value);
+        return toRegister(operand);
     }
 
     private void parseArith(ASMArithmeticInstruction.InstType type, ASMRegister rd, IROperand rs1, IROperand rs2, boolean inverse) {
@@ -222,20 +227,12 @@ public class InstructionSelector implements IRVisitor {
     @Override
     public void visit(IRCallInstruction inst) {
         LinkedHashMap<ASMPhysicalRegister, ASMVirtualRegister> callerSaves = new LinkedHashMap<>();
-        if (RegisterAllocator.naive()) {
-            // naive allocator doesn't need to back up callee save except for ra since it store all value on stack
-            ASMPhysicalRegister ra = ASMPhysicalRegister.getPhysicalRegister(ASMPhysicalRegister.PhysicalRegisterName.ra);
-            ASMVirtualRegister raBackup = new ASMVirtualRegister("ra_backup");
-            appendPseudoInst(ASMPseudoInstruction.InstType.mv, raBackup, ra);
-            callerSaves.put(ra, raBackup);
-        } else {
-            // caller save register backup
-            ASMPhysicalRegister.getCallerSaveRegisters().forEach(reg -> {
-                ASMVirtualRegister backup = new ASMVirtualRegister(reg + "_backup");
-                appendPseudoInst(ASMPseudoInstruction.InstType.mv, backup, reg);
-                callerSaves.put(reg, backup);
-            });
-        }
+        // naive allocator doesn't need to back up caller save except for ra since it store all value on stack
+        // graph coloring also doesn't need to back up since all caller save registers is treated as defs of call instruction
+        ASMPhysicalRegister ra = ASMPhysicalRegister.getPhysicalRegister(ASMPhysicalRegister.PhysicalRegisterName.ra);
+        ASMVirtualRegister raBackup = new ASMVirtualRegister("ra_backup");
+        appendPseudoInst(ASMPseudoInstruction.InstType.mv, raBackup, ra);
+        callerSaves.put(ra, raBackup);
         // put arguments in register, if more than 8 put in stack
         for (int i = 0; i < Integer.min(inst.getArgumentNumber(), 8); i++)
             appendPseudoInst(ASMPseudoInstruction.InstType.mv, ASMPhysicalRegister.getArgumentRegister(i), toRegister(inst.getArgumentValues().get(i)));
@@ -246,8 +243,6 @@ public class InstructionSelector implements IRVisitor {
         ASMLabel functionLabel = getFunctionLabel(inst.getCallFunction().getFunctionName());
         appendPseudoInst(ASMPseudoInstruction.InstType.call, functionLabel);
         if (inst.haveReturnValue()) appendPseudoInst(ASMPseudoInstruction.InstType.mv, toRegister(inst.getResultRegister()), ASMPhysicalRegister.getPhysicalRegister(ASMPhysicalRegister.PhysicalRegisterName.a0));
-        // retrieve caller save register
-        callerSaves.forEach((reg, backup) -> appendPseudoInst(ASMPseudoInstruction.InstType.mv, reg, backup));
     }
 
     @Override

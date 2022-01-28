@@ -1,6 +1,7 @@
 package ASM.Operand;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 
 public class ASMPhysicalRegister extends ASMRegister {
@@ -27,11 +28,16 @@ public class ASMPhysicalRegister extends ASMRegister {
         public boolean isSave() {
             return s0.ordinal() <= ordinal() && ordinal() <= s1.ordinal() || s2.ordinal() <= ordinal() && ordinal() <= s11.ordinal();
         }
+
+        public boolean isPreColored() {
+            return ordinal() != PhysicalRegisterName.zero.ordinal() && ordinal() != PhysicalRegisterName.sp.ordinal();
+        }
     }
 
     static private final HashMap<PhysicalRegisterName, ASMPhysicalRegister> PhysicalRegisters = new HashMap<>();
     static private final ArrayList<ASMPhysicalRegister> CallerSaveRegisters = new ArrayList<>();
     static private final ArrayList<ASMPhysicalRegister> CalleeSaveRegisters = new ArrayList<>();
+    static private final ArrayList<ASMPhysicalRegister> PreColoredRegisters = new ArrayList<>();
 
     static {
         for (PhysicalRegisterName name : PhysicalRegisterName.values()) {
@@ -39,6 +45,7 @@ public class ASMPhysicalRegister extends ASMRegister {
             PhysicalRegisters.put(name, pr);
             if (name.isTemp() || name.isArgument() || name.isReturnAddress()) CallerSaveRegisters.add(pr);
             if (name.isSave()) CalleeSaveRegisters.add(pr);
+            if (name.isPreColored()) PreColoredRegisters.add(pr);
         }
     }
 
@@ -63,6 +70,10 @@ public class ASMPhysicalRegister extends ASMRegister {
         return CalleeSaveRegisters;
     }
 
+    public static ArrayList<ASMPhysicalRegister> getPreColoredRegisters() {
+        return PreColoredRegisters;
+    }
+
     private final PhysicalRegisterName name;
 
     public ASMPhysicalRegister(PhysicalRegisterName name) {
@@ -71,6 +82,11 @@ public class ASMPhysicalRegister extends ASMRegister {
 
     public PhysicalRegisterName getName() {
         return name;
+    }
+
+    @Override
+    public boolean countAsDefUse() {
+        return name.isPreColored();
     }
 
     @Override

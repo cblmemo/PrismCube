@@ -96,6 +96,10 @@ public class IRBasicBlock {
         predecessors.add(predecessor);
     }
 
+    public ArrayList<IRBasicBlock> getPredecessors() {
+        return predecessors;
+    }
+
     public String getPreds() {
         if (predecessors.isEmpty()) return "";
         StringBuilder builder = new StringBuilder("; preds = ");

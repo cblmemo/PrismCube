@@ -1,20 +1,12 @@
 package BackEnd;
 
-import ASM.RegisterAllocate.GraphColoringAllocator;
-import ASM.RegisterAllocate.NaiveAllocator;
+import BackEnd.RegisterAllocate.GraphColoringAllocator;
+import BackEnd.RegisterAllocate.NaiveAllocator;
 import Memory.Memory;
 
 /**
  * This class allocate virtual register to physical
  * register.
- * In naive implementation, we directly spill all
- * virtual register to stack. For more detail,
- * @see NaiveAllocator
- * In graph coloring implementation,
- * to be done...
- * For more detail,
- * @see GraphColoringAllocator
- *
  *
  * @author rainy memory
  * @version 1.0.0
@@ -22,7 +14,7 @@ import Memory.Memory;
 
 public class RegisterAllocator {
     private static boolean allocate = false;
-    private static final boolean naive = true;
+    private static final boolean naive = false;
 
     public static void enable() {
         allocate = true;

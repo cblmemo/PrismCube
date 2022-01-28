@@ -1,4 +1,4 @@
-package ASM.RegisterAllocate;
+package BackEnd.RegisterAllocate;
 
 import ASM.ASMBasicBlock;
 import ASM.ASMFunction;
