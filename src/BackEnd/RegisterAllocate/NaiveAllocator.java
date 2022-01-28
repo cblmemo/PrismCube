@@ -113,65 +113,65 @@ public class NaiveAllocator {
     }
 
     private void allocateInstruction(ASMInstruction inst) {
-        if (inst.isStoreInstruction()) {
-            ASMOperand rs = inst.getOperands().get(0);
+//        if (inst.isStoreInstruction()) {
+//            ASMOperand rs = inst.getOperands().get(0);
+//            if (rs instanceof ASMVirtualRegister) {
+//                newList.add(new ASMMemoryInstruction(ASMMemoryInstruction.InstType.lw, registers.get(0), vr2addr.get((ASMVirtualRegister) rs)));
+//                inst.setOperand(0, registers.get(0));
+//            }
+//            ASMOperand address = inst.getOperands().get(1);
+//            assert address instanceof ASMAddress;
+//            if (((ASMAddress) address).getRegister() instanceof ASMVirtualRegister) {
+//                ASMAddress tempAddress = vr2addr.get((ASMVirtualRegister) ((ASMAddress) address).getRegister());
+//                newList.add(new ASMMemoryInstruction(ASMMemoryInstruction.InstType.lw, registers.get(1), tempAddress));
+//                ((ASMAddress) address).replaceRegister(registers.get(1));
+//            }
+//            newList.add(inst);
+//        } else {
+//            for (int i = inst.isBranchInstruction() ? 0 : 1; i < inst.getOperands().size(); i++) {
+//                ASMOperand rs = inst.getOperands().get(i);
+//                if (rs instanceof ASMVirtualRegister) {
+//                    newList.add(new ASMMemoryInstruction(ASMMemoryInstruction.InstType.lw, registers.get(i), vr2addr.get((ASMVirtualRegister) rs)));
+//                    inst.setOperand(i, registers.get(i));
+//                } else if (rs instanceof ASMAddress) { // ir load
+//                    if (((ASMAddress) rs).getRegister() instanceof ASMVirtualRegister) {
+//                        ASMAddress tempAddress = vr2addr.get((ASMVirtualRegister) ((ASMAddress) rs).getRegister());
+//                        newList.add(new ASMMemoryInstruction(ASMMemoryInstruction.InstType.lw, registers.get(i), tempAddress));
+//                        ((ASMAddress) rs).replaceRegister(registers.get(i));
+//                    }
+//                }
+//            }
+//            newList.add(inst);
+//            if (inst.getOperands().size() != 0 && !inst.isBranchInstruction()) {
+//                ASMOperand rd = inst.getOperands().get(0);
+//                if (rd instanceof ASMVirtualRegister) {
+//                    newList.add(new ASMMemoryInstruction(ASMMemoryInstruction.InstType.sw, registers.get(0), vr2addr.get((ASMVirtualRegister) rd)));
+//                    inst.setOperand(0, registers.get(0));
+//                }
+//            }
+//        }
+
+
+        if (inst.isCallInstruction()) {
+            newList.add(inst);
+            return;
+        }
+        int current = 0;
+        ArrayList<ASMRegister> use = new ArrayList<>(inst.getUses()), def = new ArrayList<>(inst.getDefs());
+        for (ASMRegister rs : use) {
             if (rs instanceof ASMVirtualRegister) {
-                newList.add(new ASMMemoryInstruction(ASMMemoryInstruction.InstType.lw, registers.get(0), vr2addr.get((ASMVirtualRegister) rs)));
-                inst.setOperand(0, registers.get(0));
-            }
-            ASMOperand address = inst.getOperands().get(1);
-            assert address instanceof ASMAddress;
-            if (((ASMAddress) address).getRegister() instanceof ASMVirtualRegister) {
-                ASMAddress tempAddress = vr2addr.get((ASMVirtualRegister) ((ASMAddress) address).getRegister());
-                newList.add(new ASMMemoryInstruction(ASMMemoryInstruction.InstType.lw, registers.get(1), tempAddress));
-                ((ASMAddress) address).replaceRegister(registers.get(1));
-            }
-            newList.add(inst);
-        } else {
-            for (int i = inst.isBranchInstruction() ? 0 : 1; i < inst.getOperands().size(); i++) {
-                ASMOperand rs = inst.getOperands().get(i);
-                if (rs instanceof ASMVirtualRegister) {
-                    newList.add(new ASMMemoryInstruction(ASMMemoryInstruction.InstType.lw, registers.get(i), vr2addr.get((ASMVirtualRegister) rs)));
-                    inst.setOperand(i, registers.get(i));
-                } else if (rs instanceof ASMAddress) { // ir load
-                    if (((ASMAddress) rs).getRegister() instanceof ASMVirtualRegister) {
-                        ASMAddress tempAddress = vr2addr.get((ASMVirtualRegister) ((ASMAddress) rs).getRegister());
-                        newList.add(new ASMMemoryInstruction(ASMMemoryInstruction.InstType.lw, registers.get(i), tempAddress));
-                        ((ASMAddress) rs).replaceRegister(registers.get(i));
-                    }
-                }
-            }
-            newList.add(inst);
-            if (inst.getOperands().size() != 0 && !inst.isBranchInstruction()) {
-                ASMOperand rd = inst.getOperands().get(0);
-                if (rd instanceof ASMVirtualRegister) {
-                    newList.add(new ASMMemoryInstruction(ASMMemoryInstruction.InstType.sw, registers.get(0), vr2addr.get((ASMVirtualRegister) rd)));
-                    inst.setOperand(0, registers.get(0));
-                }
+                ASMPhysicalRegister phyReg = registers.get(current++);
+                newList.add(new ASMMemoryInstruction(ASMMemoryInstruction.InstType.lw, phyReg, vr2addr.get((ASMVirtualRegister) rs)));
+                inst.replaceRegister((ASMVirtualRegister) rs, phyReg);
             }
         }
-
-
-//        if (inst.isCallInstruction()) {
-//            newList.add(inst);
-//            return;
-//        }
-//        int current = 0;
-//        ArrayList<ASMRegister> use = inst.getUses(), def = inst.getDefs();
-//        for (ASMRegister rs : use) {
-//            if (rs instanceof ASMVirtualRegister) {
-//                ASMPhysicalRegister phyReg = registers.get(current++);
-//                newList.add(new ASMMemoryInstruction(ASMMemoryInstruction.InstType.lw, phyReg, vr2addr.get((ASMVirtualRegister) rs)));
-//                inst.replaceRegister((ASMVirtualRegister) rs, phyReg);
-//            }
-//        }
-//        newList.add(inst);
-//        for (ASMRegister rd : def) {
-//            if (rd instanceof ASMVirtualRegister) {
-//                ASMPhysicalRegister phyReg = registers.get(current++);
-//                newList.add(new ASMMemoryInstruction(ASMMemoryInstruction.InstType.sw, phyReg, vr2addr.get((ASMVirtualRegister) rd)));
-//                inst.replaceRegister((ASMVirtualRegister) rd, phyReg);
-//            }
-//        }
+        newList.add(inst);
+        for (ASMRegister rd : def) {
+            if (rd instanceof ASMVirtualRegister) {
+                ASMPhysicalRegister phyReg = registers.get(current++);
+                newList.add(new ASMMemoryInstruction(ASMMemoryInstruction.InstType.sw, phyReg, vr2addr.get((ASMVirtualRegister) rd)));
+                inst.replaceRegister((ASMVirtualRegister) rd, phyReg);
+            }
+        }
     }
 }
