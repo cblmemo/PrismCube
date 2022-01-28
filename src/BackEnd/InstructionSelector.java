@@ -242,7 +242,8 @@ public class InstructionSelector implements IRVisitor {
         }
         ASMLabel functionLabel = getFunctionLabel(inst.getCallFunction().getFunctionName());
         appendPseudoInst(ASMPseudoInstruction.InstType.call, functionLabel);
-        if (inst.haveReturnValue()) appendPseudoInst(ASMPseudoInstruction.InstType.mv, toRegister(inst.getResultRegister()), ASMPhysicalRegister.getPhysicalRegister(ASMPhysicalRegister.PhysicalRegisterName.a0));
+        if (inst.haveReturnValue()) appendPseudoInst(ASMPseudoInstruction.InstType.mv, toRegister(inst.getResultRegister()), ASMPhysicalRegister.getPhysicalRegister(ASMPhysicalRegister.PhysicalRegisterName.a0));// retrieve caller save register
+        callerSaves.forEach((reg, backup) -> appendPseudoInst(ASMPseudoInstruction.InstType.mv, reg, backup));
     }
 
     @Override

@@ -1,9 +1,6 @@
 package ASM.Instruction;
 
-import ASM.Operand.ASMAddress;
-import ASM.Operand.ASMOperand;
-import ASM.Operand.ASMPhysicalRegister;
-import ASM.Operand.ASMRegister;
+import ASM.Operand.*;
 import BackEnd.ASMEmitter;
 
 import java.util.ArrayList;
@@ -32,6 +29,14 @@ abstract public class ASMInstruction {
 
     protected void addUse(ASMRegister reg) {
         if (reg.countAsDefUse()) uses.add(reg);
+    }
+
+    protected void removeDef(ASMRegister reg) {
+        defs.remove(reg);
+    }
+
+    protected void removeUse(ASMRegister reg) {
+        uses.remove(reg);
     }
 
     public ArrayList<ASMRegister> getDefs() {
@@ -82,10 +87,16 @@ abstract public class ASMInstruction {
         return Objects.equals(instStr, "beqz");
     }
 
+    public boolean isCallInstruction() {
+        return Objects.equals(instStr, "call");
+    }
+
     public void replaceRegistersWithColor(LinkedHashMap<ASMRegister, ASMPhysicalRegister> color) {
         for (int i = 0; i < operands.size(); i++)
             if (operands.get(i) instanceof ASMRegister) operands.set(i, color.get((ASMRegister) operands.get(i)));
     }
+
+    abstract public void replaceRegister(ASMVirtualRegister oldReg, ASMRegister newReg);
 
     @Override
     public String toString() {

@@ -14,7 +14,7 @@ import Memory.Memory;
 
 public class RegisterAllocator {
     private static boolean allocate = false;
-    private static final boolean naive = false;
+    private static final boolean naive = true;
 
     public static void enable() {
         allocate = true;
