@@ -1,8 +1,5 @@
 package ASM.Instruction;
 
-import ASM.Operand.ASMRegister;
-import ASM.Operand.ASMVirtualRegister;
-
 public class ASMArithmeticInstruction extends ASMInstruction {
     public enum InstType {
         lui, auipc,
@@ -28,21 +25,5 @@ public class ASMArithmeticInstruction extends ASMInstruction {
 
     public ASMArithmeticInstruction(InstType type) {
         super(type.toString());
-    }
-
-    @Override
-    public void replaceRegister(ASMVirtualRegister oldReg, ASMRegister newReg) {
-        if (getOperands().get(0) == oldReg) {
-            setOperand(0, newReg);
-            removeDef(oldReg);
-            addDef(newReg);
-        }
-        for (int i = 1; i < getOperands().size(); i++) {
-            if (getOperands().get(i) == oldReg) {
-                setOperand(i, newReg);
-                removeUse(oldReg);
-                addUse(newReg);
-            }
-        }
     }
 }

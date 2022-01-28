@@ -61,11 +61,11 @@ abstract public class ASMInstruction {
             if (operand instanceof ASMRegister) reg = (ASMRegister) operand;
             else reg = ((ASMAddress) operand).getRegister();
             switch (instStr) {
-                case "lb", "lw", "li", "mv", "la", "seqz", "snez", "lui", "auipc", "sub", "add", "sll", "slt", "sltu", "xor", "srl", "sra", "or", "and", "addi", "slli", "slti", "sltiu", "xori", "srli", "srai", "ori", "andi", "mul", "div", "rem" -> {
+                case "sb", "sw", "beqz" -> addUse(reg);
+                default -> {
                     if (operands.size() == 1) addDef(reg);
                     else addUse(reg);
                 }
-                case "sb", "sw", "beqz" -> addUse(reg);
             }
         }
         return this;
@@ -75,28 +75,56 @@ abstract public class ASMInstruction {
         return operands;
     }
 
-    public void setOperand(int index, ASMOperand operand) {
-        operands.set(index, operand);
-    }
-
-    public boolean isStoreInstruction() {
-        return Objects.equals(instStr, "sb") || Objects.equals(instStr, "sw");
-    }
-
-    public boolean isBranchInstruction() {
-        return Objects.equals(instStr, "beqz");
-    }
-
-    public boolean isCallInstruction() {
-        return Objects.equals(instStr, "call");
-    }
-
     public void replaceRegistersWithColor(LinkedHashMap<ASMRegister, ASMPhysicalRegister> color) {
         for (int i = 0; i < operands.size(); i++)
             if (operands.get(i) instanceof ASMRegister) operands.set(i, color.get((ASMRegister) operands.get(i)));
     }
 
-    abstract public void replaceRegister(ASMVirtualRegister oldReg, ASMRegister newReg);
+    private void setOperand(int index, ASMOperand operand) {
+        operands.set(index, operand);
+    }
+
+    private boolean isStoreInstruction() {
+        return Objects.equals(instStr, "sb") || Objects.equals(instStr, "sw");
+    }
+
+    private boolean isBranchInstruction() {
+        return Objects.equals(instStr, "beqz");
+    }
+
+    private void replaceDef(int index, ASMVirtualRegister oldReg, ASMRegister newReg) {
+        if (getOperands().get(index) == oldReg) {
+            setOperand(index, newReg);
+            removeDef(oldReg);
+            addDef(newReg);
+        }
+    }
+
+    private void replaceUse(int index, ASMVirtualRegister oldReg, ASMRegister newReg) {
+        if (getOperands().get(index) == oldReg) {
+            setOperand(index, newReg);
+            removeUse(oldReg);
+            addUse(newReg);
+        }
+    }
+
+    public void replaceRegister(ASMVirtualRegister oldReg, ASMRegister newReg) {
+        if (this instanceof ASMArithmeticInstruction || this instanceof ASMPseudoInstruction) {
+            if (isBranchInstruction()) replaceUse(0, oldReg, newReg);
+            else {
+                replaceDef(0, oldReg, newReg);
+                for (int i = 1; i < getOperands().size(); i++) replaceUse(i, oldReg, newReg);
+            }
+        } else {
+            if (isStoreInstruction()) replaceUse(0, oldReg, newReg);
+            else replaceDef(0, oldReg, newReg);
+            if (((ASMAddress) getOperands().get(1)).getRegister() == oldReg) {
+                ((ASMAddress) getOperands().get(1)).replaceRegister(newReg);
+                removeUse(oldReg);
+                addUse(newReg);
+            }
+        }
+    }
 
     @Override
     public String toString() {
