@@ -123,6 +123,7 @@ public class GraphColoringAllocator {
 
     private void addEdge(ASMRegister u, ASMRegister v) {
         if (u != v && !adjacentSet.contains(new Pair<>(u, v))) {
+            log.Tracef("add an edge between [%s] and [%s]\n", u, v);
             adjacentSet.add(new Pair<>(u, v));
             adjacentSet.add(new Pair<>(v, u));
             if (!preColored.contains(u)) {
@@ -155,8 +156,10 @@ public class GraphColoringAllocator {
             });
         });
         StringBuilder graphString = new StringBuilder();
-        graphString.append("------------------------------------------------------------------------------------------\n").append(String.format("Interference Graph (%d):\n", adjacentSet.size()));
-        adjacentSet.forEach(edge -> graphString.append(String.format("edge: [%s]" + " ".repeat(40 - edge.a.toString().length()) + "[%s]\n", edge.a, edge.b)));
+        graphString.append("------------------------------------------------------------------------------------------\n");
+        graphString.append("degree:\n").append(degree).append("\n");
+        graphString.append(String.format("Interference Graph (%d):\n", adjacentSet.size()));
+        adjacentSet.forEach(edge -> graphString.append(String.format("edge: [%s]" + " ".repeat(Integer.max(1, 40 - edge.a.toString().length())) + "[%s]\n", edge.a, edge.b)));
         graphString.append("------------------------------------------------------------------------------------------\n");
         log.Tracef("%s", graphString.toString());
     }
@@ -174,11 +177,16 @@ public class GraphColoringAllocator {
     }
 
     private void makeWorkList() {
+        log.Infof("start make work list.\n");
         initial.forEach(n -> {
             if (degree.get(n) >= K) spillWorkList.add(n);
             else if (moveRelated(n)) freezeWorkList.add(n);
             else simplifyWorkList.add(n);
+            if (degree.get(n) >= K) log.Debugf("add [%s] to spillWorkList\n", n);
+            else if (moveRelated(n)) log.Debugf("add [%s] to freezeWorkList\n", n);
+            else log.Debugf("add [%s] to simplifyWorkList\n", n);
         });
+        log.Infof("make work list finished.\n");
     }
 
     private LinkedHashSet<ASMRegister> adjacent(ASMRegister n) {
@@ -204,15 +212,23 @@ public class GraphColoringAllocator {
     private void decrementDegree(ASMRegister m) {
         int d = degree.get(m);
         degree.replace(m, d - 1);
+        log.Tracef("decrement [%s]'s degree to %d\n", m, d - 1);
         if (d == K) {
             LinkedHashSet<ASMRegister> nodes = adjacent(m);
             nodes.add(m);
             enableMoves(nodes);
-            assert spillWorkList.contains(m);
+            assert spillWorkList.contains(m) : m + " is not in spillWorkList";
             spillWorkList.remove(m);
+            log.Debugf("remove [%s] to spillWorkList due to decrement degree\n", m);
             if (moveRelated(m)) freezeWorkList.add(m);
             else simplifyWorkList.add(m);
         }
+    }
+
+    private void decrementDegreeWithoutCheck(ASMRegister m) {
+        int d = degree.get(m);
+        degree.replace(m, d - 1);
+        log.Tracef("decrement [%s]'s degree to %d\n", m, d - 1);
     }
 
     private void simplify() {
@@ -288,11 +304,13 @@ public class GraphColoringAllocator {
         alias.replace(v, u);
         moveList.get(u).addAll(moveList.get(v));
         LinkedHashSet<ASMRegister> adjV = adjacent(v);
+        log.Debugf("adjV: %s\n", adjV.toString());
         adjV.forEach(t -> {
             addEdge(t, u);
-            decrementDegree(t);
+            decrementDegreeWithoutCheck(t);
         });
         if (degree.get(u) >= K && freezeWorkList.contains(u)) {
+            log.Tracef("transfer [%s] from freezeWorkList to spillWorkList due to combine node\n");
             freezeWorkList.remove(u);
             spillWorkList.add(u);
         }
@@ -365,6 +383,7 @@ public class GraphColoringAllocator {
 
     private void selectSpill() {
         ASMRegister m = selectRegisterToSpill();
+        log.Debugf("select [%s] to spill\n", m);
         spillWorkList.remove(m);
         simplifyWorkList.add(m);
         freezeMoves(m);

@@ -92,7 +92,7 @@ public class ASMFunction {
     private final ArrayList<ASMBasicBlock> sorted = new ArrayList<>();
 
     private void topo(int i) {
-        log.Debugf("topo %d\n", i);
+        log.Tracef("topo %d\n", i);
         if (!mark.get(i)) {
             mark.set(i, true);
             blocks.get(i).getSuccessors().forEach(succ -> topo(block2serial.get(succ)));
@@ -109,8 +109,8 @@ public class ASMFunction {
             sorted.add(null);
             block2serial.put(blocks.get(i), i);
         }
-        log.Debugf("blocks to be sorted:\n");
-        blocks.forEach(block -> log.Debugf("serial: [%d], label: [%s], successor: [%s]\n", block2serial.get(block), block.getLabel(), block.getSuccessors().toString()));
+        log.Tracef("blocks to be sorted:\n");
+        blocks.forEach(block -> log.Tracef("serial: [%d], label: [%s], successor: [%s]\n", block2serial.get(block), block.getLabel(), block.getSuccessors().toString()));
         int minIndex = 0;
         do {
             topo(minIndex);
@@ -118,8 +118,8 @@ public class ASMFunction {
             for (int i = blocks.size() - 1; i >= 0; i--)
                 if (!mark.get(i)) minIndex = i;
         } while (minIndex != -1);
-        log.Debugf("topological order of function [%s]:\n", functionName);
-        sorted.forEach(block -> log.Debugf("serial: [%d], label: [%s]\n", block2serial.get(block), block.getLabel()));
+        log.Tracef("topological order of function [%s]:\n", functionName);
+        sorted.forEach(block -> log.Tracef("serial: [%d], label: [%s]\n", block2serial.get(block), block.getLabel()));
         return sorted;
     }
 }

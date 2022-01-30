@@ -30,7 +30,8 @@ public class ASMAddress extends ASMOperand {
     @Override
     public String toString() {
         if (offset == null) return 0 + "(" + register.toString() + ")";
-        if (needAddFrameSize) offset.updateImmediate(stackFrame.getFrameSize());
-        return offset + "(" + register + ")";
+        int trueOffset = offset.getImm();
+        if (needAddFrameSize) trueOffset += stackFrame.getFrameSize();
+        return trueOffset + "(" + register + ")";
     }
 }
