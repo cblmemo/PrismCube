@@ -12,6 +12,14 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import static Debug.MemoLog.log;
 
+/**
+ * This class allocate virtual register to physical register. This implementation is based on algorithm in
+ * Tiger Book (Andrew W. Appel, Maia Ginsburg - Modern Compiler Implementation in C - Cambridge University Press (1998)).
+ *
+ * @author rainy memory
+ * @version 1.0.0
+ */
+
 public class GraphColoringAllocator {
     static private final int K = ASMPhysicalRegister.getPreColoredRegisters().size();
 

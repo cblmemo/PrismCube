@@ -14,6 +14,15 @@ import java.util.HashMap;
 
 import static Debug.MemoLog.log;
 
+/**
+ * This class allocate virtual register to physical
+ * register. In this naive implementation, all virtual
+ * register are spilled to stack.
+ *
+ * @author rainy memory
+ * @version 1.0.0
+ */
+
 public class NaiveAllocator {
     private static final ArrayList<ASMPhysicalRegister> registers = new ArrayList<>(Arrays.asList(
             ASMPhysicalRegister.getPhysicalRegister(ASMPhysicalRegister.PhysicalRegisterName.t0),

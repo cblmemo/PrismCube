@@ -32,8 +32,9 @@ Mx* is a simplified language from the mix of Standard C++ and Java. Details of M
  - [x] IRPrinter
  - [x] InstructionSelector
  - [x] NaiveAllocator
- - [ ] GraphColoringAllocator
+ - [x] GraphColoringAllocator
  - [x] ASMPrinter
+ - [ ] Optimize (working on...)
 
 ## File Structure
 
@@ -44,6 +45,7 @@ Mx* is a simplified language from the mix of Standard C++ and Java. Details of M
  ┃ ┃ ┣ 📜ASMArithmeticInstruction.java
  ┃ ┃ ┣ 📜ASMInstruction.java
  ┃ ┃ ┣ 📜ASMMemoryInstruction.java
+ ┃ ┃ ┣ 📜ASMMoveInstruction.java
  ┃ ┃ ┗ 📜ASMPseudoInstruction.java
  ┃ ┣ 📂Operand
  ┃ ┃ ┣ 📂GlobalSymbol
@@ -59,9 +61,6 @@ Mx* is a simplified language from the mix of Standard C++ and Java. Details of M
  ┃ ┃ ┣ 📜ASMPhysicalRegister.java
  ┃ ┃ ┣ 📜ASMRegister.java
  ┃ ┃ ┗ 📜ASMVirtualRegister.java
- ┃ ┣ 📂RegisterAllocate
- ┃ ┃ ┣ 📜GraphColoringAllocator.java
- ┃ ┃ ┗ 📜NaiveAllocator.java
  ┃ ┣ 📜ASMBasicBlock.java
  ┃ ┣ 📜ASMFunction.java
  ┃ ┣ 📜ASMModule.java
@@ -117,7 +116,11 @@ Mx* is a simplified language from the mix of Standard C++ and Java. Details of M
  ┃ ┣ 📜ASTVisitor.java
  ┃ ┗ 📜ProgramNode.java
  ┣ 📂BackEnd
- ┃ ┣ 📜ASMPrinter.java
+ ┃ ┣ 📂RegisterAllocate
+ ┃ ┃ ┣ 📜GraphColoringAllocator.java
+ ┃ ┃ ┣ 📜LivenessAnalyzer.java
+ ┃ ┃ ┗ 📜NaiveAllocator.java
+ ┃ ┣ 📜ASMEmitter.java
  ┃ ┣ 📜InstructionSelector.java
  ┃ ┗ 📜RegisterAllocator.java
  ┣ 📂Debug
@@ -128,7 +131,7 @@ Mx* is a simplified language from the mix of Standard C++ and Java. Details of M
  ┃ ┣ 📜ASTBuilder.java
  ┃ ┣ 📜ConstStringCollector.java
  ┃ ┣ 📜IRBuilder.java
- ┃ ┣ 📜IRPrinter.java
+ ┃ ┣ 📜IREmitter.java
  ┃ ┣ 📜IRVisitor.java
  ┃ ┣ 📜Preprocessor.java
  ┃ ┣ 📜SemanticChecker.java
