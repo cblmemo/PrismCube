@@ -17,6 +17,7 @@ public class GraphColoringAllocator {
 
     private final ASMFunction function;
 
+    private final LinkedHashSet<ASMRegister> physicalRegisters = new LinkedHashSet<>(ASMPhysicalRegister.getPhysicalRegisters());
     private final LinkedHashSet<ASMRegister> preColored = new LinkedHashSet<>();
     private final LinkedHashSet<ASMRegister> initial = new LinkedHashSet<>();
     private final LinkedHashSet<ASMRegister> simplifyWorkList = new LinkedHashSet<>();
@@ -157,7 +158,7 @@ public class GraphColoringAllocator {
         graphString.append("------------------------------------------------------------------------------------------\n").append(String.format("Interference Graph (%d):\n", adjacentSet.size()));
         adjacentSet.forEach(edge -> graphString.append(String.format("edge: [%s]" + " ".repeat(25 - edge.a.toString().length()) + "[%s]\n", edge.a, edge.b)));
         graphString.append("------------------------------------------------------------------------------------------\n");
-        log.Debugf("%s", graphString.toString());
+        log.Tracef("%s", graphString.toString());
     }
 
     private LinkedHashSet<ASMMoveInstruction> nodeMoves(ASMRegister n) {
@@ -230,7 +231,7 @@ public class GraphColoringAllocator {
     }
 
     private GraphColoringAllocator addWorkList(ASMRegister u) {
-        if (!preColored.contains(u) && !moveRelated(u) && degree.get(u) < K) {
+        if (!physicalRegisters.contains(u) && !moveRelated(u) && degree.get(u) < K) {
             assert freezeWorkList.contains(u);
             freezeWorkList.remove(u);
             simplifyWorkList.add(u);
@@ -247,6 +248,7 @@ public class GraphColoringAllocator {
     }
 
     private boolean BriggsStrategy(ASMRegister u, ASMRegister v) {
+        assert u instanceof ASMVirtualRegister && v instanceof ASMVirtualRegister : String.format("use Brigg to preColored register [%s] && [%s]", u, v);
         LinkedHashSet<ASMRegister> nodes = new LinkedHashSet<>();
         nodes.addAll(adjacent(u));
         nodes.addAll(adjacent(v));
@@ -258,6 +260,7 @@ public class GraphColoringAllocator {
     }
 
     private boolean GeorgeStrategy(ASMRegister u, ASMRegister v) {
+        assert v instanceof ASMVirtualRegister : String.format("use George to two preColored register [%s] && [%s]", u, v);
         LinkedHashSet<ASMRegister> adjV = adjacent(v);
         for (ASMRegister t : adjV)
             if (!OK(t, u)) return false;
@@ -266,13 +269,12 @@ public class GraphColoringAllocator {
 
     private boolean applyStrategies(ASMRegister u, ASMRegister v) {
         // preColor registers' adjacent is too large to apply Brigg strategy
+        // if there is a preColored register in u, v, then it will be swapped to u
+        // therefore preColored.contains(u) means there is a preColored register in u, v
         boolean ret;
         if (preColored.contains(u)) ret = GeorgeStrategy(u, v);
         else ret = BriggsStrategy(u, v);
-        if (ret) {
-            log.Debugf("applying %s strategy success.\n", preColored.contains(u) ? "George" : "Briggs");
-            log.Debugf("adjV: %s\n", adjacent(v).toString());
-        }
+        if (ret) log.Debugf("applying %s strategy success.\n", preColored.contains(u) ? "George" : "Briggs");
         return ret;
     }
 
@@ -310,7 +312,7 @@ public class GraphColoringAllocator {
         if (u == v) {
             coalescedMoves.add(m);
             addWorkList(u);
-        } else if (preColored.contains(v) || adjacentSet.contains(new Pair<>(u, v))) {
+        } else if (physicalRegisters.contains(v) || adjacentSet.contains(new Pair<>(u, v))) {
             constrainedMoves.add(m);
             addWorkList(u).addWorkList(v);
         } else if (applyStrategies(u, v)) {

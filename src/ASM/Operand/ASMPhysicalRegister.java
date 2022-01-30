@@ -34,6 +34,7 @@ public class ASMPhysicalRegister extends ASMRegister {
     }
 
     static private final HashMap<PhysicalRegisterName, ASMPhysicalRegister> PhysicalRegisters = new HashMap<>();
+    static private final ArrayList<ASMPhysicalRegister> PhysicalRegistersList = new ArrayList<>();
     static private final ArrayList<ASMPhysicalRegister> CallerSaveRegisters = new ArrayList<>();
     static private final ArrayList<ASMPhysicalRegister> CalleeSaveRegisters = new ArrayList<>();
     static private final ArrayList<ASMPhysicalRegister> PreColoredRegisters = new ArrayList<>();
@@ -42,6 +43,7 @@ public class ASMPhysicalRegister extends ASMRegister {
         for (PhysicalRegisterName name : PhysicalRegisterName.values()) {
             ASMPhysicalRegister pr = new ASMPhysicalRegister(name);
             PhysicalRegisters.put(name, pr);
+            PhysicalRegistersList.add(pr);
             if (name.isTemp() || name.isArgument() || name.isReturnAddress()) CallerSaveRegisters.add(pr);
             // ra is caller save register in calling convention
             // however if we want use ra as allocatable(preColored) register, we need to back up it in the beginning and end of function
@@ -74,6 +76,10 @@ public class ASMPhysicalRegister extends ASMRegister {
 
     public static ArrayList<ASMPhysicalRegister> getPreColoredRegisters() {
         return PreColoredRegisters;
+    }
+
+    public static ArrayList<ASMPhysicalRegister> getPhysicalRegisters() {
+        return PhysicalRegistersList;
     }
 
     private final PhysicalRegisterName name;
