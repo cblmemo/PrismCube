@@ -156,7 +156,7 @@ public class GraphColoringAllocator {
         });
         StringBuilder graphString = new StringBuilder();
         graphString.append("------------------------------------------------------------------------------------------\n").append(String.format("Interference Graph (%d):\n", adjacentSet.size()));
-        adjacentSet.forEach(edge -> graphString.append(String.format("edge: [%s]" + " ".repeat(25 - edge.a.toString().length()) + "[%s]\n", edge.a, edge.b)));
+        adjacentSet.forEach(edge -> graphString.append(String.format("edge: [%s]" + " ".repeat(40 - edge.a.toString().length()) + "[%s]\n", edge.a, edge.b)));
         graphString.append("------------------------------------------------------------------------------------------\n");
         log.Tracef("%s", graphString.toString());
     }
