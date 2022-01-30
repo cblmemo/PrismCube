@@ -108,17 +108,16 @@ public class ASMFunction {
     }
 
     public ArrayList<ASMBasicBlock> getTopologicalOrder() {
+        if (!sorted.isEmpty()) return sorted;
         N = blocks.size();
-        mark.clear();
-        sorted.clear();
         for (int i = 0; i < N; i++) {
             mark.add(false);
             sorted.add(null);
             block2serial.put(blocks.get(i), i);
         }
         topo(0);
-        log.Debugf("topological order of function [%s]:\n", functionName);
-        sorted.forEach(block -> log.Debugf("serial: [%d], label: [%s]\n", block2serial.get(block), block.getLabel()));
+        log.Tracef("topological order of function [%s]:\n", functionName);
+        sorted.forEach(block -> log.Tracef("serial: [%d], label: [%s]\n", block2serial.get(block), block.getLabel()));
         return sorted;
     }
 }

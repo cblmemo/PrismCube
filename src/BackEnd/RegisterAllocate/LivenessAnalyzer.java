@@ -6,6 +6,8 @@ import ASM.Operand.ASMRegister;
 
 import java.util.*;
 
+import static Debug.MemoLog.log;
+
 public class LivenessAnalyzer {
     private final ASMFunction function;
     private final LinkedHashMap<ASMBasicBlock, LinkedHashSet<ASMRegister>> def = new LinkedHashMap<>();
@@ -23,9 +25,10 @@ public class LivenessAnalyzer {
             LinkedHashSet<ASMRegister> blockUse = new LinkedHashSet<>();
             block.getInstructions().forEach(inst -> {
                 if (inst == null) return;
-                // LinkedHashSet will automatically check whether reg in set
+                inst.getUses().forEach(u -> {
+                    if (!blockDef.contains(u)) blockUse.add(u);
+                });
                 blockDef.addAll(inst.getDefs());
-                blockUse.addAll(inst.getUses());
             });
             def.put(block, blockDef);
             use.put(block, blockUse);
@@ -38,16 +41,16 @@ public class LivenessAnalyzer {
             liveOut.put(block, new LinkedHashSet<>());
         });
         boolean flag;
+        ArrayList<ASMBasicBlock> blocks = function.getTopologicalOrder();
         do {
             flag = false;
-            ArrayList<ASMBasicBlock> blocks = function.getTopologicalOrder();
             for (ASMBasicBlock block : blocks) {
                 int oldInSize = liveIn.get(block).size(), oldOutSize = liveOut.get(block).size();
-                LinkedHashSet<ASMRegister> newIn = new LinkedHashSet<>(use.get(block)), newOut = new LinkedHashSet<>();
-                liveOut.get(block).forEach(reg -> {
-                    if (!def.get(block).contains(reg)) newIn.add(reg);
-                });
+                LinkedHashSet<ASMRegister> newOut = new LinkedHashSet<>();
                 block.getSuccessors().forEach(successorBlock -> newOut.addAll(liveIn.get(successorBlock)));
+                LinkedHashSet<ASMRegister> newIn = new LinkedHashSet<>(newOut);
+                newIn.removeAll(def.get(block));
+                newIn.addAll(use.get(block));
                 liveIn.replace(block, newIn);
                 liveOut.replace(block, newOut);
                 flag |= !(newIn.size() == oldInSize && newOut.size() == oldOutSize);
@@ -57,7 +60,9 @@ public class LivenessAnalyzer {
     }
 
     public void analyze() {
+        log.Debugf("start liveness analyze.\n");
         constructBlockDefUse();
         constructLiveInOut();
+        log.Debugf("liveness analyze finished.\n");
     }
 }

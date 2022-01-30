@@ -1,7 +1,6 @@
 package ASM.Operand;
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.HashMap;
 
 public class ASMPhysicalRegister extends ASMRegister {
@@ -30,7 +29,7 @@ public class ASMPhysicalRegister extends ASMRegister {
         }
 
         public boolean isPreColored() {
-            return ordinal() != PhysicalRegisterName.zero.ordinal() && ordinal() != PhysicalRegisterName.sp.ordinal();
+            return ordinal() > PhysicalRegisterName.tp.ordinal() || ordinal() == ra.ordinal();
         }
     }
 
@@ -44,7 +43,10 @@ public class ASMPhysicalRegister extends ASMRegister {
             ASMPhysicalRegister pr = new ASMPhysicalRegister(name);
             PhysicalRegisters.put(name, pr);
             if (name.isTemp() || name.isArgument() || name.isReturnAddress()) CallerSaveRegisters.add(pr);
-            if (name.isSave()) CalleeSaveRegisters.add(pr);
+            // ra is caller save register in calling convention
+            // however if we want use ra as allocatable(preColored) register, we need to back up it in the beginning and end of function
+            // since it acts as callee save registers, we also mark ra as callee save register for convenience
+            if (name.isSave() || name.isReturnAddress()) CalleeSaveRegisters.add(pr);
             if (name.isPreColored()) PreColoredRegisters.add(pr);
         }
     }

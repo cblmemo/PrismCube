@@ -229,10 +229,12 @@ public class InstructionSelector implements IRVisitor {
         LinkedHashMap<ASMPhysicalRegister, ASMVirtualRegister> callerSaves = new LinkedHashMap<>();
         // naive allocator doesn't need to back up caller save except for ra since it store all value on stack
         // graph coloring also doesn't need to back up since all caller save registers is treated as defs of call instruction
-        ASMPhysicalRegister ra = ASMPhysicalRegister.getPhysicalRegister(ASMPhysicalRegister.PhysicalRegisterName.ra);
-        ASMVirtualRegister raBackup = new ASMVirtualRegister("ra_backup");
-        appendPseudoInst(ASMPseudoInstruction.InstType.mv, raBackup, ra);
-        callerSaves.put(ra, raBackup);
+        if (RegisterAllocator.naive()) {
+            ASMPhysicalRegister ra = ASMPhysicalRegister.getPhysicalRegister(ASMPhysicalRegister.PhysicalRegisterName.ra);
+            ASMVirtualRegister raBackup = new ASMVirtualRegister("ra_backup");
+            appendPseudoInst(ASMPseudoInstruction.InstType.mv, raBackup, ra);
+            callerSaves.put(ra, raBackup);
+        }
         // put arguments in register, if more than 8 put in stack
         for (int i = 0; i < Integer.min(inst.getArgumentNumber(), 8); i++)
             appendPseudoInst(ASMPseudoInstruction.InstType.mv, ASMPhysicalRegister.getArgumentRegister(i), toRegister(inst.getArgumentValues().get(i)));
@@ -243,7 +245,7 @@ public class InstructionSelector implements IRVisitor {
         ASMLabel functionLabel = getFunctionLabel(inst.getCallFunction().getFunctionName());
         appendPseudoInst(ASMPseudoInstruction.InstType.call, functionLabel);
         if (inst.haveReturnValue()) appendPseudoInst(ASMPseudoInstruction.InstType.mv, toRegister(inst.getResultRegister()), ASMPhysicalRegister.getPhysicalRegister(ASMPhysicalRegister.PhysicalRegisterName.a0));// retrieve caller save register
-        callerSaves.forEach((reg, backup) -> appendPseudoInst(ASMPseudoInstruction.InstType.mv, reg, backup));
+        if (RegisterAllocator.naive()) callerSaves.forEach((reg, backup) -> appendPseudoInst(ASMPseudoInstruction.InstType.mv, reg, backup));
     }
 
     @Override

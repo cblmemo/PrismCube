@@ -14,10 +14,10 @@ import java.util.HashMap;
 import static Debug.MemoLog.log;
 
 public class ASMStackFrame {
-    private int requestSize = 0;
     private int maxArgumentNumber = -1;
     private int argumentSize = 0;
     private int allocaSize = 0;
+    private int spillSize = 0;
     private final HashMap<IRRegister, Integer> alloca2offset = new HashMap<>();
 
     public void updateMaxArgumentNumber(int num) {
@@ -50,11 +50,11 @@ public class ASMStackFrame {
     }
 
     public int spillToStack() {
-        requestSize += 4;
-        return argumentSize + allocaSize + requestSize - 4;
+        spillSize += 4;
+        return argumentSize + allocaSize + spillSize - 4;
     }
 
     public int getFrameSize() {
-        return argumentSize + allocaSize + requestSize;
+        return argumentSize + allocaSize + spillSize;
     }
 }

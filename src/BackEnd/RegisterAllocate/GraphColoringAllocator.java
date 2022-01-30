@@ -4,6 +4,7 @@ import ASM.ASMBasicBlock;
 import ASM.ASMFunction;
 import ASM.Instruction.*;
 import ASM.Operand.*;
+import BackEnd.ASMEmitter;
 import org.antlr.v4.runtime.misc.Pair;
 
 import java.util.*;
@@ -15,9 +16,6 @@ public class GraphColoringAllocator {
     static private final int K = ASMPhysicalRegister.getPreColoredRegisters().size();
 
     private final ASMFunction function;
-
-    private final LinkedHashSet<LinkedHashSet<ASMRegister>> regSets = new LinkedHashSet<>();
-    private final LinkedHashSet<LinkedHashSet<ASMMoveInstruction>> moveSets = new LinkedHashSet<>();
 
     private final LinkedHashSet<ASMRegister> preColored = new LinkedHashSet<>();
     private final LinkedHashSet<ASMRegister> initial = new LinkedHashSet<>();
@@ -43,28 +41,26 @@ public class GraphColoringAllocator {
     private final LinkedHashMap<ASMRegister, ASMRegister> alias = new LinkedHashMap<>();
     private final LinkedHashMap<ASMRegister, ASMPhysicalRegister> color = new LinkedHashMap<>();
     private final LinkedHashMap<ASMRegister, Integer> memoryLocation = new LinkedHashMap<>();
-    private final LinkedHashMap<ASMRegister, ASMVirtualRegister> v2vi = new LinkedHashMap<>();
-
-    private GraphColoringAllocator addRegSet(LinkedHashSet<ASMRegister> set) {
-        regSets.add(set);
-        return this;
-    }
-
-    private GraphColoringAllocator addMoveSet(LinkedHashSet<ASMMoveInstruction> set) {
-        moveSets.add(set);
-        return this;
-    }
 
     public GraphColoringAllocator(ASMFunction function) {
         this.function = function;
-        addRegSet(preColored).addRegSet(initial).addRegSet(simplifyWorkList).addRegSet(freezeWorkList).addRegSet(spillWorkList).addRegSet(spilledNodes).addRegSet(coalescedNodes).addRegSet(coloredNodes);
-        addMoveSet(coalescedMoves).addMoveSet(constrainedMoves).addMoveSet(frozenMoves).addMoveSet(workListMoves).addMoveSet(activeMoves);
     }
 
-    private void initialize() {
-        // clear all
-        regSets.forEach(HashSet::clear);
-        moveSets.forEach(HashSet::clear);
+    private void clear() {
+        log.Debugf("start clear.\n");
+        preColored.clear();
+        initial.clear();
+        simplifyWorkList.clear();
+        freezeWorkList.clear();
+        spillWorkList.clear();
+        spilledNodes.clear();
+        coalescedNodes.clear();
+        coloredNodes.clear();
+        coalescedMoves.clear();
+        constrainedMoves.clear();
+        frozenMoves.clear();
+        workListMoves.clear();
+        activeMoves.clear();
         selectStack.clear();
         adjacentSet.clear();
         adjacentList.clear();
@@ -74,7 +70,12 @@ public class GraphColoringAllocator {
         alias.clear();
         color.clear();
         memoryLocation.clear();
-        v2vi.clear();
+        log.Debugf("clear finished.\n");
+    }
+
+    private void initialize() {
+        // clear all
+        clear();
 
         // initialize preColored and initial
         preColored.addAll(ASMPhysicalRegister.getPreColoredRegisters());
@@ -84,6 +85,8 @@ public class GraphColoringAllocator {
             initial.addAll(inst.getUses());
         }));
         ASMPhysicalRegister.getPreColoredRegisters().forEach(initial::remove);
+        log.Debugf("initial registers (%d): %s\n", initial.size(), initial.toString());
+        log.Debugf("preColored registers (%d): %s\n", preColored.size(), preColored.toString());
 
         // initialize other LinkedHashSet
         initial.forEach(reg -> {
@@ -103,13 +106,14 @@ public class GraphColoringAllocator {
         });
 
         // calculate spill cost
-        // spill cost = def + use
+        // spill cost = def + use / degree
         // todo loop analysis
         function.getBlocks().forEach(block -> block.getInstructions().forEach(inst -> {
             if (inst == null) return;
-            inst.getDefsAndUses().forEach(reg -> spillCost.replace(reg, spillCost.get(reg) + 1));
+            inst.getDefsAndUses().forEach(reg -> {
+                if (!preColored.contains(reg)) spillCost.replace(reg, spillCost.get(reg) + 1);
+            });
         }));
-        initial.forEach(reg -> spillCost.replace(reg, spillCost.get(reg)));
     }
 
     private void livenessAnalyze() {
@@ -134,9 +138,9 @@ public class GraphColoringAllocator {
     private void buildInterferenceGraph() {
         function.getBlocks().forEach(block -> {
             LinkedHashSet<ASMRegister> live = block.getLiveOut();
-            ArrayList<ASMInstruction> insts = new ArrayList<>(block.getInstructions());
-            Collections.reverse(insts);
-            insts.forEach(inst -> {
+            ArrayList<ASMInstruction> instructions = new ArrayList<>(block.getInstructions());
+            Collections.reverse(instructions);
+            instructions.forEach(inst -> {
                 if (inst == null) return;
                 if (inst instanceof ASMMoveInstruction) {
                     inst.getUses().forEach(live::remove);
@@ -149,14 +153,18 @@ public class GraphColoringAllocator {
                 live.addAll(inst.getUses());
             });
         });
-        adjacentSet.forEach(edge -> log.Tracef("[%s] --- [%s]\n", edge.a, edge.b));
+        StringBuilder graphString = new StringBuilder();
+        graphString.append("------------------------------------------------------------------------------------------\n").append(String.format("Interference Graph (%d):\n", adjacentSet.size()));
+        adjacentSet.forEach(edge -> graphString.append(String.format("edge: [%s]" + " ".repeat(25 - edge.a.toString().length()) + "[%s]\n", edge.a, edge.b)));
+        graphString.append("------------------------------------------------------------------------------------------\n");
+        log.Debugf("%s", graphString.toString());
     }
 
     private LinkedHashSet<ASMMoveInstruction> nodeMoves(ASMRegister n) {
         LinkedHashSet<ASMMoveInstruction> ret = new LinkedHashSet<>();
         ret.addAll(activeMoves);
         ret.addAll(workListMoves);
-        ret.removeIf(reg -> !moveList.get(n).contains(reg));
+        ret.retainAll(moveList.get(n));
         return ret;
     }
 
@@ -170,10 +178,11 @@ public class GraphColoringAllocator {
             else if (moveRelated(n)) freezeWorkList.add(n);
             else simplifyWorkList.add(n);
         });
-        initial.clear();
     }
 
     private LinkedHashSet<ASMRegister> adjacent(ASMRegister n) {
+        assert n instanceof ASMVirtualRegister : "query adjacentList for physical register " + n;
+        assert adjacentList.containsKey(n) : n + " is not in adjacentList";
         LinkedHashSet<ASMRegister> ret = new LinkedHashSet<>(adjacentList.get(n));
         ret.removeIf(reg -> (selectStack.contains(reg) || coalescedNodes.contains(reg)));
         return ret;
@@ -198,6 +207,7 @@ public class GraphColoringAllocator {
             LinkedHashSet<ASMRegister> nodes = adjacent(m);
             nodes.add(m);
             enableMoves(nodes);
+            assert spillWorkList.contains(m);
             spillWorkList.remove(m);
             if (moveRelated(m)) freezeWorkList.add(m);
             else simplifyWorkList.add(m);
@@ -221,6 +231,7 @@ public class GraphColoringAllocator {
 
     private GraphColoringAllocator addWorkList(ASMRegister u) {
         if (!preColored.contains(u) && !moveRelated(u) && degree.get(u) < K) {
+            assert freezeWorkList.contains(u);
             freezeWorkList.remove(u);
             simplifyWorkList.add(u);
         }
@@ -255,11 +266,18 @@ public class GraphColoringAllocator {
 
     private boolean applyStrategies(ASMRegister u, ASMRegister v) {
         // preColor registers' adjacent is too large to apply Brigg strategy
-        if (preColored.contains(u)) return GeorgeStrategy(u, v);
-        else return BriggsStrategy(u, v);
+        boolean ret;
+        if (preColored.contains(u)) ret = GeorgeStrategy(u, v);
+        else ret = BriggsStrategy(u, v);
+        if (ret) {
+            log.Debugf("applying %s strategy success.\n", preColored.contains(u) ? "George" : "Briggs");
+            log.Debugf("adjV: %s\n", adjacent(v).toString());
+        }
+        return ret;
     }
 
     private void combine(ASMRegister u, ASMRegister v) {
+        log.Debugf("combine u:[%s] with v:[%s]\n", u, v);
         // execute coalesce means all nodes in simplifyWorkList have been simplified and remove from it
         // therefore u, v either in freezeWorkList or in spillWorkList
         if (freezeWorkList.contains(v)) freezeWorkList.remove(v);
@@ -282,6 +300,7 @@ public class GraphColoringAllocator {
         Iterator<ASMMoveInstruction> iter = workListMoves.iterator();
         ASMMoveInstruction m = iter.next();
         iter.remove();
+        assert !workListMoves.contains(m);
         ASMRegister u = getAlias(m.getRd()), v = getAlias(m.getRs());
         if (preColored.contains(v)) {
             ASMRegister temp = u;
@@ -289,7 +308,7 @@ public class GraphColoringAllocator {
             v = temp;
         }
         if (u == v) {
-            coalescedMoves.remove(m);
+            coalescedMoves.add(m);
             addWorkList(u);
         } else if (preColored.contains(v) || adjacentSet.contains(new Pair<>(u, v))) {
             constrainedMoves.add(m);
@@ -317,9 +336,12 @@ public class GraphColoringAllocator {
     }
 
     private void freeze() {
+        // choose a move related node, freeze all related move and add it to simplifyWorkList
+        // notice all node that degree >= K is in spillWorkList
         Iterator<ASMRegister> iter = freezeWorkList.iterator();
         ASMRegister u = iter.next();
         iter.remove();
+        assert !freezeWorkList.contains(u);
         simplifyWorkList.add(u);
         freezeMoves(u);
     }
@@ -335,6 +357,7 @@ public class GraphColoringAllocator {
             }
         }
         assert ret != null;
+        assert !preColored.contains(ret) : "pre colored register cannot spill to stack";
         return ret;
     }
 
@@ -350,11 +373,10 @@ public class GraphColoringAllocator {
             ASMRegister n = selectStack.pop();
             assert n instanceof ASMVirtualRegister;
             LinkedHashSet<ASMPhysicalRegister> okColors = new LinkedHashSet<>(ASMPhysicalRegister.getPreColoredRegisters());
-            LinkedHashSet<ASMRegister> adjN = adjacent(n);
-            adjN.forEach(w -> {
+            adjacentList.get(n).forEach(w -> {
                 ASMRegister aliasW = getAlias(w);
                 if (coloredNodes.contains(aliasW) || preColored.contains(aliasW)) {
-                    assert color.containsKey(aliasW);
+                    assert color.containsKey(aliasW) : aliasW + " is not in <color>";
                     okColors.remove(color.get(aliasW));
                 }
             });
@@ -363,6 +385,7 @@ public class GraphColoringAllocator {
                 coloredNodes.add(n);
                 ASMPhysicalRegister c = okColors.iterator().next();
                 color.put(n, c);
+                log.Debugf("temporary assign color [%s] to [%s]\n", c, n);
             }
         }
         coalescedNodes.forEach(n -> color.put(n, color.get(getAlias(n))));
@@ -383,50 +406,54 @@ public class GraphColoringAllocator {
     static private final ASMPhysicalRegister sp = ASMPhysicalRegister.getPhysicalRegister(ASMPhysicalRegister.PhysicalRegisterName.sp);
     static private final ASMPhysicalRegister t0 = ASMPhysicalRegister.getPhysicalRegister(ASMPhysicalRegister.PhysicalRegisterName.t0);
 
+    private void replaceRegisterInInstruction(ASMInstruction inst, ASMRegister v, ASMMemoryInstruction.InstType type) {
+        if (spilledNodes.contains(v)) {
+            assert v instanceof ASMVirtualRegister;
+            ASMVirtualRegister vi = new ASMVirtualRegister("spill_temp");
+            int loc = memoryLocation.get(v);
+            if (isValidImmediate(loc)) newInstructions.add(new ASMMemoryInstruction(type, vi, new ASMAddress(sp, new ASMImmediate(loc))));
+            else {
+                ASMVirtualRegister location = new ASMVirtualRegister("memory_location");
+                newInstructions.add(new ASMPseudoInstruction(ASMPseudoInstruction.InstType.li).addOperand(location).addOperand(new ASMImmediate(loc)));
+                newInstructions.add(new ASMArithmeticInstruction(ASMArithmeticInstruction.InstType.add).addOperand(location).addOperand(sp).addOperand(location));
+                newInstructions.add(new ASMMemoryInstruction(type, vi, new ASMAddress(location, null)));
+            }
+            inst.replaceRegister((ASMVirtualRegister) v, vi);
+        }
+    }
+
     private void rewriteInstruction(ASMInstruction inst) {
-        if (inst == null) return;
+        if (inst == null) { // plus sp or minus sp
+            newInstructions.add(null);
+            return;
+        }
         ArrayList<ASMRegister> use = new ArrayList<>(inst.getUses()), def = new ArrayList<>(inst.getDefs());
-        for (ASMRegister v : use) {
-            if (spilledNodes.contains(v)) {
-                assert v instanceof ASMVirtualRegister;
-                ASMRegister vi = v2vi.get(v);
-                int loc = memoryLocation.get(v);
-                if (isValidImmediate(loc)) newInstructions.add(new ASMMemoryInstruction(ASMMemoryInstruction.InstType.lw, vi, new ASMAddress(sp, new ASMImmediate(loc))));
-                else {
-                    newInstructions.add(new ASMPseudoInstruction(ASMPseudoInstruction.InstType.li).addOperand(vi).addOperand(new ASMImmediate(loc)));
-                    newInstructions.add(new ASMArithmeticInstruction(ASMArithmeticInstruction.InstType.add).addOperand(vi).addOperand(sp).addOperand(vi));
-                    newInstructions.add(new ASMMemoryInstruction(ASMMemoryInstruction.InstType.lw, vi, new ASMAddress(vi, null)));
-                }
-                inst.replaceRegister((ASMVirtualRegister) v, vi);
-            }
-        }
+        for (ASMRegister v : use) replaceRegisterInInstruction(inst, v, ASMMemoryInstruction.InstType.lw);
         newInstructions.add(inst);
-        for (ASMRegister v : def) {
-            if (spilledNodes.contains(v)) {
-                assert v instanceof ASMVirtualRegister;
-                ASMRegister vi = v2vi.get(v);
-                int loc = memoryLocation.get(v);
-                if (isValidImmediate(loc)) newInstructions.add(new ASMMemoryInstruction(ASMMemoryInstruction.InstType.sw, vi, new ASMAddress(sp, new ASMImmediate(loc))));
-                else {
-                    newInstructions.add(new ASMPseudoInstruction(ASMPseudoInstruction.InstType.li).addOperand(vi).addOperand(new ASMImmediate(loc)));
-                    newInstructions.add(new ASMArithmeticInstruction(ASMArithmeticInstruction.InstType.add).addOperand(vi).addOperand(sp).addOperand(vi));
-                    newInstructions.add(new ASMMemoryInstruction(ASMMemoryInstruction.InstType.sw, vi, new ASMAddress(vi, null)));
-                }
-                inst.replaceRegister((ASMVirtualRegister) v, vi);
-            }
-        }
+        for (ASMRegister v : def) replaceRegisterInInstruction(inst, v, ASMMemoryInstruction.InstType.sw);
     }
 
     private void rewriteProgram() {
         log.Debugf("start rewrite program.\n");
+        log.Debugf("spilledNodes: %s\n", spilledNodes.toString());
         spilledNodes.forEach(v -> {
-            memoryLocation.put(v, function.getStackFrame().spillToStack());
-            v2vi.put(v, new ASMVirtualRegister("spill_vi"));
+            int loc = function.getStackFrame().spillToStack();
+            memoryLocation.put(v, loc);
+            log.Debugf("spill [%s] to (%d)sp.\n", v, loc);
         });
         function.getBlocks().forEach(this::rewriteBlock);
+        log.Debugf("rewrite program finished.\n");
+    }
+
+    private void logCurrentFunction(String message) {
+        log.Debugf("------------------------------------------------------------------------------------------\n");
+        log.Debugf(message);
+        log.Debugf("%s", new ASMEmitter().emitFunctionToString(function));
+        log.Debugf("------------------------------------------------------------------------------------------\n");
     }
 
     private void coloring() {
+        logCurrentFunction("function to be allocated:\n");
         initialize();
         livenessAnalyze();
         buildInterferenceGraph();
@@ -445,7 +472,10 @@ public class GraphColoringAllocator {
     }
 
     private void aftermath() {
-        color.forEach((v, c) -> log.Debugf("assign color [%s] to [%s]\n", c, v));
+        color.forEach((v, c) -> {
+            if (v instanceof ASMPhysicalRegister) assert v == c : "physical register assigned to a color that not itself";
+            else log.Debugf("assign color [%s] to [%s]\n", c, v);
+        });
         ASMPhysicalRegister sp = ASMPhysicalRegister.getPhysicalRegister(ASMPhysicalRegister.PhysicalRegisterName.sp);
         ASMBasicBlock entry = function.getBlocks().get(0), escape = function.getBlocks().get(function.getBlocks().size() - 1);
         int indexOfMinusSp = entry.getInstructions().indexOf(null), indexOfPlusSp = escape.getInstructions().indexOf(null);
@@ -463,13 +493,14 @@ public class GraphColoringAllocator {
         entry.getInstructions().set(indexOfMinusSp, minusSp);
         escape.getInstructions().set(indexOfPlusSp, plusSp);
         function.getBlocks().forEach(block -> block.getInstructions().forEach(inst -> inst.replaceRegistersWithColor(color)));
-        function.getBlocks().forEach(block -> block.getInstructions().removeIf(inst ->
-                inst instanceof ASMMoveInstruction && ((ASMMoveInstruction) inst).getRd() == ((ASMMoveInstruction) inst).getRs()
-        ));
+        function.getBlocks().forEach(block -> block.getInstructions().removeIf(inst -> inst instanceof ASMMoveInstruction && ((ASMMoveInstruction) inst).getRd() == ((ASMMoveInstruction) inst).getRs()));
+        logCurrentFunction("function after allocate:\n");
     }
 
     public void allocate() {
+        log.Infof("start graph coloring register allocate for function [%s].\n", function.getFunctionName());
         coloring();
         aftermath();
+        log.Infof("graph coloring register allocate for function [%s] finished.\n", function.getFunctionName());
     }
 }

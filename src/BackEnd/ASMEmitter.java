@@ -25,6 +25,8 @@ public class ASMEmitter {
     private int indentCnt = 0;
     private int functionCnt = 0;
 
+    private final StringBuilder builder = new StringBuilder();
+
     private static PrintStream virtualStream = null;
     private static boolean print = false;
     private static boolean printVirtual = false;
@@ -52,9 +54,8 @@ public class ASMEmitter {
         printVirtual = false;
     }
 
-    private void printWithIndent(String str) {
-        for (int i = 0; i < indentCnt; i++) ps.print("\t");
-        ps.println(str);
+    private void appendWithIndent(String str) {
+        builder.append("\t".repeat(Math.max(0, indentCnt))).append(str).append("\n");
     }
 
     private String formatComment(String str, String comment) {
@@ -79,6 +80,8 @@ public class ASMEmitter {
         if (print) {
             ps = memory.getPrintStream();
             emit(memory.getAsmModule());
+            ps.print(builder);
+            builder.delete(0, builder.length());
         }
     }
 
@@ -87,26 +90,35 @@ public class ASMEmitter {
             assert virtualStream != null;
             ps = virtualStream;
             emit(memory.getAsmModule());
+            ps.print(builder);
+            builder.delete(0, builder.length());
         }
+    }
+
+    public String emitFunctionToString(ASMFunction function) {
+        emit(function);
+        String ret = builder.toString();
+        builder.delete(0, builder.length());
+        return ret;
     }
 
     private void emit(ASMModule module) {
         indentCnt++;
-        printWithIndent(".text");
-        printWithIndent(formatPseudoOptions("file", "\"src.mx\""));
+        appendWithIndent(".text");
+        appendWithIndent(formatPseudoOptions("file", "\"src.mx\""));
         indentCnt--;
         module.getFunctions().values().forEach(this::emit);
         if (module.getGlobals().values().size() != 0) {
             indentCnt++;
-            printWithIndent("");
-            printWithIndent(formatPseudoOptions("section", ".sdata, \"aw\", @progbits"));
+            appendWithIndent("");
+            appendWithIndent(formatPseudoOptions("section", ".sdata, \"aw\", @progbits"));
             indentCnt--;
             module.getGlobals().values().forEach(this::emit);
         }
         if (module.getStrings().values().size() != 0) {
             indentCnt++;
-            printWithIndent("");
-            printWithIndent(formatPseudoOptions("section", ".rodata.str1.1, \"aMS\", @progbits, 1"));
+            appendWithIndent("");
+            appendWithIndent(formatPseudoOptions("section", ".rodata.str1.1, \"aMS\", @progbits, 1"));
             indentCnt--;
             module.getStrings().values().forEach(this::emit);
         }
@@ -114,70 +126,73 @@ public class ASMEmitter {
 
     private void emit(ASMGlobalSymbol symbol) {
         String name = symbol.getSymbolName();
-        printWithIndent("");
+        appendWithIndent("");
         indentCnt++;
-        printWithIndent(formatComment(formatPseudoOptions("type", name + ", @object"), " @" + name));
-        printWithIndent(formatPseudoOptions("globl", symbol.getSymbolName()));
-        printWithIndent(formatPseudoOptions("p2align", "2"));
+        appendWithIndent(formatComment(formatPseudoOptions("type", name + ", @object"), " @" + name));
+        appendWithIndent(formatPseudoOptions("globl", symbol.getSymbolName()));
+        appendWithIndent(formatPseudoOptions("p2align", "2"));
         indentCnt--;
-        printWithIndent(name + ":");
+        appendWithIndent(name + ":");
         indentCnt++;
         int value = symbol.getValue();
         if (symbol instanceof ASMGlobalBoolean) {
-            printWithIndent(formatComment(formatPseudoOptions("byte", Integer.toString(value)), " 0x" + value));
-            printWithIndent(formatPseudoOptions("size", symbol.getSymbolName() + ", 1"));
+            appendWithIndent(formatComment(formatPseudoOptions("byte", Integer.toString(value)), " 0x" + value));
+            appendWithIndent(formatPseudoOptions("size", symbol.getSymbolName() + ", 1"));
         } else if (symbol instanceof ASMGlobalInteger) {
-            printWithIndent(formatComment(formatPseudoOptions("word", Integer.toUnsignedString(value)), " 0x" + Integer.toUnsignedString(value, 16)));
-            printWithIndent(formatPseudoOptions("size", symbol.getSymbolName() + ", 4"));
+            appendWithIndent(formatComment(formatPseudoOptions("word", Integer.toUnsignedString(value)), " 0x" + Integer.toUnsignedString(value, 16)));
+            appendWithIndent(formatPseudoOptions("size", symbol.getSymbolName() + ", 4"));
         } else {
-            printWithIndent(formatPseudoOptions("word", Integer.toUnsignedString(value)));
-            printWithIndent(formatPseudoOptions("size", name + ", 4"));
+            appendWithIndent(formatPseudoOptions("word", Integer.toUnsignedString(value)));
+            appendWithIndent(formatPseudoOptions("size", name + ", 4"));
         }
         indentCnt--;
     }
 
     private void emit(ASMConstString string) {
         String name = string.getName();
-        printWithIndent("");
+        appendWithIndent("");
         indentCnt++;
-        printWithIndent(formatComment(formatPseudoOptions("type", name + ", @object"), " @" + name));
+        appendWithIndent(formatComment(formatPseudoOptions("type", name + ", @object"), " @" + name));
         indentCnt--;
-        printWithIndent(name + ":");
+        appendWithIndent(name + ":");
         String value = string.getValue();
         int length = string.getLength();
         indentCnt++;
-        printWithIndent(formatPseudoOptions("asciz", "\"" + value + "\""));
-        printWithIndent(formatPseudoOptions("size", name + ", " + (length + 1)));
+        appendWithIndent(formatPseudoOptions("asciz", "\"" + value + "\""));
+        appendWithIndent(formatPseudoOptions("size", name + ", " + (length + 1)));
         indentCnt--;
     }
 
     private void emit(ASMFunction function) {
-        printWithIndent("");
+        appendWithIndent("");
         String funcName = function.getFunctionName();
         indentCnt++;
-        printWithIndent(formatComment(formatPseudoOptions("globl", funcName), " -- Begin Function " + funcName));
-        printWithIndent(formatPseudoOptions("p2align", "2"));
-        printWithIndent(formatPseudoOptions("type", funcName + ", @function"));
+        appendWithIndent(formatComment(formatPseudoOptions("globl", funcName), " -- Begin Function " + funcName));
+        appendWithIndent(formatPseudoOptions("p2align", "2"));
+        appendWithIndent(formatPseudoOptions("type", funcName + ", @function"));
         indentCnt--;
-        printWithIndent(formatComment(funcName + ":", " @" + funcName));
+        appendWithIndent(formatComment(funcName + ":", " @" + funcName));
         function.getBlocks().forEach(this::emit);
         String endLabel = ".Lfunc_end" + (functionCnt++);
-        printWithIndent(endLabel + ":");
+        appendWithIndent(endLabel + ":");
         indentCnt++;
-        printWithIndent(formatPseudoOptions("size", funcName + ", " + endLabel + "-" + funcName));
+        appendWithIndent(formatPseudoOptions("size", funcName + ", " + endLabel + "-" + funcName));
         indentCnt--;
-        printWithIndent(formatComment("", " -- End Function"));
+        appendWithIndent(formatComment("", " -- End Function"));
     }
 
     private void emit(ASMBasicBlock block) {
-        printWithIndent(block.getLabel() + ":");
+        appendWithIndent(block.getLabel() + ":");
         indentCnt++;
         block.getInstructions().forEach(this::emit);
         indentCnt--;
     }
 
     private void emit(ASMInstruction inst) {
-        if (inst == null) return; // used in printVirtual
-        printWithIndent(inst.toString());
+        if (inst == null) { // used in printVirtual
+            appendWithIndent("null: plus sp or minus sp");
+            return;
+        }
+        appendWithIndent(inst.toString());
     }
 }
