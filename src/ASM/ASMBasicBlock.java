@@ -76,4 +76,9 @@ public class ASMBasicBlock {
     public void setInstructions(ArrayList<ASMInstruction> instructions) {
         this.instructions = instructions;
     }
+
+    @Override
+    public String toString() {
+        return label.toString();
+    }
 }

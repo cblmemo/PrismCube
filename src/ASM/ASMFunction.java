@@ -16,7 +16,6 @@ public class ASMFunction {
     private final ArrayList<ASMBasicBlock> blocks = new ArrayList<>();
     private final LinkedHashMap<IRBasicBlock, ASMBasicBlock> blockMap = new LinkedHashMap<>();
     private final ASMBasicBlock entryBlock;
-    private final ASMBasicBlock exitBlock;
     private final LinkedHashMap<ASMPhysicalRegister, ASMVirtualRegister> calleeSaves = new LinkedHashMap<>();
     private final ASMStackFrame stackFrame = new ASMStackFrame();
     private final ASMLabel label;
@@ -39,7 +38,6 @@ public class ASMFunction {
         log.Debugf("start request alloca for function %s\n", functionName);
         function.getEntryBlock().getAllocas().forEach(stackFrame::requestAlloca);
         this.entryBlock = blockMap.get(function.getEntryBlock());
-        this.exitBlock = blockMap.get(function.getReturnBlock());
         this.label = new ASMLabel(function.getFunctionName());
     }
 
@@ -47,7 +45,6 @@ public class ASMFunction {
     public ASMFunction(String functionName) {
         this.functionName = functionName;
         this.entryBlock = null;
-        this.exitBlock = null;
         this.label = new ASMLabel(functionName);
     }
 
@@ -70,10 +67,6 @@ public class ASMFunction {
 
     public ASMBasicBlock getEntryBlock() {
         return entryBlock;
-    }
-
-    public ASMBasicBlock getExitBlock() {
-        return exitBlock;
     }
 
     public String getFunctionName() {
@@ -99,6 +92,7 @@ public class ASMFunction {
     private final ArrayList<ASMBasicBlock> sorted = new ArrayList<>();
 
     private void topo(int i) {
+        log.Debugf("topo %d\n", i);
         if (!mark.get(i)) {
             mark.set(i, true);
             blocks.get(i).getSuccessors().forEach(succ -> topo(block2serial.get(succ)));
@@ -115,9 +109,17 @@ public class ASMFunction {
             sorted.add(null);
             block2serial.put(blocks.get(i), i);
         }
-        topo(0);
-        log.Tracef("topological order of function [%s]:\n", functionName);
-        sorted.forEach(block -> log.Tracef("serial: [%d], label: [%s]\n", block2serial.get(block), block.getLabel()));
+        log.Debugf("blocks to be sorted:\n");
+        blocks.forEach(block -> log.Debugf("serial: [%d], label: [%s], successor: [%s]\n", block2serial.get(block), block.getLabel(), block.getSuccessors().toString()));
+        int minIndex = 0;
+        do {
+            topo(minIndex);
+            minIndex = -1;
+            for (int i = blocks.size() - 1; i >= 0; i--)
+                if (!mark.get(i)) minIndex = i;
+        } while (minIndex != -1);
+        log.Debugf("topological order of function [%s]:\n", functionName);
+        sorted.forEach(block -> log.Debugf("serial: [%d], label: [%s]\n", block2serial.get(block), block.getLabel()));
         return sorted;
     }
 }
