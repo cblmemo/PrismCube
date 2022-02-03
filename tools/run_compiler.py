@@ -1,7 +1,7 @@
 import os
 import sys
 
-ravel_path = "/Users/memory/Documents/workplace/IdeaProjects/PrismCube/lib/ravel"
+ravel_path = "./lib/ravel"
 
 
 def exe(cmd):
