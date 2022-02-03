@@ -14,4 +14,8 @@ public class ASMMoveInstruction extends ASMPseudoInstruction {
     public ASMRegister getRs() {
         return (ASMRegister) getOperands().get(1);
     }
+
+    public boolean eliminable() {
+        return getOperands().get(0) == getOperands().get(1);
+    }
 }

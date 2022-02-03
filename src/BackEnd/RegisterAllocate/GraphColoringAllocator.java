@@ -256,7 +256,7 @@ public class GraphColoringAllocator {
 
     private GraphColoringAllocator addWorkList(ASMRegister u) {
         if (!physicalRegisters.contains(u) && !moveRelated(u) && degree.get(u) < K) {
-            assert freezeWorkList.contains(u);
+            assert freezeWorkList.contains(u) : u + " is not in freezeWorkList";
             freezeWorkList.remove(u);
             simplifyWorkList.add(u);
         }
@@ -420,14 +420,6 @@ public class GraphColoringAllocator {
         coalescedNodes.forEach(n -> color.put(n, color.get(getAlias(n))));
     }
 
-    private ArrayList<ASMInstruction> newInstructions;
-
-    private void rewriteBlock(ASMBasicBlock block) {
-        newInstructions = new ArrayList<>();
-        block.getInstructions().forEach(this::rewriteInstruction);
-        block.setInstructions(newInstructions);
-    }
-
     static private boolean isValidImmediate(int imm) {
         return -2048 <= imm && imm <= 2047;
     }
@@ -438,11 +430,11 @@ public class GraphColoringAllocator {
     private void replaceRegisterInInstruction(ASMInstruction inst, ASMRegister v, ASMMemoryInstruction.InstType type) {
         if (spilledNodes.contains(v)) {
             assert v instanceof ASMVirtualRegister;
-            ASMVirtualRegister vi = new ASMVirtualRegister("spill_temp");
+            ASMVirtualRegister vi = new ASMVirtualRegister("spill");
             int loc = memoryLocation.get(v);
             if (isValidImmediate(loc)) newInstructions.add(new ASMMemoryInstruction(type, vi, new ASMAddress(sp, new ASMImmediate(loc))));
             else {
-                ASMVirtualRegister location = new ASMVirtualRegister("memory_location");
+                ASMVirtualRegister location = new ASMVirtualRegister("mem_loc");
                 newInstructions.add(new ASMPseudoInstruction(ASMPseudoInstruction.InstType.li).addOperand(location).addOperand(new ASMImmediate(loc)));
                 newInstructions.add(new ASMArithmeticInstruction(ASMArithmeticInstruction.InstType.add).addOperand(location).addOperand(sp).addOperand(location));
                 newInstructions.add(new ASMMemoryInstruction(type, vi, new ASMAddress(location, null)));
@@ -460,6 +452,14 @@ public class GraphColoringAllocator {
         for (ASMRegister v : use) replaceRegisterInInstruction(inst, v, ASMMemoryInstruction.InstType.lw);
         newInstructions.add(inst);
         for (ASMRegister v : def) replaceRegisterInInstruction(inst, v, ASMMemoryInstruction.InstType.sw);
+    }
+
+    private ArrayList<ASMInstruction> newInstructions;
+
+    private void rewriteBlock(ASMBasicBlock block) {
+        newInstructions = new ArrayList<>();
+        block.getInstructions().forEach(this::rewriteInstruction);
+        block.setInstructions(newInstructions);
     }
 
     private void rewriteProgram() {
@@ -505,7 +505,6 @@ public class GraphColoringAllocator {
             if (v instanceof ASMPhysicalRegister) assert v == c : "physical register assigned to a color that not itself";
             else log.Debugf("assign color [%s] to [%s]\n", c, v);
         });
-        ASMPhysicalRegister sp = ASMPhysicalRegister.getPhysicalRegister(ASMPhysicalRegister.PhysicalRegisterName.sp);
         ASMBasicBlock entry = function.getBlocks().get(0), escape = function.getBlocks().get(function.getBlocks().size() - 1);
         int indexOfMinusSp = entry.getInstructions().indexOf(null), indexOfPlusSp = escape.getInstructions().indexOf(null);
         ASMInstruction minusSp, plusSp;
@@ -522,7 +521,7 @@ public class GraphColoringAllocator {
         entry.getInstructions().set(indexOfMinusSp, minusSp);
         escape.getInstructions().set(indexOfPlusSp, plusSp);
         function.getBlocks().forEach(block -> block.getInstructions().forEach(inst -> inst.replaceRegistersWithColor(color)));
-        function.getBlocks().forEach(block -> block.getInstructions().removeIf(inst -> inst instanceof ASMMoveInstruction && ((ASMMoveInstruction) inst).getRd() == ((ASMMoveInstruction) inst).getRs()));
+        function.getBlocks().forEach(block -> block.getInstructions().removeIf(inst -> inst instanceof ASMMoveInstruction && ((ASMMoveInstruction) inst).eliminable()));
         logCurrentFunction("function after allocate:\n");
     }
 

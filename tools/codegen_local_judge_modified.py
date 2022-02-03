@@ -14,7 +14,7 @@ execute_cmd = "java -cp lib/antlr-4.9.1-complete.jar:./myout PrismCube -emit-asm
 excluded_test_cases = ["foo.mx"]
 ravel_path = "./lib/ravel --enable-cache"
 builtin_path = "./builtin/builtin.s"
-halt_on_3_fails = False
+halt_on_3_fails = True
 
 color_red = "\033[0;31m"
 color_green = "\033[0;32m"
