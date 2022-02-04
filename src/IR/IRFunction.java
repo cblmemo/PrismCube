@@ -9,6 +9,7 @@ import Utility.Type.Type;
 import Utility.error.IRError;
 
 import java.util.ArrayList;
+import java.util.LinkedHashSet;
 import java.util.Objects;
 
 import static Debug.MemoLog.log;
@@ -203,6 +204,21 @@ public class IRFunction {
 
     public IRRegister getThisRegister() {
         return thisRegister;
+    }
+
+    private final LinkedHashSet<IRBasicBlock> reachable = new LinkedHashSet<>();
+
+    public LinkedHashSet<IRBasicBlock> reachableBlocks() {
+        if (!reachable.isEmpty()) return reachable;
+        dfs(entryBlock);
+        return reachable;
+    }
+
+    private void dfs(IRBasicBlock current) {
+        reachable.add(current);
+        current.getSuccessors().forEach(succ -> {
+            if (!reachable.contains(succ)) dfs(succ);
+        });
     }
 
     public void accept(IRVisitor visitor) {

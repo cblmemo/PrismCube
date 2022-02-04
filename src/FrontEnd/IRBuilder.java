@@ -197,7 +197,7 @@ public class IRBuilder implements ASTVisitor {
         IRFunction globalConstructor = module.getGlobalConstructor();
         IRBasicBlock entryBlock = globalConstructor.getEntryBlock();
         module.getSingleInitializeFunctions().forEach(initFunc -> entryBlock.appendInstruction(new IRCallInstruction(getVoidType(), initFunc)));
-        entryBlock.setEscapeInstruction(new IRBrInstruction(null, globalConstructor.getReturnBlock(), null, entryBlock));
+        entryBlock.setEscapeInstruction(new IRJumpInstruction(globalConstructor.getReturnBlock(), entryBlock));
         entryBlock.finishBlock();
         globalConstructor.getReturnBlock().setEscapeInstruction(new IRReturnInstruction(getVoidType(), null));
         globalConstructor.finishFunction();
@@ -247,7 +247,7 @@ public class IRBuilder implements ASTVisitor {
                 IROperand initializeValue = node.getInitializeValue().getIRResultValue();
                 appendInst(new IRStoreInstruction(variableIRType, variableRegister, initializeValue));
                 currentFunction.getReturnBlock().setEscapeInstruction(new IRReturnInstruction(getVoidType(), null));
-                finishCurrentBasicBlock(new IRBrInstruction(null, currentFunction.getReturnBlock(), null, currentBasicBlock));
+                finishCurrentBasicBlock(new IRJumpInstruction(currentFunction.getReturnBlock(), currentBasicBlock));
                 currentFunction.finishFunction();
                 currentFunction = null;
                 currentBasicBlock = null;
@@ -309,7 +309,7 @@ public class IRBuilder implements ASTVisitor {
         appendInst(new IRStoreInstruction(parameterType, parameterRegister, currentFunction.getParameters().get(0)));
         node.getStatements().forEach(statement -> statement.accept(this));
         currentFunction.getReturnBlock().setEscapeInstruction(new IRReturnInstruction(getVoidType(), null));
-        if (!currentBasicBlock.hasEscapeInstruction()) currentBasicBlock.setEscapeInstruction(new IRBrInstruction(null, currentFunction.getReturnBlock(), null, currentBasicBlock));
+        if (!currentBasicBlock.hasEscapeInstruction()) currentBasicBlock.setEscapeInstruction(new IRJumpInstruction(currentFunction.getReturnBlock(), currentBasicBlock));
         // don't inherit any encountered flow mark since method has ended
         currentScope = currentScope.getParentScope();
         finishCurrentBasicBlock();
@@ -364,7 +364,7 @@ public class IRBuilder implements ASTVisitor {
             node.getStatements().forEach(statement -> statement.accept(this));
             currentFunction.getReturnBlock().setEscapeInstruction(new IRReturnInstruction(returnIRType, null));
         }
-        if (!currentBasicBlock.hasEscapeInstruction()) currentBasicBlock.setEscapeInstruction(new IRBrInstruction(null, currentFunction.getReturnBlock(), null, currentBasicBlock));
+        if (!currentBasicBlock.hasEscapeInstruction()) currentBasicBlock.setEscapeInstruction(new IRJumpInstruction(currentFunction.getReturnBlock(), currentBasicBlock));
         // don't inherit any encountered flow mark since function has ended
         currentScope = currentScope.getParentScope();
         finishCurrentBasicBlock();
@@ -404,7 +404,7 @@ public class IRBuilder implements ASTVisitor {
         currentScope = currentScope.getParentScope();
         // everytime encountered a statement, need to check whether it has escape or not
         if (!currentBasicBlock.hasEscapeInstruction()) // return statement might generate an escape instruction
-            currentBasicBlock.setEscapeInstruction(new IRBrInstruction(null, terminateBlock, null, currentBasicBlock));
+            currentBasicBlock.setEscapeInstruction(new IRJumpInstruction(terminateBlock, currentBasicBlock));
         finishCurrentBasicBlock();
         if (node.hasElse()) {
             currentBasicBlock = elseBlock;
@@ -413,7 +413,7 @@ public class IRBuilder implements ASTVisitor {
             // don't inherit any encountered flow mark too
             currentScope = currentScope.getParentScope();
             if (!currentBasicBlock.hasEscapeInstruction()) // return statement might always generate an escape instruction
-                currentBasicBlock.setEscapeInstruction(new IRBrInstruction(null, terminateBlock, null, currentBasicBlock));
+                currentBasicBlock.setEscapeInstruction(new IRJumpInstruction(terminateBlock, currentBasicBlock));
             finishCurrentBasicBlock();
         }
         currentBasicBlock = terminateBlock;
@@ -429,7 +429,7 @@ public class IRBuilder implements ASTVisitor {
         IRBasicBlock stepBlock = node.hasStepExpression() ? new IRBasicBlock(currentFunction, id + "_for_step") : null;
         IRBasicBlock terminateBlock = new IRBasicBlock(currentFunction, id + "_for_terminate");
         if (node.hasInitializeStatement()) node.getInitializeStatement().accept(this);
-        finishCurrentBasicBlock(new IRBrInstruction(null, conditionBlock, null, currentBasicBlock));
+        finishCurrentBasicBlock(new IRJumpInstruction(conditionBlock, currentBasicBlock));
         currentBasicBlock = conditionBlock;
         IROperand conditionResult;
         if (node.hasConditionExpression()) {
@@ -450,11 +450,11 @@ public class IRBuilder implements ASTVisitor {
         } else {
             if (node.hasStepExpression()) {
                 assert stepBlock != null;
-                finishCurrentBasicBlock(new IRBrInstruction(null, stepBlock, null, currentBasicBlock));
+                finishCurrentBasicBlock(new IRJumpInstruction(stepBlock, currentBasicBlock));
                 currentBasicBlock = stepBlock;
                 node.getStepExpression().accept(this);
             }
-            currentBasicBlock.setEscapeInstruction(new IRBrInstruction(null, conditionBlock, null, currentBasicBlock));
+            currentBasicBlock.setEscapeInstruction(new IRJumpInstruction(conditionBlock, currentBasicBlock));
         }
         currentScope = currentScope.getParentScope();
         finishCurrentBasicBlock();
@@ -468,7 +468,7 @@ public class IRBuilder implements ASTVisitor {
         IRBasicBlock conditionBlock = new IRBasicBlock(currentFunction, id + "_while_condition");
         IRBasicBlock bodyBlock = new IRBasicBlock(currentFunction, id + "_while_body");
         IRBasicBlock terminateBlock = new IRBasicBlock(currentFunction, id + "_while_terminate");
-        finishCurrentBasicBlock(new IRBrInstruction(null, conditionBlock, null, currentBasicBlock));
+        finishCurrentBasicBlock(new IRJumpInstruction(conditionBlock, currentBasicBlock));
         currentBasicBlock = conditionBlock;
         node.getConditionExpression().accept(this);
         IROperand conditionResult = node.getConditionExpression().getIRResultValue();
@@ -484,7 +484,7 @@ public class IRBuilder implements ASTVisitor {
         currentScope.eraseEncounteredLoopFlowMark();
         // might encounter return, break or continue
         if (!currentBasicBlock.hasEscapeInstruction())
-            currentBasicBlock.setEscapeInstruction(new IRBrInstruction(null, conditionBlock, null, currentBasicBlock));
+            currentBasicBlock.setEscapeInstruction(new IRJumpInstruction(conditionBlock, currentBasicBlock));
         finishCurrentBasicBlock();
         currentBasicBlock = terminateBlock;
     }
@@ -500,7 +500,7 @@ public class IRBuilder implements ASTVisitor {
             appendInst(new IRStoreInstruction(currentFunction.getReturnType(), currentScope.getReturnValuePtr(), returnValueRegister));
         }
         // return statement should create an escape (i.e., branch) instruction to returnBlock.
-        currentBasicBlock.setEscapeInstruction(new IRBrInstruction(null, currentFunction.getReturnBlock(), null, currentBasicBlock));
+        currentBasicBlock.setEscapeInstruction(new IRJumpInstruction(currentFunction.getReturnBlock(), currentBasicBlock));
         currentScope.setAsEncounteredFlow(Scope.flowStatementType.returnType);
     }
 
@@ -508,7 +508,7 @@ public class IRBuilder implements ASTVisitor {
     public void visit(BreakStatementNode node) {
         if (currentScope.hasEncounteredFlow()) return;
         LoopScope loopScope = currentScope.getLoopScope();
-        currentBasicBlock.setEscapeInstruction(new IRBrInstruction(null, loopScope.getLoopTerminateBlock(), null, currentBasicBlock));
+        currentBasicBlock.setEscapeInstruction(new IRJumpInstruction(loopScope.getLoopTerminateBlock(), currentBasicBlock));
         currentScope.setAsEncounteredFlow(Scope.flowStatementType.breakType);
     }
 
@@ -516,7 +516,7 @@ public class IRBuilder implements ASTVisitor {
     public void visit(ContinueStatementNode node) {
         if (currentScope.hasEncounteredFlow()) return;
         LoopScope loopScope = currentScope.getLoopScope();
-        currentBasicBlock.setEscapeInstruction(new IRBrInstruction(null, loopScope.getContinueTarget(), null, currentBasicBlock));
+        currentBasicBlock.setEscapeInstruction(new IRJumpInstruction(loopScope.getContinueTarget(), currentBasicBlock));
         currentScope.setAsEncounteredFlow(Scope.flowStatementType.continueType);
     }
 
@@ -573,7 +573,7 @@ public class IRBuilder implements ASTVisitor {
         IRGetelementptrInstruction gepInst2 = new IRGetelementptrInstruction(iterEnd, elementType, arrayRegister);
         gepInst2.addIndex(length);
         appendInst(gepInst2);
-        finishCurrentBasicBlock(new IRBrInstruction(null, conditionBlock, null, currentBasicBlock));
+        finishCurrentBasicBlock(new IRJumpInstruction(conditionBlock, currentBasicBlock));
         currentBasicBlock = conditionBlock;
         // iter != iterEnd;
         IRRegister iterVal = new IRRegister(arrayType, "iter");
@@ -592,7 +592,7 @@ public class IRBuilder implements ASTVisitor {
         gepInst3.addIndex(new IRConstInt(getIntType(), 1));
         appendInst(gepInst3);
         appendInst(new IRStoreInstruction(arrayType, iterPtr, updatedIterVal));
-        finishCurrentBasicBlock(new IRBrInstruction(null, conditionBlock, null, currentBasicBlock));
+        finishCurrentBasicBlock(new IRJumpInstruction(conditionBlock, currentBasicBlock));
         currentBasicBlock = terminateBlock;
         return arrayRegister;
     }
@@ -913,7 +913,7 @@ public class IRBuilder implements ASTVisitor {
             } else {
                 appendInst(new IRStoreInstruction(getBoolType(), logicResultPtr, logicShortCircuitResult));
             }
-            finishCurrentBasicBlock(new IRBrInstruction(null, terminateBlock, null, currentBasicBlock));
+            finishCurrentBasicBlock(new IRJumpInstruction(terminateBlock, currentBasicBlock));
             currentBasicBlock = nonShortCircuitBlock;
             node.getRhs().accept(this);
             IROperand rhsVal = node.getRhs().getIRResultValue();
@@ -930,7 +930,7 @@ public class IRBuilder implements ASTVisitor {
                 appendInst(new IRBinaryInstruction(Objects.equals(node.getOp(), "&&") ? "and" : "or", resultVal, lhsVal, rhsVal));
                 appendInst(new IRStoreInstruction(getBoolType(), logicResultPtr, resultVal));
             }
-            finishCurrentBasicBlock(new IRBrInstruction(null, terminateBlock, null, currentBasicBlock));
+            finishCurrentBasicBlock(new IRJumpInstruction(terminateBlock, currentBasicBlock));
             currentBasicBlock = terminateBlock;
             IRRegister logicResult;
             if (useCharToStoreBool) {

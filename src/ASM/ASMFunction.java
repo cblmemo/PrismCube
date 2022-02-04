@@ -30,10 +30,8 @@ public class ASMFunction {
         // inherit predecessors and successors from ir basic block
         function.getBlocks().forEach(irBlock -> {
             ASMBasicBlock asmBlock = blockMap.get(irBlock);
-            irBlock.getPredecessors().forEach(pred -> {
-                asmBlock.addPredecessor(blockMap.get(pred));
-                blockMap.get(pred).addSuccessor(asmBlock);
-            });
+            irBlock.getPredecessors().forEach(pred -> asmBlock.addPredecessor(blockMap.get(pred)));
+            irBlock.getSuccessors().forEach(succ -> asmBlock.addSuccessor(blockMap.get(succ)));
         });
         log.Debugf("start request alloca for function %s\n", functionName);
         function.getEntryBlock().getAllocas().forEach(stackFrame::requestAlloca);

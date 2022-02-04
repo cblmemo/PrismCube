@@ -216,12 +216,16 @@ public class InstructionSelector implements IRVisitor {
 
     @Override
     public void visit(IRBrInstruction inst) {
-        // br l1         -> j l1
-        //
         // br %0 l1 l2   -> beqz %0 l2
         //                  j l1
-        if (inst.isBranch()) appendPseudoInst(ASMPseudoInstruction.InstType.beqz, toRegister(inst.getCondition()), currentFunction.getBasicBlockLabel(inst.getElseBlock()));
+        appendPseudoInst(ASMPseudoInstruction.InstType.beqz, toRegister(inst.getCondition()), currentFunction.getBasicBlockLabel(inst.getElseBlock()));
         appendPseudoInst(ASMPseudoInstruction.InstType.j, currentFunction.getBasicBlockLabel(inst.getThenBlock()));
+    }
+
+    @Override
+    public void visit(IRJumpInstruction inst) {
+        // br l1         -> j l1
+        appendPseudoInst(ASMPseudoInstruction.InstType.j, currentFunction.getBasicBlockLabel(inst.getTargetBlock()));
     }
 
     @Override

@@ -2,6 +2,7 @@ import FrontEnd.*;
 import BackEnd.*;
 import Debug.*;
 import Memory.Memory;
+import MiddleEnd.IRBlockFuser;
 import Utility.error.error;
 
 /**
@@ -28,6 +29,8 @@ public class PrismCube {
             new ConstStringCollector().collect(memory);
             new IRBuilder().build(memory);
             new IREmitter().emit(memory);
+            // optimize
+            new IRBlockFuser().fuse(memory);
             // assembly
             new InstructionSelector().select(memory);
             new ASMEmitter().emitVirtual(memory);

@@ -18,6 +18,7 @@ public class IRBasicBlock {
     private boolean isEntryBlock = false;
     private boolean isReturnBlock = false;
     private final ArrayList<IRBasicBlock> predecessors = new ArrayList<>();
+    private final ArrayList<IRBasicBlock> successors = new ArrayList<>();
 
     private boolean hasFinished = false;
 
@@ -63,6 +64,24 @@ public class IRBasicBlock {
         instructions.add(escapeInstruction);
     }
 
+    public IRInstruction getEscapeInstruction() {
+        return escapeInstruction;
+    }
+
+    public void fuse(IRBasicBlock successor) {
+        assert hasFinished;
+        instructions.remove(instructions.get(instructions.size() - 1));
+        instructions.addAll(successor.getInstructions());
+        this.escapeInstruction = successor.getEscapeInstruction();
+        if (successor.getAllocas() != null) allocas.addAll(successor.getAllocas());
+        if (successor.isReturnBlock()) isReturnBlock = true;
+        successors.clear();
+        successor.getSuccessors().forEach(succSucc -> {
+            if (!successors.contains(succSucc)) successors.add(succSucc);
+            succSucc.replacePredecessor(successor, this);
+        });
+    }
+
     public ArrayList<IRInstruction> getInstructions() {
         return instructions;
     }
@@ -94,10 +113,25 @@ public class IRBasicBlock {
 
     public void addPredecessor(IRBasicBlock predecessor) {
         predecessors.add(predecessor);
+        predecessor.addSuccessor(this);
     }
 
     public ArrayList<IRBasicBlock> getPredecessors() {
         return predecessors;
+    }
+
+    public void replacePredecessor(IRBasicBlock original, IRBasicBlock current) {
+        assert predecessors.contains(original);
+        predecessors.remove(original);
+        if (!predecessors.contains(current)) predecessors.add(current);
+    }
+
+    private void addSuccessor(IRBasicBlock successor) {
+        successors.add(successor);
+    }
+
+    public ArrayList<IRBasicBlock> getSuccessors() {
+        return successors;
     }
 
     public String getPreds() {
