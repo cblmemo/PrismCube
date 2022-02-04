@@ -12,7 +12,7 @@ public class IRBlockFuser {
     private boolean changed = true;
 
     public void fuse(Memory memory) {
-//        while (changed) memory.getIRModule().getFunctions().values().forEach(this::visit);
+        while (changed) memory.getIRModule().getFunctions().values().forEach(this::visit);
     }
 
     private void visit(IRFunction function) {
