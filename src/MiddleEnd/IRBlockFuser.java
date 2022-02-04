@@ -12,13 +12,14 @@ public class IRBlockFuser {
     private boolean changed = true;
 
     public void fuse(Memory memory) {
-        while (changed) memory.getIRModule().getFunctions().values().forEach(this::visit);
+//        while (changed) memory.getIRModule().getFunctions().values().forEach(this::visit);
     }
 
     private void visit(IRFunction function) {
         changed = false;
         // remove unreachable blocks
         LinkedHashSet<IRBasicBlock> reachable = function.reachableBlocks();
+        changed = function.getBlocks().size() != reachable.size();
         function.getBlocks().removeIf(block -> !reachable.contains(block));
         // cannot fuse entry block and exit block
         if (function.getBlocks().size() <= 2) return;
