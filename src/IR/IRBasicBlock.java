@@ -1,10 +1,7 @@
 package IR;
 
 import FrontEnd.IRVisitor;
-import IR.Instruction.IRAllocaInstruction;
-import IR.Instruction.IRBrInstruction;
-import IR.Instruction.IRInstruction;
-import IR.Instruction.IRReturnInstruction;
+import IR.Instruction.*;
 import IR.Operand.IRLabel;
 
 import java.util.ArrayList;
@@ -49,7 +46,7 @@ public class IRBasicBlock {
 
     public void setEscapeInstruction(IRInstruction escapeInstruction) {
         assert this.escapeInstruction == null;
-        assert escapeInstruction instanceof IRReturnInstruction || escapeInstruction instanceof IRBrInstruction;
+        assert escapeInstruction instanceof IRReturnInstruction || escapeInstruction instanceof IRBrInstruction || escapeInstruction instanceof IRJumpInstruction;
         this.escapeInstruction = escapeInstruction;
     }
 

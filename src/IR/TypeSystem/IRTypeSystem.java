@@ -35,6 +35,10 @@ abstract public class IRTypeSystem {
         return false;
     }
 
+    public boolean isPointer() {
+        return this instanceof IRPointerType;
+    }
+
     public boolean isNull() {
         return this instanceof IRNullType;
     }

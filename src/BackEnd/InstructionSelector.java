@@ -159,10 +159,11 @@ public class InstructionSelector implements IRVisitor {
         String name = define.getVariableName();
         IRTypeSystem type = define.getVariableType();
         ASMGlobalSymbol symbol;
-        if (type.isInt()) symbol = new ASMGlobalInteger(name);
+        // pointer is int in assembly
+        if (type.isInt() || type.isPointer()) symbol = new ASMGlobalInteger(name);
         else if (type.isBool() || type.isChar()) symbol = new ASMGlobalBoolean(name);
         else {
-            assert type.isString();
+            assert type.isString() : type;
             symbol = new ASMGlobalString(name);
         }
         asmModule.addGlobal(name, symbol);
