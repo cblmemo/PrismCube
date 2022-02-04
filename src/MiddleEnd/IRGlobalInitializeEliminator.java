@@ -11,14 +11,16 @@ import Memory.Memory;
 
 import java.util.ArrayList;
 
-public class IRGlobalInitializeEliminator {
+public class IRGlobalInitializeEliminator extends Optimize {
     private IRModule module;
 
     public void eliminate(Memory memory) {
-        this.module = memory.getIRModule();
-        ArrayList<IRFunction> initFuncs = new ArrayList<>(module.getSingleInitializeFunctions());
-        initFuncs.forEach(this::visit);
-        module.tryRemoveGlobalConstructor();
+        if (doOptimize) {
+            this.module = memory.getIRModule();
+            ArrayList<IRFunction> initFuncs = new ArrayList<>(module.getSingleInitializeFunctions());
+            initFuncs.forEach(this::visit);
+            module.tryRemoveGlobalConstructor();
+        }
     }
 
     private void visit(IRFunction function) {

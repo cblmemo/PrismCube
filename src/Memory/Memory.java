@@ -13,6 +13,7 @@ import FrontEnd.IRBuilder;
 import FrontEnd.IREmitter;
 import IR.IRModule;
 import IR.Operand.IRRegister;
+import MiddleEnd.Optimize;
 import Utility.Scope.GlobalScope;
 import Utility.error.ArgumentParseError;
 import org.antlr.v4.runtime.tree.ParseTree;
@@ -22,6 +23,7 @@ import java.io.FileNotFoundException;
 import java.io.InputStream;
 import java.io.PrintStream;
 import java.util.Objects;
+import java.util.Optional;
 
 import static Debug.MemoLog.log;
 
@@ -114,6 +116,7 @@ public class Memory {
                     if (mode != Mode.NONE) err("argument conflict");
                     mode = Mode.CODEGEN;
                 }
+                case "-O2" -> Optimize.enable();
                 case "-printV" -> {
                     String arg = i + 1 < args.length && args[i + 1].charAt(0) == '-' ? "./bin/virtual.s" : args[++i];
                     PrintStream virtualStream = new PrintStream(arg);
@@ -149,6 +152,7 @@ public class Memory {
                 InstructionSelector.disable();
                 RegisterAllocator.disable();
                 ASMEmitter.disable();
+                Optimize.disable();
             }
             case LLVM -> {
                 ConstStringCollector.enable();
@@ -175,6 +179,7 @@ public class Memory {
         inputStream = System.in;
         IREmitter.disable();
         ASMEmitter.disableVirtual();
+        Optimize.disable();
     }
 
     public void setParseTreeRoot(ParseTree parseTreeRoot) {

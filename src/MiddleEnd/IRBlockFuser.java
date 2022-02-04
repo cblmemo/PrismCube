@@ -8,11 +8,15 @@ import Memory.Memory;
 import java.util.ArrayList;
 import java.util.LinkedHashSet;
 
-public class IRBlockFuser {
+public class IRBlockFuser extends Optimize {
     private boolean changed = true;
 
     public void fuse(Memory memory) {
-        while (changed) memory.getIRModule().getFunctions().values().forEach(this::visit);
+        if (doOptimize) {
+            while (changed) {
+                memory.getIRModule().getFunctions().values().forEach(this::visit);
+            }
+        }
     }
 
     private void visit(IRFunction function) {
