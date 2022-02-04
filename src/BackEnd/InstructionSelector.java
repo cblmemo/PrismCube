@@ -63,6 +63,7 @@ public class InstructionSelector implements IRVisitor {
             functions = asmModule.getFunctions();
             builtinFunctions = asmModule.getBuiltinFunctions();
             memory.getIRModule().accept(this);
+            new ASMEmitter().emitVirtual(memory);
         }
     }
 
@@ -83,6 +84,7 @@ public class InstructionSelector implements IRVisitor {
     }
 
     private String getIRConstStringName(IRConstString string) {
+        // @see ASMGlobalString.getValue
         return ".L.str." + string.getId();
     }
 
@@ -160,11 +162,11 @@ public class InstructionSelector implements IRVisitor {
         IRTypeSystem type = define.getVariableType();
         ASMGlobalSymbol symbol;
         // pointer is int in assembly
-        if (type.isInt() || type.isPointer()) symbol = new ASMGlobalInteger(name);
-        else if (type.isBool() || type.isChar()) symbol = new ASMGlobalBoolean(name);
+        if (type.isInt() || type.isPointer()) symbol = new ASMGlobalInteger(name, define);
+        else if (type.isBool() || type.isChar()) symbol = new ASMGlobalBoolean(name, define);
         else {
             assert type.isString() : type;
-            symbol = new ASMGlobalString(name);
+            symbol = new ASMGlobalString(name, define);
         }
         asmModule.addGlobal(name, symbol);
     }
@@ -371,7 +373,6 @@ public class InstructionSelector implements IRVisitor {
             }
             case 2 -> { // member access
                 assert inst.getPtrValue() instanceof IRRegister;
-                assert inst.getElementType() instanceof IRPointerType;
                 assert inst.getElementType() instanceof IRStructureType;
                 assert inst.getIndices().get(0) instanceof IRConstInt;
                 assert ((IRConstInt) inst.getIndices().get(0)).getIntValue() == 0;
@@ -387,7 +388,7 @@ public class InstructionSelector implements IRVisitor {
 
     @Override
     public void visit(IRBitcastInstruction inst) {
-        // straightly move since type of ptr doesn't matter in asm
+        // directly move since type of ptr doesn't matter in asm
         appendPseudoInst(ASMPseudoInstruction.InstType.mv, toRegister(inst.getResultRegister()), toRegister(inst.getPtrValue()));
     }
 }

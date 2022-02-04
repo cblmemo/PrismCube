@@ -134,15 +134,14 @@ public class ASMEmitter {
         indentCnt--;
         appendWithIndent(name + ":");
         indentCnt++;
-        int value = symbol.getValue();
         if (symbol instanceof ASMGlobalBoolean) {
-            appendWithIndent(formatComment(formatPseudoOptions("byte", Integer.toString(value)), " 0x" + value));
+            appendWithIndent(formatComment(formatPseudoOptions("byte",symbol.getValue()), " 0x" + symbol.getHexValue()));
             appendWithIndent(formatPseudoOptions("size", symbol.getSymbolName() + ", 1"));
         } else if (symbol instanceof ASMGlobalInteger) {
-            appendWithIndent(formatComment(formatPseudoOptions("word", Integer.toUnsignedString(value)), " 0x" + Integer.toUnsignedString(value, 16)));
+            appendWithIndent(formatComment(formatPseudoOptions("word", symbol.getValue()), " 0x" + symbol.getHexValue()));
             appendWithIndent(formatPseudoOptions("size", symbol.getSymbolName() + ", 4"));
         } else {
-            appendWithIndent(formatPseudoOptions("word", Integer.toUnsignedString(value)));
+            appendWithIndent(formatPseudoOptions("word", symbol.getValue()));
             appendWithIndent(formatPseudoOptions("size", name + ", 4"));
         }
         indentCnt--;

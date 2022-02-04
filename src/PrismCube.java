@@ -3,6 +3,7 @@ import BackEnd.*;
 import Debug.*;
 import Memory.Memory;
 import MiddleEnd.IRBlockFuser;
+import MiddleEnd.IRGlobalInitializeEliminator;
 import Utility.error.error;
 
 /**
@@ -30,10 +31,10 @@ public class PrismCube {
             new IRBuilder().build(memory);
             new IREmitter().emit(memory);
             // optimize
+            new IRGlobalInitializeEliminator().eliminate(memory);
             new IRBlockFuser().fuse(memory);
             // assembly
             new InstructionSelector().select(memory);
-            new ASMEmitter().emitVirtual(memory);
             new RegisterAllocator().allocate(memory);
             new ASMEmitter().emit(memory);
         } catch (error err) {

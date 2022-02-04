@@ -209,7 +209,7 @@ public class IRFunction {
     private final LinkedHashSet<IRBasicBlock> reachable = new LinkedHashSet<>();
 
     public LinkedHashSet<IRBasicBlock> reachableBlocks() {
-        if (!reachable.isEmpty()) return reachable;
+        reachable.clear();
         dfs(entryBlock);
         return reachable;
     }

@@ -13,7 +13,9 @@ abstract public class ASMGlobalSymbol extends ASMOperand {
         return symbolName;
     }
 
-    abstract public int getValue();
+    abstract public String getValue();
+
+    abstract public String getHexValue();
 
     @Override
     public String toString() {

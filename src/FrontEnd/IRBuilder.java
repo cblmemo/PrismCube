@@ -28,6 +28,8 @@ import Utility.error.IRError;
 import java.util.LinkedList;
 import java.util.Objects;
 
+import static Debug.MemoLog.log;
+
 /**
  * This class generate source code's
  * intermediate representation, and
@@ -66,11 +68,13 @@ public class IRBuilder implements ASTVisitor {
      */
     public void build(Memory memory) {
         if (build) {
+            log.Infof("Start IR build.\n");
             currentScope = globalScope = memory.getGlobalScope();
             module = memory.getIRModule();
             module.initializeBuiltinFunction(globalScope);
             memory.getASTRoot().accept(this);
             if (Memory.codegen()) module.relocationInitializeFunctions();
+            log.Infof("IR build finished.\n");
         }
     }
 
@@ -112,7 +116,7 @@ public class IRBuilder implements ASTVisitor {
     }
 
     private void finishCurrentBasicBlock(IRInstruction escInst) {
-        assert escInst instanceof IRBrInstruction || escInst instanceof IRReturnInstruction;
+        assert escInst instanceof IRBrInstruction || escInst instanceof IRReturnInstruction || escInst instanceof IRJumpInstruction;
         currentBasicBlock.setEscapeInstruction(escInst);
         currentBasicBlock.finishBlock();
         currentFunction.appendBasicBlock(currentBasicBlock);
@@ -246,8 +250,8 @@ public class IRBuilder implements ASTVisitor {
                 // similar to ReturnStatementNode
                 IROperand initializeValue = node.getInitializeValue().getIRResultValue();
                 appendInst(new IRStoreInstruction(variableIRType, variableRegister, initializeValue));
-                currentFunction.getReturnBlock().setEscapeInstruction(new IRReturnInstruction(getVoidType(), null));
                 finishCurrentBasicBlock(new IRJumpInstruction(currentFunction.getReturnBlock(), currentBasicBlock));
+                currentFunction.getReturnBlock().setEscapeInstruction(new IRReturnInstruction(getVoidType(), null));
                 currentFunction.finishFunction();
                 currentFunction = null;
                 currentBasicBlock = null;

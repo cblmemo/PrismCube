@@ -2,6 +2,7 @@ package IR;
 
 import FrontEnd.IRVisitor;
 import IR.Instruction.IRCallInstruction;
+import IR.Instruction.IRInstruction;
 import IR.Operand.IRConstString;
 import IR.TypeSystem.*;
 import Utility.Scope.GlobalScope;
@@ -240,6 +241,11 @@ public class IRModule {
         globalDefines.put(define.getVariableName(), define);
     }
 
+    public IRGlobalDefine getGlobalDefine(String name) {
+        assert globalDefines.containsKey(name);
+        return globalDefines.get(name);
+    }
+
     public void addNewConstString(String value) {
         if (strings.containsKey(value)) return;
         log.Debugf("receive new string constant \"%s\".\n", value);
@@ -279,6 +285,28 @@ public class IRModule {
         addFunction(globalConstructor);
         singleInitializeFunctions.forEach(this::addFunction);
         mainFunction.getEntryBlock().getInstructions().add(0, new IRCallInstruction(getIRType("void"), globalConstructor));
+    }
+
+    public void removeSingleInitializeFunction(IRFunction init) {
+        functions.remove(init.getFunctionName());
+        singleInitializeFunctions.remove(init);
+        IRInstruction target = null;
+        for (IRInstruction inst : globalConstructor.getEntryBlock().getInstructions()) {
+            if (inst instanceof IRCallInstruction && ((IRCallInstruction) inst).getCallFunction() == init) {
+                target = inst;
+                break;
+            }
+        }
+        assert target != null;
+        globalConstructor.getEntryBlock().getInstructions().remove(target);
+    }
+
+    public void tryRemoveGlobalConstructor() {
+        if (globalConstructor.getEntryBlock().getInstructions().size() == 1) {
+            functions.remove(globalConstructor.getFunctionName());
+            log.Debugf("remove inst %s when tryRemoveGlobalConstructor\n", mainFunction.getEntryBlock().getInstructions().get(0));
+            mainFunction.getEntryBlock().getInstructions().remove(0);
+        }
     }
 
     public void accept(IRVisitor visitor) {

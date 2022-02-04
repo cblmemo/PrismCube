@@ -8,7 +8,7 @@ import IR.TypeSystem.IRTypeSystem;
 public class IRGlobalDefine {
     private final String variableName;
     private final IRTypeSystem variableType;
-    private final IROperand initValue;
+    private IROperand initValue;
 
     public IRGlobalDefine(String variableName, IRTypeSystem variableType) {
         this.variableName = variableName;
@@ -18,6 +18,14 @@ public class IRGlobalDefine {
 
     public IRTypeSystem getVariableType() {
         return variableType;
+    }
+
+    public void setInitValue(IROperand initValue) {
+        this.initValue = initValue;
+    }
+
+    public IROperand getInitValue() {
+        return initValue;
     }
 
     @Override

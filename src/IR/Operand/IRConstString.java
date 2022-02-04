@@ -3,7 +3,7 @@ package IR.Operand;
 import FrontEnd.IRVisitor;
 import IR.TypeSystem.IRTypeSystem;
 
-public class IRConstString extends IROperand {
+public class IRConstString extends IRConst {
     private final String value;
     private final String originalValue;
     private final int id;
@@ -65,6 +65,11 @@ public class IRConstString extends IROperand {
     @Override
     public String toString() {
         return "getelementptr inbounds ([" + getTrueLength() + " x i8], [" + getTrueLength() + " x i8]* " + getConstStringIdentifier() + ", i32 0, i32 0)";
+    }
+
+    @Override
+    public IROperand toIROperand() {
+        return this;
     }
 
     public void accept(IRVisitor visitor) {
