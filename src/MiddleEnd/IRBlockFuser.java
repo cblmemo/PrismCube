@@ -23,9 +23,7 @@ public class IRBlockFuser extends Optimize {
     protected void visit(IRFunction function) {
         changed = false;
         // remove unreachable blocks
-        ArrayList<IRBasicBlock> reachable = function.reachableBlocks();
-        changed = function.getBlocks().size() != reachable.size();
-        function.getBlocks().removeIf(block -> !reachable.contains(block));
+        changed = function.removeUnreachableBlocks();
         // cannot fuse entry block and exit block
         if (function.getBlocks().size() <= 2) return;
         // fuse blocks

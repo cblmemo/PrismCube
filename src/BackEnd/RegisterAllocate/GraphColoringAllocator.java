@@ -129,7 +129,8 @@ public class GraphColoringAllocator {
         new LivenessAnalyzer(function).analyze();
     }
 
-    private void addEdge(ASMRegister u, ASMRegister v) {
+    private boolean addEdge(ASMRegister u, ASMRegister v) {
+        boolean ret = false;
         if (u != v && !adjacentSet.contains(new Pair<>(u, v))) {
             log.Tracef("add an edge between [%s] and [%s]\n", u, v);
             adjacentSet.add(new Pair<>(u, v));
@@ -137,12 +138,14 @@ public class GraphColoringAllocator {
             if (!preColored.contains(u)) {
                 adjacentList.get(u).add(v);
                 degree.replace(u, degree.get(u) + 1);
+                ret = true;
             }
             if (!preColored.contains(v)) {
                 adjacentList.get(v).add(u);
                 degree.replace(v, degree.get(v) + 1);
             }
         }
+        return ret;
     }
 
     private void buildInterferenceGraph() {
@@ -256,7 +259,7 @@ public class GraphColoringAllocator {
 
     private GraphColoringAllocator addWorkList(ASMRegister u) {
         if (!physicalRegisters.contains(u) && !moveRelated(u) && degree.get(u) < K) {
-            assert freezeWorkList.contains(u) : u + " is not in freezeWorkList";
+            assert freezeWorkList.contains(u) : u + " is not in freezeWorkList, degree: " + degree.get(u) + ", spillWorkList: " + spillWorkList.contains(u);
             freezeWorkList.remove(u);
             simplifyWorkList.add(u);
         }
@@ -312,10 +315,9 @@ public class GraphColoringAllocator {
         alias.replace(v, u);
         moveList.get(u).addAll(moveList.get(v));
         LinkedHashSet<ASMRegister> adjV = adjacent(v);
-        log.Debugf("adjV: %s\n", adjV.toString());
+        log.Tracef("adjV: %s\n", adjV.toString());
         adjV.forEach(t -> {
-            addEdge(t, u);
-            decrementDegreeWithoutCheck(t);
+            if (addEdge(t, u)) decrementDegreeWithoutCheck(t);
         });
         if (degree.get(u) >= K && freezeWorkList.contains(u)) {
             log.Tracef("transfer [%s] from freezeWorkList to spillWorkList due to combine node\n");

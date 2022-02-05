@@ -120,6 +120,10 @@ public class IRBasicBlock {
         predecessor.addSuccessor(this);
     }
 
+    public void removePredecessor(IRBasicBlock predecessor) {
+        predecessors.remove(predecessor);
+    }
+
     public ArrayList<IRBasicBlock> getPredecessors() {
         return predecessors;
     }
@@ -134,6 +138,10 @@ public class IRBasicBlock {
         successors.add(successor);
     }
 
+    public void removeSuccessor(IRBasicBlock successor) {
+        successors.remove(successor);
+    }
+
     public ArrayList<IRBasicBlock> getSuccessors() {
         return successors;
     }
@@ -146,6 +154,11 @@ public class IRBasicBlock {
             builder.append(predecessors.get(i).getLabel());
         }
         return builder.toString();
+    }
+
+    @Override
+    public String toString() {
+        return label.toBasicBlockLabel();
     }
 
     public void accept(IRVisitor visitor) {

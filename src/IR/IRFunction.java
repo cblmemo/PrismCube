@@ -221,6 +221,21 @@ public class IRFunction {
         });
     }
 
+    public boolean removeUnreachableBlocks() {
+        reachableBlocks();
+        boolean ret = reachable.size() != blocks.size();
+        ArrayList<IRBasicBlock> blockBackup = new ArrayList<>(blocks);
+        blockBackup.forEach(block -> {
+            if (!reachable.contains(block)) {
+                assert block != entryBlock && block != returnBlock;
+                blocks.remove(block);
+                assert block.getPredecessors().size() == 0;
+                block.getSuccessors().forEach(succ -> succ.removePredecessor(block));
+            }
+        });
+        return ret;
+    }
+
     public void accept(IRVisitor visitor) {
         visitor.visit(this);
     }

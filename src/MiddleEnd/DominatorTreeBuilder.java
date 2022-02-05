@@ -101,6 +101,7 @@ public class DominatorTreeBuilder extends Optimize {
                 b.getPredecessors().forEach(p -> {
                     IRBasicBlock runner = p;
                     while (runner != idom.get(b)) {
+                        assert dominatorFrontier.containsKey(runner) : runner + " is not in dominatorFrontier";
                         dominatorFrontier.get(runner).add(b);
                         runner = idom.get(runner);
                     }

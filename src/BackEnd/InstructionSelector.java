@@ -23,6 +23,8 @@ import IR.TypeSystem.IRTypeSystem;
 import Memory.Memory;
 import Utility.error.ASMError;
 
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
@@ -274,9 +276,12 @@ public class InstructionSelector implements IRVisitor {
 
     @Override
     public void visit(IRReturnInstruction inst) {
-        if (!RegisterAllocator.naive())
-            // retrieve callee save register
-            currentFunction.getCalleeSaves().forEach((reg, backup) -> appendPseudoInst(ASMPseudoInstruction.InstType.mv, reg, backup));
+        if (!RegisterAllocator.naive()) {
+            // retrieve callee save register in reverse order
+            ArrayList<ASMPhysicalRegister> calleeSaves = new ArrayList<>(ASMPhysicalRegister.getCalleeSaveRegisters());
+            Collections.reverse(calleeSaves);
+            calleeSaves.forEach(reg -> appendPseudoInst(ASMPseudoInstruction.InstType.mv, reg, currentFunction.getCalleeSaves().get(reg)));
+        }
         // put return value in a0
         if (inst.hasReturnValue()) appendPseudoInst(ASMPseudoInstruction.InstType.mv, ASMPhysicalRegister.getPhysicalRegister(ASMPhysicalRegister.PhysicalRegisterName.a0), toRegister(inst.getReturnValue()));
         appendInst(null); // will be replaced by "sp += frame size"
