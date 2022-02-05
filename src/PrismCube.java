@@ -2,8 +2,10 @@ import FrontEnd.*;
 import BackEnd.*;
 import Debug.*;
 import Memory.Memory;
+import MiddleEnd.DominatorTreeBuilder;
 import MiddleEnd.IRBlockFuser;
 import MiddleEnd.IRGlobalInitializeEliminator;
+import MiddleEnd.MemoryToRegisterPromoter;
 import Utility.error.error;
 
 /**
@@ -21,10 +23,8 @@ public class PrismCube {
             // abstract syntax tree
             new Preprocessor().preprocess(memory);
             new ASTBuilder().build(memory);
-            new ASTPrinter().print(memory);
             // semantic
             new SymbolCollector().collect(memory);
-            new ScopePrinter().print(memory);
             new SemanticChecker().check(memory);
             // intermediate representation
             new ConstStringCollector().collect(memory);
@@ -33,6 +33,9 @@ public class PrismCube {
             // optimize
             new IRGlobalInitializeEliminator().eliminate(memory);
             new IRBlockFuser().fuse(memory);
+            new DominatorTreeBuilder().build(memory);
+            new MemoryToRegisterPromoter().promote(memory);
+            new IREmitter().emitOpt(memory);
             // assembly
             new InstructionSelector().select(memory);
             new RegisterAllocator().allocate(memory);

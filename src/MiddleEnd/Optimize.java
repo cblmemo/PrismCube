@@ -1,6 +1,8 @@
 package MiddleEnd;
 
-public class Optimize {
+import IR.IRFunction;
+
+public abstract class Optimize {
     protected static boolean doOptimize = false;
 
     public static void enable() {
@@ -10,4 +12,6 @@ public class Optimize {
     public static void disable() {
         doOptimize = false;
     }
+
+    abstract protected void visit(IRFunction function);
 }

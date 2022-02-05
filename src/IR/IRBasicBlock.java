@@ -7,6 +7,7 @@ import IR.Operand.IRLabel;
 import java.util.ArrayList;
 
 public class IRBasicBlock {
+    private final IRFunction parentFunction;
     private final IRLabel label;
     private final String labelName;
     private final ArrayList<IRInstruction> instructions = new ArrayList<>();
@@ -23,8 +24,13 @@ public class IRBasicBlock {
     private static final String delim = ".";
 
     public IRBasicBlock(IRFunction parentFunction, String labelName) {
+        this.parentFunction = parentFunction;
         this.label = new IRLabel(prefix + parentFunction.getFunctionName() + delim + labelName);
         this.labelName = labelName;
+    }
+
+    public IRFunction getParentFunction() {
+        return parentFunction;
     }
 
     public IRLabel getLabel() {

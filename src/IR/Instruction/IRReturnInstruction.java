@@ -1,6 +1,7 @@
 package IR.Instruction;
 
 import FrontEnd.IRVisitor;
+import IR.IRBasicBlock;
 import IR.Operand.IROperand;
 import IR.TypeSystem.IRTypeSystem;
 
@@ -8,13 +9,15 @@ import java.util.Objects;
 
 public class IRReturnInstruction extends IRInstruction {
     private final IRTypeSystem returnType;
-    private final IROperand returnValue;
+    private IROperand returnValue;
 
-    public IRReturnInstruction(IRTypeSystem returnType, IROperand returnValue) {
+    public IRReturnInstruction(IRBasicBlock parentBlock, IRTypeSystem returnType, IROperand returnValue) {
+        super(parentBlock);
         if (returnType.isVoid()) assert returnValue == null;
         else assert Objects.equals(returnType, returnValue.getIRType());
         this.returnType = returnType;
         this.returnValue = returnValue;
+        if (returnValue != null) returnValue.addUser(this);
     }
 
     public boolean hasReturnValue() {
@@ -23,6 +26,15 @@ public class IRReturnInstruction extends IRInstruction {
 
     public IROperand getReturnValue() {
         return returnValue;
+    }
+
+    @Override
+    public void replaceUse(IROperand oldOperand, IROperand newOperand) {
+        if (returnValue == oldOperand) {
+            oldOperand.removeUser(this);
+            returnValue = newOperand;
+            newOperand.addUser(this);
+        }
     }
 
     @Override

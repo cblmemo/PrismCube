@@ -1,6 +1,7 @@
 package IR.Instruction;
 
 import FrontEnd.IRVisitor;
+import IR.IRBasicBlock;
 import IR.Operand.IROperand;
 import IR.Operand.IRRegister;
 import IR.TypeSystem.IRPointerType;
@@ -12,19 +13,22 @@ import java.util.Objects;
 public class IRGetelementptrInstruction extends IRInstruction {
     private final IRRegister resultRegister;
     private final IRTypeSystem elementType;
-    private final IROperand ptrValue;
+    private IROperand ptrValue;
     private final ArrayList<IROperand> indices = new ArrayList<>();
 
-    public IRGetelementptrInstruction(IRRegister resultRegister, IRTypeSystem elementType, IROperand ptrValue) {
+    public IRGetelementptrInstruction(IRBasicBlock parentBlock, IRRegister resultRegister, IRTypeSystem elementType, IROperand ptrValue) {
+        super(parentBlock);
         assert ptrValue.getIRType() instanceof IRPointerType;
         assert Objects.equals(elementType, ((IRPointerType) ptrValue.getIRType()).getBaseType());
         this.resultRegister = resultRegister;
         this.elementType = elementType;
         this.ptrValue = ptrValue;
+        ptrValue.addUser(this);
     }
 
     public void addIndex(IROperand index) {
         this.indices.add(index);
+        index.addUser(this);
     }
 
     public ArrayList<IROperand> getIndices() {
@@ -41,6 +45,22 @@ public class IRGetelementptrInstruction extends IRInstruction {
 
     public IROperand getPtrValue() {
         return ptrValue;
+    }
+
+    @Override
+    public void replaceUse(IROperand oldOperand, IROperand newOperand) {
+        if (ptrValue == oldOperand) {
+            oldOperand.removeUser(this);
+            ptrValue = newOperand;
+            newOperand.addUser(this);
+        }
+        for (int i = 0; i < indices.size(); i++) {
+            if (indices.get(i) == oldOperand) {
+                oldOperand.removeUser(this);
+                indices.set(i, newOperand);
+                newOperand.addUser(this);
+            }
+        }
     }
 
     @Override

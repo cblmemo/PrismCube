@@ -118,9 +118,14 @@ public class Memory {
                 }
                 case "-O2" -> Optimize.enable();
                 case "-printV" -> {
-                    String arg = i + 1 < args.length && args[i + 1].charAt(0) == '-' ? "./bin/virtual.s" : args[++i];
+                    String arg = (i + 1 < args.length && args[i + 1].charAt(0) != '-') ? args[++i] : "./bin/virtual.s";
                     PrintStream virtualStream = new PrintStream(arg);
                     ASMEmitter.enableVirtual(virtualStream);
+                }
+                case "-printO2IR" -> {
+                    String arg = (i + 1 < args.length && args[i + 1].charAt(0) != '-') ? args[++i] : "./bin/opt.s";
+                    PrintStream optStream = new PrintStream(arg);
+                    IREmitter.enableOpt(optStream);
                 }
                 case "-arch" -> {
                     if (!(i + 1 < args.length && (Objects.equals(args[i + 1], "x86_64") || Objects.equals(args[i + 1], "x86_32")))) err("wrong arch argument");

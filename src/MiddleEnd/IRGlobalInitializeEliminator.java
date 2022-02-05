@@ -23,7 +23,8 @@ public class IRGlobalInitializeEliminator extends Optimize {
         }
     }
 
-    private void visit(IRFunction function) {
+    @Override
+    protected void visit(IRFunction function) {
         if (function.getBlocks().size() == 2) {
             ArrayList<IRInstruction> instructions = function.getEntryBlock().getInstructions();
             assert instructions.size() >= 2;

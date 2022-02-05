@@ -1,17 +1,19 @@
 package IR.Instruction;
 
 import FrontEnd.IRVisitor;
+import IR.IRBasicBlock;
 import IR.Operand.IROperand;
 import IR.Operand.IRRegister;
 import IR.TypeSystem.IRTypeSystem;
 
 public class IRTruncInstruction extends IRInstruction {
     private final IRRegister truncResultRegister;
-    private final IROperand truncTarget;
+    private IROperand truncTarget;
     private final IRTypeSystem originalType;
     private final IRTypeSystem resultType;
 
-    public IRTruncInstruction(IRRegister truncResultRegister, IROperand truncTarget, IRTypeSystem resultType) {
+    public IRTruncInstruction(IRBasicBlock parentBlock, IRRegister truncResultRegister, IROperand truncTarget, IRTypeSystem resultType) {
+        super(parentBlock);
         assert truncResultRegister.getIRType().isBool() || truncResultRegister.getIRType().isChar() || truncResultRegister.getIRType().isInt();
         assert truncTarget.getIRType().isBool() || truncTarget.getIRType().isChar() || truncTarget.getIRType().isInt();
         assert resultType.isBool() || resultType.isChar() || resultType.isInt();
@@ -19,6 +21,7 @@ public class IRTruncInstruction extends IRInstruction {
         this.truncTarget = truncTarget;
         this.originalType = truncTarget.getIRType();
         this.resultType = resultType;
+        truncTarget.addUser(this);
     }
 
     public IRRegister getTruncResultRegister() {
@@ -27,6 +30,15 @@ public class IRTruncInstruction extends IRInstruction {
 
     public IROperand getTruncTarget() {
         return truncTarget;
+    }
+
+    @Override
+    public void replaceUse(IROperand oldOperand, IROperand newOperand) {
+        if (truncTarget == oldOperand) {
+            oldOperand.removeUser(this);
+            truncTarget = newOperand;
+            newOperand.addUser(this);
+        }
     }
 
     @Override

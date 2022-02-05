@@ -33,10 +33,17 @@ public class IREmitter implements IRVisitor {
 
     private static boolean print = false;
     private static PrintStream irStream = null;
+    private static boolean printOpt = false;
+    private static PrintStream optStream = null;
 
     public static void enable(PrintStream irStream) {
         IREmitter.irStream = irStream;
         print = true;
+    }
+
+    public static void enableOpt(PrintStream optStream) {
+        IREmitter.optStream = optStream;
+        printOpt = true;
     }
 
     public static void disable() {
@@ -56,6 +63,13 @@ public class IREmitter implements IRVisitor {
         }
     }
 
+    public void emitOpt(Memory memory) {
+        if (printOpt) {
+            ps = optStream;
+            memory.getIRModule().accept(this);
+        }
+    }
+
     @Override
     public void visit(IRModule module) {
         ps.println(IRModule.getLLVMDetails());
@@ -67,12 +81,9 @@ public class IREmitter implements IRVisitor {
         module.getClasses().forEach(type -> type.accept(this));
         if (module.getClasses().size() != 0) ps.println();
         module.getGlobalDefines().values().forEach(define -> define.accept(this));
-        ps.println(module.getLLVMGlobalConstructors());
         ps.println();
         module.getFunctions().values().forEach(func -> func.accept(this));
         ps.println();
-        module.getGlobalConstructor().accept(this);
-        module.getSingleInitializeFunctions().forEach(func -> func.accept(this));
     }
 
     @Override
@@ -96,10 +107,6 @@ public class IREmitter implements IRVisitor {
         if (!block.isEmpty()) {
             ps.print(block.getLabel().toBasicBlockLabel());
             ps.println(" ".repeat(60 - block.getLabel().toBasicBlockLabel().length()) + block.getPreds());
-            if (block.isEntryBlock()) block.getAllocas().forEach(alloca -> {
-                ps.print("\t");
-                alloca.accept(this);
-            });
             block.getInstructions().forEach(instruction -> {
                 // indent non-label instructions
                 ps.print("\t");

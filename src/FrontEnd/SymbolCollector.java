@@ -8,6 +8,7 @@ import AST.PrimaryNode.*;
 import AST.ProgramNode;
 import AST.StatementNode.*;
 import AST.TypeNode.*;
+import Debug.ScopePrinter;
 import Memory.Memory;
 import Utility.Entity.ConstructorEntity;
 import Utility.Entity.FunctionEntity;
@@ -66,6 +67,8 @@ public class SymbolCollector implements ASTVisitor {
         visit(memory.getASTRoot());
 
         log.Infof("Symbol collect finished.\n");
+
+        new ScopePrinter().print(memory);
     }
 
     @Override

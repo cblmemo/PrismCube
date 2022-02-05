@@ -206,9 +206,9 @@ public class IRFunction {
         return thisRegister;
     }
 
-    private final LinkedHashSet<IRBasicBlock> reachable = new LinkedHashSet<>();
+    private final ArrayList<IRBasicBlock> reachable = new ArrayList<>();
 
-    public LinkedHashSet<IRBasicBlock> reachableBlocks() {
+    public ArrayList<IRBasicBlock> reachableBlocks() {
         reachable.clear();
         dfs(entryBlock);
         return reachable;

@@ -1,6 +1,8 @@
 package IR.Instruction;
 
 import FrontEnd.IRVisitor;
+import IR.IRBasicBlock;
+import IR.Operand.IROperand;
 import IR.Operand.IRRegister;
 import IR.TypeSystem.IRPointerType;
 import IR.TypeSystem.IRTypeSystem;
@@ -11,7 +13,8 @@ public class IRAllocaInstruction extends IRInstruction {
     private final IRTypeSystem allocaType;
     private final IRRegister allocaTarget;
 
-    public IRAllocaInstruction(IRTypeSystem allocaType, IRRegister allocaTarget) {
+    public IRAllocaInstruction(IRBasicBlock parentBlock, IRTypeSystem allocaType, IRRegister allocaTarget) {
+        super(parentBlock);
         assert allocaTarget.getIRType() instanceof IRPointerType;
         assert Objects.equals(allocaType, ((IRPointerType) allocaTarget.getIRType()).getBaseType());
         this.allocaType = allocaType;
@@ -24,6 +27,11 @@ public class IRAllocaInstruction extends IRInstruction {
 
     public IRRegister getAllocaTarget() {
         return allocaTarget;
+    }
+
+    @Override
+    public void replaceUse(IROperand oldOperand, IROperand newOperand) {
+        // do nothing since no use in alloca
     }
 
     @Override

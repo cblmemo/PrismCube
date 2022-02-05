@@ -90,7 +90,7 @@ public class InstructionSelector implements IRVisitor {
 
     private ASMLabel getFunctionLabel(String functionName) {
         if (functions.containsKey(functionName)) return functions.get(functionName).getLabel();
-        assert builtinFunctions.containsKey(functionName);
+        assert builtinFunctions.containsKey(functionName) : functionName + " is not builtin functions";
         return builtinFunctions.get(functionName).getLabel();
     }
 

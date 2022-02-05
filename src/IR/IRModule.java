@@ -32,6 +32,7 @@ public class IRModule {
     private IRFunction mainFunction;
     private final IRFunction globalConstructor;
     private final ArrayList<IRFunction> singleInitializeFunctions = new ArrayList<>();
+    private IRCallInstruction callGlobalInit;
 
     private boolean generatedInitializeFunction = false;
     private final String globalInitializeFunctionName = "__mx_global_init";
@@ -177,9 +178,9 @@ public class IRModule {
         return globalConstructor;
     }
 
-    public String getLLVMGlobalConstructors() {
-        return "@llvm.global_ctors = appending global [1 x { i32, void ()*, i8* }] [{ i32, void ()*, i8* } { i32 65535, void ()* @" + globalConstructor.getFunctionName() + ", i8* null }]";
-    }
+//    public String getLLVMGlobalConstructors() {
+//        return "@llvm.global_ctors = appending global [1 x { i32, void ()*, i8* }] [{ i32, void ()*, i8* } { i32 65535, void ()* @" + globalConstructor.getFunctionName() + ", i8* null }]";
+//    }
 
     public String getGlobalInitializeFunctionName() {
         return globalInitializeFunctionName;
@@ -281,10 +282,20 @@ public class IRModule {
         return singleInitializeFunctions;
     }
 
-    public void relocationInitializeFunctions() {
+    public void relocationInitializeFunctionsAndAllocas() {
         addFunction(globalConstructor);
         singleInitializeFunctions.forEach(this::addFunction);
-        mainFunction.getEntryBlock().getInstructions().add(0, new IRCallInstruction(getIRType("void"), globalConstructor));
+        callGlobalInit = new IRCallInstruction(mainFunction.getEntryBlock(), getIRType("void"), globalConstructor);
+        mainFunction.getEntryBlock().getInstructions().add(0, callGlobalInit);
+        functions.values().forEach(func -> {
+            if (!func.isDeclare()) {
+                IRBasicBlock entry = func.getEntryBlock();
+                ArrayList<IRInstruction> insts = new ArrayList<>(entry.getInstructions());
+                entry.getInstructions().clear();
+                entry.getInstructions().addAll(entry.getAllocas());
+                entry.getInstructions().addAll(insts);
+            }
+        });
     }
 
     public void removeSingleInitializeFunction(IRFunction init) {
@@ -304,8 +315,9 @@ public class IRModule {
     public void tryRemoveGlobalConstructor() {
         if (globalConstructor.getEntryBlock().getInstructions().size() == 1) {
             functions.remove(globalConstructor.getFunctionName());
-            log.Debugf("remove inst %s when tryRemoveGlobalConstructor\n", mainFunction.getEntryBlock().getInstructions().get(0));
-            mainFunction.getEntryBlock().getInstructions().remove(0);
+            int index = mainFunction.getEntryBlock().getInstructions().indexOf(callGlobalInit);
+            log.Debugf("remove inst %s when tryRemoveGlobalConstructor\n", mainFunction.getEntryBlock().getInstructions().get(index));
+            mainFunction.getEntryBlock().getInstructions().remove(index);
         }
     }
 

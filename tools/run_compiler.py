@@ -36,7 +36,7 @@ def ir_gen_executable():
 
 def run_asm(debug):
     if debug:
-        exe("java -ea -cp ./lib/antlr-4.9.1-complete.jar:./myout PrismCube -i ./bin/test.mx -o ./bin/test.s -emit-asm -emit-llvm ./bin/test.ll -log-o ./bin/log.txt -log-level debug -printV ./bin/virtual.s -arch x86_32")
+        exe("java -ea -cp ./lib/antlr-4.9.1-complete.jar:./myout PrismCube -i ./bin/test.mx -o ./bin/test.s -emit-asm -emit-llvm ./bin/test.ll -log-o ./bin/log.txt -log-level debug -printV ./bin/virtual.s -O2 -printO2IR ./bin/opt.ll -arch x86_32")
     else:
         exe("java -cp ./lib/antlr-4.9.1-complete.jar:./myout PrismCube -i ./bin/test.mx -o ./bin/test.s -emit-asm -arch x86_32")
     exe("rm ./bin/b.s")
@@ -100,6 +100,7 @@ def run():
     conflict = False
     case_dir = "./testcases/codegen/"
     asm_debug = False
+    build_flag = True
     while i < len(sys.argv):
         arg = sys.argv[i]
         if arg == "--help" or arg == "-h":
@@ -107,7 +108,7 @@ def run():
             print("now support:")
             print("---------------------------------------------------------------------")
             print("-h / --help               show help message                          ")
-            print("--reload                  re-build compiler                          ")
+            print("--disable-reload          disable re-build compiler                  ")
             print("-emit-asm                 generate standard rv32i asm for bin/a.c    ")
             print("-compile-test             generate test.ll and test.s for test.mx    ")
             print("ir                        test ir  for bin/test.mx                   ")
@@ -115,8 +116,8 @@ def run():
             print("asm-test <case>           running testcase <case> under codegen      ")
             print("---------------------------------------------------------------------")
             exit(0)
-        elif arg == "--reload":
-            build()
+        elif arg == "--disable-reload":
+            build_flag = False
         elif arg == "ir":
             if conflict:
                 print("error: mode conflict")
@@ -164,6 +165,8 @@ def run():
             print("error: unknown argument type")
             exit(1)
         i = i + 1
+    if build_flag:
+        build()
     if case == 1:
         ir_gen_executable()
         run_executable()

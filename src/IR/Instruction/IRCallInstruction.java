@@ -1,5 +1,6 @@
 package IR.Instruction;
 
+import IR.IRBasicBlock;
 import IR.IRFunction;
 import FrontEnd.IRVisitor;
 import IR.Operand.IROperand;
@@ -16,7 +17,8 @@ public class IRCallInstruction extends IRInstruction {
     private int currentArgumentNumber = 0;
     private IRRegister resultRegister = null;
 
-    public IRCallInstruction(IRTypeSystem returnType, IRFunction callFunction) {
+    public IRCallInstruction(IRBasicBlock parentBlock, IRTypeSystem returnType, IRFunction callFunction) {
+        super(parentBlock);
         // avoid to print redundant function declare
         callFunction.markAsCalled();
         this.returnType = returnType;
@@ -28,6 +30,7 @@ public class IRCallInstruction extends IRInstruction {
         assert Objects.equals(callFunction.getParameterType().get(currentArgumentNumber), argumentType);
         argumentValues.add(argumentValue);
         currentArgumentNumber++;
+        argumentValue.addUser(this);
         return this;
     }
 
@@ -65,6 +68,17 @@ public class IRCallInstruction extends IRInstruction {
 
     public int getArgumentNumber() {
         return argumentValues.size();
+    }
+
+    @Override
+    public void replaceUse(IROperand oldOperand, IROperand newOperand) {
+        for (int i = 0; i < argumentValues.size(); i++) {
+            if (argumentValues.get(i) == oldOperand) {
+                oldOperand.removeUser(this);
+                argumentValues.set(i, newOperand);
+                newOperand.addUser(this);
+            }
+        }
     }
 
     @Override

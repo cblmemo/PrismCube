@@ -5,11 +5,12 @@ import FrontEnd.IRVisitor;
 import IR.Operand.IROperand;
 
 public class IRBrInstruction extends IRInstruction {
-    private final IROperand condition;
+    private IROperand condition;
     private final IRBasicBlock thenBlock;
     private final IRBasicBlock elseBlock;
 
-    public IRBrInstruction(IROperand condition, IRBasicBlock thenBlock, IRBasicBlock elseBlock, IRBasicBlock currentBlock) {
+    public IRBrInstruction(IRBasicBlock parentBlock, IROperand condition, IRBasicBlock thenBlock, IRBasicBlock elseBlock, IRBasicBlock currentBlock) {
+        super(parentBlock);
         assert currentBlock != null && thenBlock != null && elseBlock != null;
         assert condition.getIRType().isBool();
         this.condition = condition;
@@ -17,6 +18,7 @@ public class IRBrInstruction extends IRInstruction {
         this.elseBlock = elseBlock;
         thenBlock.addPredecessor(currentBlock);
         elseBlock.addPredecessor(currentBlock);
+        condition.addUser(this);
     }
 
     public IROperand getCondition() {
@@ -29,6 +31,15 @@ public class IRBrInstruction extends IRInstruction {
 
     public IRBasicBlock getElseBlock() {
         return elseBlock;
+    }
+
+    @Override
+    public void replaceUse(IROperand oldOperand, IROperand newOperand) {
+        if (condition == oldOperand) {
+            oldOperand.removeUser(this);
+            condition = newOperand;
+            newOperand.addUser(this);
+        }
     }
 
     @Override

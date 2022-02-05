@@ -19,10 +19,11 @@ public class IRBlockFuser extends Optimize {
         }
     }
 
-    private void visit(IRFunction function) {
+    @Override
+    protected void visit(IRFunction function) {
         changed = false;
         // remove unreachable blocks
-        LinkedHashSet<IRBasicBlock> reachable = function.reachableBlocks();
+        ArrayList<IRBasicBlock> reachable = function.reachableBlocks();
         changed = function.getBlocks().size() != reachable.size();
         function.getBlocks().removeIf(block -> !reachable.contains(block));
         // cannot fuse entry block and exit block

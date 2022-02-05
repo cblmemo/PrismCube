@@ -2,17 +2,24 @@ package IR.Instruction;
 
 import FrontEnd.IRVisitor;
 import IR.IRBasicBlock;
+import IR.Operand.IROperand;
 
-public class IRJumpInstruction extends IRInstruction{
+public class IRJumpInstruction extends IRInstruction {
     private final IRBasicBlock targetBlock;
 
-    public IRJumpInstruction(IRBasicBlock targetBlock, IRBasicBlock currentBlock) {
+    public IRJumpInstruction(IRBasicBlock parentBlock, IRBasicBlock targetBlock, IRBasicBlock currentBlock) {
+        super(parentBlock);
         this.targetBlock = targetBlock;
         targetBlock.addPredecessor(currentBlock);
     }
 
     public IRBasicBlock getTargetBlock() {
         return targetBlock;
+    }
+
+    @Override
+    public void replaceUse(IROperand oldOperand, IROperand newOperand) {
+        // do nothing since no use in jump
     }
 
     @Override

@@ -1,6 +1,7 @@
 package IR.Instruction;
 
 import FrontEnd.IRVisitor;
+import IR.IRBasicBlock;
 import IR.Operand.IROperand;
 import IR.Operand.IRRegister;
 import IR.TypeSystem.IRPointerType;
@@ -10,16 +11,18 @@ import java.util.Objects;
 
 public class IRBitcastInstruction extends IRInstruction {
     private final IRRegister resultRegister;
-    private final IROperand ptrValue;
+    private IROperand ptrValue;
     private final IRTypeSystem targetType;
 
-    public IRBitcastInstruction(IRRegister resultRegister, IROperand ptrValue, IRTypeSystem targetType) {
+    public IRBitcastInstruction(IRBasicBlock parentBlock, IRRegister resultRegister, IROperand ptrValue, IRTypeSystem targetType) {
+        super(parentBlock);
         assert Objects.equals(resultRegister.getIRType(), targetType);
         assert targetType instanceof IRPointerType;
         assert ptrValue.getIRType() instanceof IRPointerType;
         this.resultRegister = resultRegister;
         this.ptrValue = ptrValue;
         this.targetType = targetType;
+        ptrValue.addUser(this);
     }
 
     public IRRegister getResultRegister() {
@@ -28,6 +31,15 @@ public class IRBitcastInstruction extends IRInstruction {
 
     public IROperand getPtrValue() {
         return ptrValue;
+    }
+
+    @Override
+    public void replaceUse(IROperand oldOperand, IROperand newOperand) {
+        if (ptrValue == oldOperand) {
+            oldOperand.removeUser(this);
+            ptrValue = newOperand;
+            newOperand.addUser(this);
+        }
     }
 
     @Override

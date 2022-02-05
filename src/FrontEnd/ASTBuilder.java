@@ -7,6 +7,7 @@ import AST.PrimaryNode.*;
 import AST.ProgramNode;
 import AST.StatementNode.*;
 import AST.TypeNode.*;
+import Debug.ASTPrinter;
 import Memory.Memory;
 import Parser.MxStarBaseVisitor;
 import Parser.MxStarParser;
@@ -46,6 +47,7 @@ public class ASTBuilder extends MxStarBaseVisitor<ASTNode> {
         ProgramNode ASTRoot = (ProgramNode) visit(memory.getParseTreeRoot());
         memory.setASTRoot(ASTRoot);
         log.Infof("Build finished.\n");
+        new ASTPrinter().print(memory);
     }
 
     // Program
