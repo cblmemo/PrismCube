@@ -72,6 +72,7 @@ public class IRCallInstruction extends IRInstruction {
 
     @Override
     public void replaceUse(IROperand oldOperand, IROperand newOperand) {
+        super.replaceUse(oldOperand, newOperand);
         for (int i = 0; i < argumentValues.size(); i++) {
             if (argumentValues.get(i) == oldOperand) {
                 oldOperand.removeUser(this);

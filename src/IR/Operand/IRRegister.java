@@ -48,7 +48,7 @@ public class IRRegister extends IROperand {
     public String toString() {
         if (isAlloca) return "%" + name + "_" + (-id);
         assert id >= 0;
-        if (printName && name != null) return "%" + name + "_" + id;
+        if (printName && name != null && !name.equals("argument")) return "%" + name + "_" + id;
         else return "%" + id;
     }
 }

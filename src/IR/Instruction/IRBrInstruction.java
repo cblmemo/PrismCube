@@ -35,6 +35,7 @@ public class IRBrInstruction extends IRInstruction {
 
     @Override
     public void replaceUse(IROperand oldOperand, IROperand newOperand) {
+        super.replaceUse(oldOperand, newOperand);
         if (condition == oldOperand) {
             oldOperand.removeUser(this);
             condition = newOperand;

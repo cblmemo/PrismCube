@@ -35,6 +35,7 @@ public class IRZextInstruction extends IRInstruction {
 
     @Override
     public void replaceUse(IROperand oldOperand, IROperand newOperand) {
+        super.replaceUse(oldOperand, newOperand);
         if (zextTarget == oldOperand) {
             oldOperand.removeUser(this);
             zextTarget = newOperand;

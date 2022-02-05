@@ -75,6 +75,7 @@ public class IRBasicBlock {
         assert hasFinished;
         instructions.remove(instructions.get(instructions.size() - 1));
         instructions.addAll(successor.getInstructions());
+        successor.getInstructions().forEach(inst -> inst.setParentBlock(this));
         this.escapeInstruction = successor.getEscapeInstruction();
         if (successor.getAllocas() != null) allocas.addAll(successor.getAllocas());
         if (successor.isReturnBlock()) isReturnBlock = true;

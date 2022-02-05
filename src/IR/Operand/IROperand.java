@@ -19,6 +19,7 @@ abstract public class IROperand {
 
     public void addUser(IRInstruction instruction) {
         users.add(instruction);
+        instruction.addUser(this);
     }
 
     public void removeUser(IRInstruction instruction) {

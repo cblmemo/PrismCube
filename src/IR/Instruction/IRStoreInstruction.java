@@ -39,6 +39,7 @@ public class IRStoreInstruction extends IRInstruction {
 
     @Override
     public void replaceUse(IROperand oldOperand, IROperand newOperand) {
+        super.replaceUse(oldOperand, newOperand);
         if (storeTarget == oldOperand) {
             oldOperand.removeUser(this);
             storeTarget = newOperand;

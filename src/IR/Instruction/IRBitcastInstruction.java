@@ -35,6 +35,7 @@ public class IRBitcastInstruction extends IRInstruction {
 
     @Override
     public void replaceUse(IROperand oldOperand, IROperand newOperand) {
+        super.replaceUse(oldOperand, newOperand);
         if (ptrValue == oldOperand) {
             oldOperand.removeUser(this);
             ptrValue = newOperand;

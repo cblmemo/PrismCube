@@ -195,8 +195,7 @@ public class InstructionSelector implements IRVisitor {
             });
         // get arguments
         for (int i = 0; i < Integer.min(function.getParameterNumber(), 8); i++) {
-            // directly use a0 - a7 as register of parameter
-            lr2r.put(function.getParameters().get(i), ASMPhysicalRegister.getArgumentRegister(i));
+            appendPseudoInst(ASMPseudoInstruction.InstType.mv, toRegister(function.getParameters().get(i)), ASMPhysicalRegister.getArgumentRegister(i));
         }
         for (int i = 8; i < function.getParameterNumber(); i++) {
             ASMAddress argumentAddress = new ASMAddress(ASMPhysicalRegister.getPhysicalRegister(ASMPhysicalRegister.PhysicalRegisterName.sp), new ASMImmediate(4 * (i - 8)));

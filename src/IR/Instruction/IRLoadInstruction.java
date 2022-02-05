@@ -39,6 +39,7 @@ public class IRLoadInstruction extends IRInstruction {
 
     @Override
     public void replaceUse(IROperand oldOperand, IROperand newOperand) {
+        super.replaceUse(oldOperand, newOperand);
         if (loadValue == oldOperand) {
             oldOperand.removeUser(this);
             loadValue = newOperand;

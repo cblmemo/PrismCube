@@ -61,7 +61,6 @@ public class MemoryToRegisterPromoter extends Optimize {
             alloca.removeFromParentBlock();
         } else if (userBlocks.size() == 1) {
             IRBasicBlock block = userBlocks.get(0);
-            assert block == block.getParentFunction().getEntryBlock() : "alloca not in entry block";
             IROperand memoryAddress = alloca.getAllocaTarget();
             IROperand currentValue = null;
             ArrayList<IRInstruction> insts = new ArrayList<>(block.getInstructions());

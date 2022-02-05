@@ -34,6 +34,7 @@ public class IRTruncInstruction extends IRInstruction {
 
     @Override
     public void replaceUse(IROperand oldOperand, IROperand newOperand) {
+        super.replaceUse(oldOperand, newOperand);
         if (truncTarget == oldOperand) {
             oldOperand.removeUser(this);
             truncTarget = newOperand;

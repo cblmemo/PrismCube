@@ -30,6 +30,7 @@ public class IRReturnInstruction extends IRInstruction {
 
     @Override
     public void replaceUse(IROperand oldOperand, IROperand newOperand) {
+        super.replaceUse(oldOperand, newOperand);
         if (returnValue == oldOperand) {
             oldOperand.removeUser(this);
             returnValue = newOperand;

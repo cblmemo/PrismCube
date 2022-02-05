@@ -39,6 +39,7 @@ public class IRBinaryInstruction extends IRInstruction {
 
     @Override
     public void replaceUse(IROperand oldOperand, IROperand newOperand) {
+        super.replaceUse(oldOperand, newOperand);
         if (lhs == oldOperand) {
             oldOperand.removeUser(this);
             lhs = newOperand;
