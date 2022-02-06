@@ -53,6 +53,11 @@ public class IRStoreInstruction extends IRInstruction {
     }
 
     @Override
+    public boolean noUsersAndSafeToRemove() {
+        return false;
+    }
+
+    @Override
     public String toString() {
         return "store " + storeType + " " + storeValue + ", " + storeType + "* " + storeAddress + (IRInstruction.useAlign() ? (", align " + storeType.sizeof()) : "");
     }

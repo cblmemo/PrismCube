@@ -7,25 +7,26 @@ import IR.Operand.IRRegister;
 import IR.TypeSystem.IRTypeSystem;
 
 public class IRTruncInstruction extends IRInstruction {
-    private final IRRegister truncResultRegister;
+    private final IRRegister resultRegister;
     private IROperand truncTarget;
     private final IRTypeSystem originalType;
     private final IRTypeSystem resultType;
 
-    public IRTruncInstruction(IRBasicBlock parentBlock, IRRegister truncResultRegister, IROperand truncTarget, IRTypeSystem resultType) {
+    public IRTruncInstruction(IRBasicBlock parentBlock, IRRegister resultRegister, IROperand truncTarget, IRTypeSystem resultType) {
         super(parentBlock);
-        assert truncResultRegister.getIRType().isBool() || truncResultRegister.getIRType().isChar() || truncResultRegister.getIRType().isInt();
+        assert resultRegister.getIRType().isBool() || resultRegister.getIRType().isChar() || resultRegister.getIRType().isInt();
         assert truncTarget.getIRType().isBool() || truncTarget.getIRType().isChar() || truncTarget.getIRType().isInt();
         assert resultType.isBool() || resultType.isChar() || resultType.isInt();
-        this.truncResultRegister = truncResultRegister;
+        this.resultRegister = resultRegister;
         this.truncTarget = truncTarget;
         this.originalType = truncTarget.getIRType();
         this.resultType = resultType;
         truncTarget.addUser(this);
+        resultRegister.setDef(this);
     }
 
-    public IRRegister getTruncResultRegister() {
-        return truncResultRegister;
+    public IRRegister getResultRegister() {
+        return resultRegister;
     }
 
     public IROperand getTruncTarget() {
@@ -43,8 +44,13 @@ public class IRTruncInstruction extends IRInstruction {
     }
 
     @Override
+    public boolean noUsersAndSafeToRemove() {
+        return resultRegister.getUsers().isEmpty();
+    }
+
+    @Override
     public String toString() {
-        return truncResultRegister + " = trunc " + originalType + " " + truncTarget + " to " + resultType;
+        return resultRegister + " = trunc " + originalType + " " + truncTarget + " to " + resultType;
     }
 
     @Override

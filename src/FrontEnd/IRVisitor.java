@@ -29,4 +29,5 @@ public interface IRVisitor {
     void visit(IRGetelementptrInstruction inst);
     void visit(IRBitcastInstruction inst);
     void visit(IRJumpInstruction inst);
+    void visit(IRPhiInstruction inst);
 }

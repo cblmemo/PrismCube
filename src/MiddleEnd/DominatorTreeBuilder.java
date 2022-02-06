@@ -94,6 +94,10 @@ public class DominatorTreeBuilder extends IROptimize {
             IRBasicBlock t = order.get(i);
             if (idom.get(t) != semi.get(t)) idom.replace(t, idom.get(idom.get(t)));
         }
+        // store to block
+        idom.forEach((succ, pred) -> {
+            if (pred != null) pred.addDominatorTreePredecessor(succ);
+        });
     }
 
     private void calculateDominatorFrontier() {
@@ -109,6 +113,8 @@ public class DominatorTreeBuilder extends IROptimize {
                 });
             }
         });
+        // store to function
+        function.setDominatorFrontier(dominatorFrontier);
     }
 
     @Override

@@ -24,6 +24,7 @@ public class IRGetelementptrInstruction extends IRInstruction {
         this.elementType = elementType;
         this.ptrValue = ptrValue;
         ptrValue.addUser(this);
+        resultRegister.setDef(this);
     }
 
     public void addIndex(IROperand index) {
@@ -62,6 +63,11 @@ public class IRGetelementptrInstruction extends IRInstruction {
                 newOperand.addUser(this);
             }
         }
+    }
+
+    @Override
+    public boolean noUsersAndSafeToRemove() {
+        return resultRegister.getUsers().isEmpty();
     }
 
     @Override

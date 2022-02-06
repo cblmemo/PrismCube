@@ -19,6 +19,7 @@ public class IRIcmpInstruction extends IRInstruction {
         this.rhs = rhs;
         lhs.addUser(this);
         rhs.addUser(this);
+        resultRegister.setDef(this);
     }
 
     public String getOp() {
@@ -50,6 +51,11 @@ public class IRIcmpInstruction extends IRInstruction {
             rhs = newOperand;
             newOperand.addUser(this);
         }
+    }
+
+    @Override
+    public boolean noUsersAndSafeToRemove() {
+        return resultRegister.getUsers().isEmpty();
     }
 
     @Override

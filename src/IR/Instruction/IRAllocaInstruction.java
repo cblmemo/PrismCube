@@ -19,6 +19,7 @@ public class IRAllocaInstruction extends IRInstruction {
         assert Objects.equals(allocaType, ((IRPointerType) allocaTarget.getIRType()).getBaseType());
         this.allocaType = allocaType;
         this.allocaTarget = allocaTarget;
+        allocaTarget.setDef(this);
     }
 
     public IRTypeSystem getAllocaType() {
@@ -32,6 +33,11 @@ public class IRAllocaInstruction extends IRInstruction {
     @Override
     public void replaceUse(IROperand oldOperand, IROperand newOperand) {
         // do nothing since no use in alloca
+    }
+
+    @Override
+    public boolean noUsersAndSafeToRemove() {
+        return false;
     }
 
     @Override

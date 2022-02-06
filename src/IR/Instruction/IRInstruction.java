@@ -27,6 +27,10 @@ abstract public class IRInstruction {
 
     public void removeFromParentBlock() {
         parentBlock.getInstructions().remove(this);
+        if (this instanceof IRAllocaInstruction) {
+            assert parentBlock.getAllocas() != null : this + "'s parent block " + parentBlock + " has no allocas";
+            parentBlock.getAllocas().remove(this);
+        }
         users.forEach(user -> user.removeUser(this));
     }
 
@@ -52,6 +56,8 @@ abstract public class IRInstruction {
     public String getComment() {
         return comment == null ? "" : "; " + comment;
     }
+
+    abstract public boolean noUsersAndSafeToRemove();
 
     abstract public String toString();
 

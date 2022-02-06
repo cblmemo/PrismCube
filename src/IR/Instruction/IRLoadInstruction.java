@@ -11,22 +11,23 @@ import java.util.Objects;
 
 public class IRLoadInstruction extends IRInstruction {
     private final IRTypeSystem loadType;
-    private final IRRegister loadTarget;
+    private final IRRegister resultRegister;
     private IROperand loadAddress;
 
-    public IRLoadInstruction(IRBasicBlock parentBlock, IRTypeSystem loadType, IRRegister loadTarget, IROperand loadAddress) {
+    public IRLoadInstruction(IRBasicBlock parentBlock, IRTypeSystem loadType, IRRegister resultRegister, IROperand loadAddress) {
         super(parentBlock);
         assert loadAddress.getIRType() instanceof IRPointerType;
         assert Objects.equals(loadType, ((IRPointerType) loadAddress.getIRType()).getBaseType());
-        assert Objects.equals(loadType, loadTarget.getIRType());
+        assert Objects.equals(loadType, resultRegister.getIRType());
         this.loadType = loadType;
-        this.loadTarget = loadTarget;
+        this.resultRegister = resultRegister;
         this.loadAddress = loadAddress;
         loadAddress.addUser(this);
+        resultRegister.setDef(this);
     }
 
-    public IRRegister getLoadTarget() {
-        return loadTarget;
+    public IRRegister getResultRegister() {
+        return resultRegister;
     }
 
     public IROperand getLoadAddress() {
@@ -48,8 +49,13 @@ public class IRLoadInstruction extends IRInstruction {
     }
 
     @Override
+    public boolean noUsersAndSafeToRemove() {
+        return resultRegister.getUsers().isEmpty();
+    }
+
+    @Override
     public String toString() {
-        return loadTarget + " = load " + loadType + ", " + loadAddress.getIRType() + " " + loadAddress + (IRInstruction.useAlign() ? ", align " + loadType.sizeof() : "");
+        return resultRegister + " = load " + loadType + ", " + loadAddress.getIRType() + " " + loadAddress + (IRInstruction.useAlign() ? ", align " + loadType.sizeof() : "");
     }
 
     @Override

@@ -8,6 +8,7 @@ import java.util.LinkedHashSet;
 abstract public class IROperand {
     private final IRTypeSystem irType;
     private final LinkedHashSet<IRInstruction> users = new LinkedHashSet<>();
+    private IRInstruction def = null;
 
     public IROperand(IRTypeSystem irType) {
         this.irType = irType;
@@ -28,6 +29,14 @@ abstract public class IROperand {
 
     public LinkedHashSet<IRInstruction> getUsers() {
         return users;
+    }
+
+    public void setDef(IRInstruction def) {
+        this.def = def;
+    }
+
+    public IRInstruction getDef() {
+        return def;
     }
 
     @Override

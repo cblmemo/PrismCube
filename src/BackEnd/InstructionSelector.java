@@ -261,6 +261,11 @@ public class InstructionSelector implements IRVisitor {
     }
 
     @Override
+    public void visit(IRPhiInstruction inst) {
+        throw new ASMError("unexpected phi");
+    }
+
+    @Override
     public void visit(IRCallInstruction inst) {
         LinkedHashMap<ASMPhysicalRegister, ASMVirtualRegister> callerSaves = new LinkedHashMap<>();
         // naive allocator doesn't need to back up caller save except for ra since it store all value on stack
@@ -286,7 +291,7 @@ public class InstructionSelector implements IRVisitor {
 
     @Override
     public void visit(IRLoadInstruction inst) {
-        ASMRegister loadTarget = toRegister(inst.getLoadTarget());
+        ASMRegister loadTarget = toRegister(inst.getResultRegister());
         ASMAddress loadSource;
         if (inst.getLoadAddress() instanceof IRGlobalVariableRegister) {
             ASMVirtualRegister address = new ASMVirtualRegister("global_address");
@@ -384,13 +389,13 @@ public class InstructionSelector implements IRVisitor {
     @Override
     public void visit(IRTruncInstruction inst) {
         // directly move since all trunc instruction are used to deal with conversion between i1 and i8
-        appendPseudoInst(ASMPseudoInstruction.InstType.mv, toRegister(inst.getTruncResultRegister()), toRegister(inst.getTruncTarget()));
+        appendPseudoInst(ASMPseudoInstruction.InstType.mv, toRegister(inst.getResultRegister()), toRegister(inst.getTruncTarget()));
     }
 
     @Override
     public void visit(IRZextInstruction inst) {
         // directly move since all zext instruction are used to deal with conversion between i1 and i8
-        appendPseudoInst(ASMPseudoInstruction.InstType.mv, toRegister(inst.getZextResultRegister()), toRegister(inst.getZextTarget()));
+        appendPseudoInst(ASMPseudoInstruction.InstType.mv, toRegister(inst.getResultRegister()), toRegister(inst.getZextTarget()));
     }
 
     @Override

@@ -9,6 +9,7 @@ import Utility.Type.Type;
 import Utility.error.IRError;
 
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.Objects;
 
@@ -27,6 +28,7 @@ public class IRFunction {
     private final IRBasicBlock returnBlock;
     private boolean hasCalled;
     private IRRegister thisRegister;
+    private LinkedHashMap<IRBasicBlock, LinkedHashSet<IRBasicBlock>> dominatorFrontier;
 
     // [[--NOTICE--]] need to call setReturnType and addParameterType manually after created an IRFunction instance.
     public IRFunction(String functionName) {
@@ -234,6 +236,14 @@ public class IRFunction {
             }
         });
         return ret;
+    }
+
+    public void setDominatorFrontier(LinkedHashMap<IRBasicBlock, LinkedHashSet<IRBasicBlock>> dominatorFrontier) {
+        this.dominatorFrontier = dominatorFrontier;
+    }
+
+    public LinkedHashMap<IRBasicBlock, LinkedHashSet<IRBasicBlock>> getDominatorFrontier() {
+        return dominatorFrontier;
     }
 
     public void accept(IRVisitor visitor) {

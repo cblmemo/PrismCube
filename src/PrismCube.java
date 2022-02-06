@@ -26,16 +26,20 @@ public class PrismCube {
             new ConstStringCollector().collect(memory);
             new IRBuilder().build(memory);
             new IREmitter().emit(memory);
-            // optimize
+            // ir optimize
             new IRGlobalInitializeEliminator().eliminate(memory);
             new DominatorTreeBuilder().build(memory);
             new MemoryToRegisterPromoter().promote(memory);
+            new PhiResolver().resolve(memory);
             new IRBlockFuser().fuse(memory);
+            new TrivialDeadCodeEliminator().eliminate(memory);
             new IREmitter().emitOpt(memory);
             // assembly
             new InstructionSelector().select(memory);
             new RegisterAllocator().allocate(memory);
-            new PeepholePeeker().peek(memory); // optimize
+            // asm optimize
+            new PeepholePeeker().peek(memory);
+            // emit
             new ASMEmitter().emit(memory);
         } catch (error err) {
             err.printStackTrace();

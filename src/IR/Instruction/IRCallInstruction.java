@@ -37,6 +37,7 @@ public class IRCallInstruction extends IRInstruction {
     public void setResultRegister(IRRegister resultRegister) {
         assert Objects.equals(resultRegister.getIRType(), returnType);
         this.resultRegister = resultRegister;
+        resultRegister.setDef(this);
     }
 
     private String getParameterListStr() {
@@ -80,6 +81,11 @@ public class IRCallInstruction extends IRInstruction {
                 newOperand.addUser(this);
             }
         }
+    }
+
+    @Override
+    public boolean noUsersAndSafeToRemove() {
+        return false;
     }
 
     @Override

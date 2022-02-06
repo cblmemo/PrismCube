@@ -39,6 +39,11 @@ public class IRReturnInstruction extends IRInstruction {
     }
 
     @Override
+    public boolean noUsersAndSafeToRemove() {
+        return false;
+    }
+
+    @Override
     public String toString() {
         if (returnType.isVoid()) return "ret void";
         return "ret " + returnType + " " + returnValue;

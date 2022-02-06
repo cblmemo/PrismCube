@@ -23,6 +23,7 @@ public class IRBitcastInstruction extends IRInstruction {
         this.ptrValue = ptrValue;
         this.targetType = targetType;
         ptrValue.addUser(this);
+        resultRegister.setDef(this);
     }
 
     public IRRegister getResultRegister() {
@@ -41,6 +42,11 @@ public class IRBitcastInstruction extends IRInstruction {
             ptrValue = newOperand;
             newOperand.addUser(this);
         }
+    }
+
+    @Override
+    public boolean noUsersAndSafeToRemove() {
+        return resultRegister.getUsers().isEmpty();
     }
 
     @Override

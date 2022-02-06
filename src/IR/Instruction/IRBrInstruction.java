@@ -44,6 +44,11 @@ public class IRBrInstruction extends IRInstruction {
     }
 
     @Override
+    public boolean noUsersAndSafeToRemove() {
+        return false;
+    }
+
+    @Override
     public String toString() {
         return "br " + condition.getIRType() + " " + condition + ", label " + thenBlock.getLabel() + ", label " + elseBlock.getLabel();
     }

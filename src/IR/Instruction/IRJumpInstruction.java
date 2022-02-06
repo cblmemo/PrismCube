@@ -23,6 +23,11 @@ public class IRJumpInstruction extends IRInstruction {
     }
 
     @Override
+    public boolean noUsersAndSafeToRemove() {
+        return false;
+    }
+
+    @Override
     public String toString() {
         return "br label " + targetBlock.getLabel();
     }

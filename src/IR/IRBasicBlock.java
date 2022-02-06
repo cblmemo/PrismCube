@@ -12,11 +12,13 @@ public class IRBasicBlock {
     private final String labelName;
     private final ArrayList<IRInstruction> instructions = new ArrayList<>();
     private ArrayList<IRAllocaInstruction> allocas;
+    private final ArrayList<IRPhiInstruction> phis = new ArrayList<>();
     private IRInstruction escapeInstruction = null;
     private boolean isEntryBlock = false;
     private boolean isReturnBlock = false;
     private final ArrayList<IRBasicBlock> predecessors = new ArrayList<>();
     private final ArrayList<IRBasicBlock> successors = new ArrayList<>();
+    private final ArrayList<IRBasicBlock> dominatorTreePredecessors = new ArrayList<>();
 
     private boolean hasFinished = false;
 
@@ -86,6 +88,14 @@ public class IRBasicBlock {
         });
     }
 
+    public void addPhi(IRPhiInstruction phi) {
+        phis.add(phi);
+    }
+
+    public ArrayList<IRPhiInstruction> getPhis() {
+        return phis;
+    }
+
     public ArrayList<IRInstruction> getInstructions() {
         return instructions;
     }
@@ -113,6 +123,14 @@ public class IRBasicBlock {
 
     public boolean isEmpty() {
         return instructions.isEmpty() && escapeInstruction == null;
+    }
+
+    public void addDominatorTreePredecessor(IRBasicBlock predecessor) {
+        dominatorTreePredecessors.add(predecessor);
+    }
+
+    public ArrayList<IRBasicBlock> getDominatorTreePredecessors() {
+        return dominatorTreePredecessors;
     }
 
     public void addPredecessor(IRBasicBlock predecessor) {
@@ -158,7 +176,7 @@ public class IRBasicBlock {
 
     @Override
     public String toString() {
-        return label.toBasicBlockLabel();
+        return label.toString();
     }
 
     public void accept(IRVisitor visitor) {
