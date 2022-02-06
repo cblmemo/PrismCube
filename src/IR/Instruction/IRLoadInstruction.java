@@ -12,25 +12,25 @@ import java.util.Objects;
 public class IRLoadInstruction extends IRInstruction {
     private final IRTypeSystem loadType;
     private final IRRegister loadTarget;
-    private IROperand loadValue;
+    private IROperand loadAddress;
 
-    public IRLoadInstruction(IRBasicBlock parentBlock, IRTypeSystem loadType, IRRegister loadTarget, IROperand loadValue) {
+    public IRLoadInstruction(IRBasicBlock parentBlock, IRTypeSystem loadType, IRRegister loadTarget, IROperand loadAddress) {
         super(parentBlock);
-        assert loadValue.getIRType() instanceof IRPointerType;
-        assert Objects.equals(loadType, ((IRPointerType) loadValue.getIRType()).getBaseType());
+        assert loadAddress.getIRType() instanceof IRPointerType;
+        assert Objects.equals(loadType, ((IRPointerType) loadAddress.getIRType()).getBaseType());
         assert Objects.equals(loadType, loadTarget.getIRType());
         this.loadType = loadType;
         this.loadTarget = loadTarget;
-        this.loadValue = loadValue;
-        loadValue.addUser(this);
+        this.loadAddress = loadAddress;
+        loadAddress.addUser(this);
     }
 
     public IRRegister getLoadTarget() {
         return loadTarget;
     }
 
-    public IROperand getLoadValue() {
-        return loadValue;
+    public IROperand getLoadAddress() {
+        return loadAddress;
     }
 
     public IRTypeSystem getLoadType() {
@@ -40,16 +40,16 @@ public class IRLoadInstruction extends IRInstruction {
     @Override
     public void replaceUse(IROperand oldOperand, IROperand newOperand) {
         super.replaceUse(oldOperand, newOperand);
-        if (loadValue == oldOperand) {
+        if (loadAddress == oldOperand) {
             oldOperand.removeUser(this);
-            loadValue = newOperand;
+            loadAddress = newOperand;
             newOperand.addUser(this);
         }
     }
 
     @Override
     public String toString() {
-        return loadTarget + " = load " + loadType + ", " + loadValue.getIRType() + " " + loadValue + (IRInstruction.useAlign() ? ", align " + loadType.sizeof() : "");
+        return loadTarget + " = load " + loadType + ", " + loadAddress.getIRType() + " " + loadAddress + (IRInstruction.useAlign() ? ", align " + loadType.sizeof() : "");
     }
 
     @Override

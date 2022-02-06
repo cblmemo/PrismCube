@@ -10,23 +10,23 @@ import java.util.Objects;
 
 public class IRStoreInstruction extends IRInstruction {
     private final IRTypeSystem storeType;
-    private IROperand storeTarget;
+    private IROperand storeAddress;
     private IROperand storeValue;
 
-    public IRStoreInstruction(IRBasicBlock parentBlock, IRTypeSystem storeType, IROperand storeTarget, IROperand storeValue) {
+    public IRStoreInstruction(IRBasicBlock parentBlock, IRTypeSystem storeType, IROperand storeAddress, IROperand storeValue) {
         super(parentBlock);
-        assert storeTarget.getIRType() instanceof IRPointerType;
-        assert Objects.equals(storeType, ((IRPointerType) storeTarget.getIRType()).getBaseType());
+        assert storeAddress.getIRType() instanceof IRPointerType;
+        assert Objects.equals(storeType, ((IRPointerType) storeAddress.getIRType()).getBaseType());
         assert Objects.equals(storeType, storeValue.getIRType());
         this.storeType = storeType;
-        this.storeTarget = storeTarget;
+        this.storeAddress = storeAddress;
         this.storeValue = storeValue;
-        storeTarget.addUser(this);
+        storeAddress.addUser(this);
         storeValue.addUser(this);
     }
 
-    public IROperand getStoreTarget() {
-        return storeTarget;
+    public IROperand getStoreAddress() {
+        return storeAddress;
     }
 
     public IROperand getStoreValue() {
@@ -40,9 +40,9 @@ public class IRStoreInstruction extends IRInstruction {
     @Override
     public void replaceUse(IROperand oldOperand, IROperand newOperand) {
         super.replaceUse(oldOperand, newOperand);
-        if (storeTarget == oldOperand) {
+        if (storeAddress == oldOperand) {
             oldOperand.removeUser(this);
-            storeTarget = newOperand;
+            storeAddress = newOperand;
             newOperand.addUser(this);
         }
         if (storeValue == oldOperand) {
@@ -54,7 +54,7 @@ public class IRStoreInstruction extends IRInstruction {
 
     @Override
     public String toString() {
-        return "store " + storeType + " " + storeValue + ", " + storeType + "* " + storeTarget + (IRInstruction.useAlign() ? (", align " + storeType.sizeof()) : "");
+        return "store " + storeType + " " + storeValue + ", " + storeType + "* " + storeAddress + (IRInstruction.useAlign() ? (", align " + storeType.sizeof()) : "");
     }
 
     @Override

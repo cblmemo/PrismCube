@@ -8,7 +8,7 @@ import Memory.Memory;
 import java.util.ArrayList;
 import java.util.LinkedHashSet;
 
-public class IRBlockFuser extends Optimize {
+public class IRBlockFuser extends IROptimize {
     private boolean changed = true;
 
     public void fuse(Memory memory) {

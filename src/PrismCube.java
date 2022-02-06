@@ -1,10 +1,7 @@
 import FrontEnd.*;
 import BackEnd.*;
 import Memory.Memory;
-import MiddleEnd.DominatorTreeBuilder;
-import MiddleEnd.IRBlockFuser;
-import MiddleEnd.IRGlobalInitializeEliminator;
-import MiddleEnd.MemoryToRegisterPromoter;
+import MiddleEnd.*;
 import Utility.error.error;
 
 /**
@@ -31,13 +28,14 @@ public class PrismCube {
             new IREmitter().emit(memory);
             // optimize
             new IRGlobalInitializeEliminator().eliminate(memory);
-            new IRBlockFuser().fuse(memory);
             new DominatorTreeBuilder().build(memory);
             new MemoryToRegisterPromoter().promote(memory);
+            new IRBlockFuser().fuse(memory);
             new IREmitter().emitOpt(memory);
             // assembly
             new InstructionSelector().select(memory);
             new RegisterAllocator().allocate(memory);
+            new PeepholePeeker().peek(memory); // optimize
             new ASMEmitter().emit(memory);
         } catch (error err) {
             err.printStackTrace();

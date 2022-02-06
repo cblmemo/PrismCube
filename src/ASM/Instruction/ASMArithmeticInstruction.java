@@ -1,5 +1,7 @@
 package ASM.Instruction;
 
+import ASM.ASMBasicBlock;
+
 public class ASMArithmeticInstruction extends ASMInstruction {
     public enum InstType {
         lui, auipc,
@@ -21,9 +23,17 @@ public class ASMArithmeticInstruction extends ASMInstruction {
             assert haveImmediateType();
             return values()[ordinal() + 9];
         }
+
+        public boolean isMul() {
+            return ordinal() == mul.ordinal();
+        }
+
+        public boolean isDiv() {
+            return ordinal() == div.ordinal();
+        }
     }
 
-    public ASMArithmeticInstruction(InstType type) {
-        super(type.toString());
+    public ASMArithmeticInstruction(ASMBasicBlock parentBlock, InstType type) {
+        super(parentBlock, type.toString());
     }
 }

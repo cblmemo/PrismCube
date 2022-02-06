@@ -36,14 +36,14 @@ public class ASMFunction {
         log.Debugf("start request alloca for function %s\n", functionName);
         function.getEntryBlock().getAllocas().forEach(stackFrame::requestAlloca);
         this.entryBlock = blockMap.get(function.getEntryBlock());
-        this.label = new ASMLabel(function.getFunctionName());
+        this.label = new ASMLabel(function.getFunctionName(), null);
     }
 
     // constructor for builtin functions
     public ASMFunction(String functionName) {
         this.functionName = functionName;
         this.entryBlock = null;
-        this.label = new ASMLabel(functionName);
+        this.label = new ASMLabel(functionName, null);
     }
 
     public void addCalleeSave(ASMPhysicalRegister reg, ASMVirtualRegister calleeSave) {
@@ -119,5 +119,32 @@ public class ASMFunction {
         log.Tracef("topological order of function [%s]:\n", functionName);
         sorted.forEach(block -> log.Tracef("serial: [%d], label: [%s]\n", block2serial.get(block), block.getLabel()));
         return sorted;
+    }
+
+    private final ArrayList<ASMBasicBlock> reachable = new ArrayList<>();
+
+    public ArrayList<ASMBasicBlock> reachableBlocks() {
+        reachable.clear();
+        dfs(entryBlock);
+        return reachable;
+    }
+
+    private void dfs(ASMBasicBlock current) {
+        reachable.add(current);
+        current.getSuccessors().forEach(succ -> {
+            if (!reachable.contains(succ)) dfs(succ);
+        });
+    }
+
+    public void removeUnreachableBlocks() {
+        reachableBlocks();
+        ArrayList<ASMBasicBlock> blockBackup = new ArrayList<>(blocks);
+        blockBackup.forEach(block -> {
+            if (!reachable.contains(block)) {
+                blocks.remove(block);
+                block.getPredecessors().forEach(pred -> pred.removeSuccessor(block));
+                block.getSuccessors().forEach(succ -> succ.removePredecessor(block));
+            }
+        });
     }
 }

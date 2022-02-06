@@ -12,6 +12,4 @@ public abstract class Optimize {
     public static void disable() {
         doOptimize = false;
     }
-
-    abstract protected void visit(IRFunction function);
 }

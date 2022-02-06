@@ -2,6 +2,8 @@ package ASM.Operand;
 
 import ASM.ASMStackFrame;
 
+import java.util.Objects;
+
 public class ASMAddress extends ASMOperand {
     private ASMRegister register;
     private final ASMImmediate offset;
@@ -27,11 +29,23 @@ public class ASMAddress extends ASMOperand {
         this.register = register;
     }
 
+    private int getTrueOffset() {
+        if (needAddFrameSize) return offset.getImm() + stackFrame.getFrameSize();
+        return offset.getImm();
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        ASMAddress that = (ASMAddress) o;
+        return Objects.equals(register, that.register) && getTrueOffset() == that.getTrueOffset();
+    }
+
     @Override
     public String toString() {
         if (offset == null) return 0 + "(" + register.toString() + ")";
-        int trueOffset = offset.getImm();
-        if (needAddFrameSize) trueOffset += stackFrame.getFrameSize();
+        int trueOffset = getTrueOffset();
         return trueOffset + "(" + register + ")";
     }
 }

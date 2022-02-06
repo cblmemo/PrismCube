@@ -1,5 +1,6 @@
 package ASM.Instruction;
 
+import ASM.ASMBasicBlock;
 import ASM.Operand.ASMAddress;
 import ASM.Operand.ASMRegister;
 
@@ -8,8 +9,8 @@ public class ASMMemoryInstruction extends ASMInstruction {
         lb, lw, sb, sw
     }
 
-    public ASMMemoryInstruction(InstType type, ASMRegister register, ASMAddress address) {
-        super(type.toString());
+    public ASMMemoryInstruction(ASMBasicBlock parentBlock, InstType type, ASMRegister register, ASMAddress address) {
+        super(parentBlock, type.toString());
         addOperand(register);
         addOperand(address);
     }

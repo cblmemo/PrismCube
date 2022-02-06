@@ -229,7 +229,7 @@ public class IRFunction {
             if (!reachable.contains(block)) {
                 assert block != entryBlock && block != returnBlock;
                 blocks.remove(block);
-                assert block.getPredecessors().size() == 0;
+                block.getPredecessors().forEach(pred -> pred.removeSuccessor(block));
                 block.getSuccessors().forEach(succ -> succ.removePredecessor(block));
             }
         });

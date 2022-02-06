@@ -1,7 +1,9 @@
 package ASM;
 
 import ASM.Instruction.ASMInstruction;
+import ASM.Operand.ASMImmediate;
 import ASM.Operand.ASMLabel;
+import ASM.Operand.ASMOperand;
 import ASM.Operand.ASMRegister;
 
 import java.util.ArrayList;
@@ -34,11 +36,15 @@ public class ASMBasicBlock {
             labelName = ".LBB_" + functionId.get(parentFunction) + "_" + blockId;
             functionLabelCnt.put(funcId, blockId + 1);
         }
-        this.label = new ASMLabel(labelName);
+        this.label = new ASMLabel(labelName, this);
     }
 
     public void appendInstruction(ASMInstruction inst) {
         instructions.add(inst);
+    }
+
+    public void replaceInstruction(ASMInstruction oldInst, ASMInstruction newInst) {
+        instructions.set(instructions.indexOf(oldInst), newInst);
     }
 
     public void addPredecessor(ASMBasicBlock pred) {
@@ -47,6 +53,14 @@ public class ASMBasicBlock {
 
     public void addSuccessor(ASMBasicBlock pred) {
         successors.add(pred);
+    }
+
+    public void removePredecessor(ASMBasicBlock pred) {
+        predecessors.remove(pred);
+    }
+
+    public void removeSuccessor(ASMBasicBlock pred) {
+        successors.remove(pred);
     }
 
     public ArrayList<ASMBasicBlock> getPredecessors() {
@@ -75,6 +89,15 @@ public class ASMBasicBlock {
 
     public void setInstructions(ArrayList<ASMInstruction> instructions) {
         this.instructions = instructions;
+    }
+
+    public boolean isDirectlyJumpBlock() {
+        return instructions.size() == 1 && instructions.get(0).isJump();
+    }
+
+    public ASMBasicBlock getJumpTarget() {
+        assert isDirectlyJumpBlock();
+        return ((ASMLabel) instructions.get(0).getOperands().get(0)).belongTo();
     }
 
     @Override

@@ -8,7 +8,7 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 
-public class DominatorTreeBuilder extends Optimize {
+public class DominatorTreeBuilder extends IROptimize {
     private IRFunction function;
 
     // auxiliary
@@ -28,6 +28,7 @@ public class DominatorTreeBuilder extends Optimize {
 
     public void build(Memory memory) {
         if (doOptimize) {
+            new IRBlockFuser().fuse(memory); // remove unreachable block
             memory.getIRModule().getFunctions().values().forEach(this::visit);
         }
     }

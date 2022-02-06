@@ -10,7 +10,7 @@ import time
 test_cases_dir = './testcases/codegen/'
 # test_cases_dir = './testcases/optim/'
 compile_cmd = "bash ./build.bash"
-execute_cmd = "java -cp lib/antlr-4.9.1-complete.jar:./myout PrismCube -emit-asm -i ./bin/test.mx -o ./bin/test.s -arch x86_64 -O2"
+execute_cmd = "java -ea -cp lib/antlr-4.9.1-complete.jar:./myout PrismCube -emit-asm -i ./bin/test.mx -o ./bin/test.s -arch x86_64 -O2"
 excluded_test_cases = ["foo.mx"]
 ravel_path = "./lib/ravel --enable-cache"
 builtin_path = "./builtin/builtin.s"
@@ -92,7 +92,7 @@ def main():
         continue_fail = 0
         print(color_green + "Accepted" + color_none)
 
-    print("total {}, passed {}, ratio {}".format(total, passed, passed / total))
+    print("total {}, passed {}, ratio {}%".format(total, passed, passed / total * 100))
 
 
 if __name__ == '__main__':

@@ -434,12 +434,12 @@ public class GraphColoringAllocator {
             assert v instanceof ASMVirtualRegister;
             ASMVirtualRegister vi = new ASMVirtualRegister("spill");
             int loc = memoryLocation.get(v);
-            if (isValidImmediate(loc)) newInstructions.add(new ASMMemoryInstruction(type, vi, new ASMAddress(sp, new ASMImmediate(loc))));
+            if (isValidImmediate(loc)) newInstructions.add(new ASMMemoryInstruction(block, type, vi, new ASMAddress(sp, new ASMImmediate(loc))));
             else {
                 ASMVirtualRegister location = new ASMVirtualRegister("mem_loc");
-                newInstructions.add(new ASMPseudoInstruction(ASMPseudoInstruction.InstType.li).addOperand(location).addOperand(new ASMImmediate(loc)));
-                newInstructions.add(new ASMArithmeticInstruction(ASMArithmeticInstruction.InstType.add).addOperand(location).addOperand(sp).addOperand(location));
-                newInstructions.add(new ASMMemoryInstruction(type, vi, new ASMAddress(location, null)));
+                newInstructions.add(new ASMPseudoInstruction(block, ASMPseudoInstruction.InstType.li).addOperand(location).addOperand(new ASMImmediate(loc)));
+                newInstructions.add(new ASMArithmeticInstruction(block, ASMArithmeticInstruction.InstType.add).addOperand(location).addOperand(sp).addOperand(location));
+                newInstructions.add(new ASMMemoryInstruction(block, type, vi, new ASMAddress(location, null)));
             }
             inst.replaceRegister((ASMVirtualRegister) v, vi);
         }
@@ -456,10 +456,12 @@ public class GraphColoringAllocator {
         for (ASMRegister v : def) replaceRegisterInInstruction(inst, v, ASMMemoryInstruction.InstType.sw);
     }
 
+    private ASMBasicBlock block;
     private ArrayList<ASMInstruction> newInstructions;
 
     private void rewriteBlock(ASMBasicBlock block) {
         newInstructions = new ArrayList<>();
+        this.block = block;
         block.getInstructions().forEach(this::rewriteInstruction);
         block.setInstructions(newInstructions);
     }
@@ -512,13 +514,13 @@ public class GraphColoringAllocator {
         ASMInstruction minusSp, plusSp;
         int frameSize = function.getStackFrame().getFrameSize();
         if (isValidImmediate(frameSize)) {
-            minusSp = new ASMArithmeticInstruction(ASMArithmeticInstruction.InstType.addi).addOperand(sp).addOperand(sp).addOperand(new ASMImmediate(-frameSize));
-            plusSp = new ASMArithmeticInstruction(ASMArithmeticInstruction.InstType.addi).addOperand(sp).addOperand(sp).addOperand(new ASMImmediate(frameSize));
+            minusSp = new ASMArithmeticInstruction(entry, ASMArithmeticInstruction.InstType.addi).addOperand(sp).addOperand(sp).addOperand(new ASMImmediate(-frameSize));
+            plusSp = new ASMArithmeticInstruction(escape, ASMArithmeticInstruction.InstType.addi).addOperand(sp).addOperand(sp).addOperand(new ASMImmediate(frameSize));
         } else {
-            entry.getInstructions().add(indexOfMinusSp++, new ASMPseudoInstruction(ASMPseudoInstruction.InstType.li).addOperand(t0).addOperand(new ASMImmediate(-frameSize)));
-            minusSp = new ASMArithmeticInstruction(ASMArithmeticInstruction.InstType.add).addOperand(sp).addOperand(sp).addOperand(t0);
-            escape.getInstructions().add(indexOfPlusSp++, new ASMPseudoInstruction(ASMPseudoInstruction.InstType.li).addOperand(t0).addOperand(new ASMImmediate(frameSize)));
-            plusSp = new ASMArithmeticInstruction(ASMArithmeticInstruction.InstType.add).addOperand(sp).addOperand(sp).addOperand(t0);
+            entry.getInstructions().add(indexOfMinusSp++, new ASMPseudoInstruction(entry, ASMPseudoInstruction.InstType.li).addOperand(t0).addOperand(new ASMImmediate(-frameSize)));
+            minusSp = new ASMArithmeticInstruction(entry, ASMArithmeticInstruction.InstType.add).addOperand(sp).addOperand(sp).addOperand(t0);
+            escape.getInstructions().add(indexOfPlusSp++, new ASMPseudoInstruction(escape, ASMPseudoInstruction.InstType.li).addOperand(t0).addOperand(new ASMImmediate(frameSize)));
+            plusSp = new ASMArithmeticInstruction(escape, ASMArithmeticInstruction.InstType.add).addOperand(sp).addOperand(sp).addOperand(t0);
         }
         entry.getInstructions().set(indexOfMinusSp, minusSp);
         escape.getInstructions().set(indexOfPlusSp, plusSp);

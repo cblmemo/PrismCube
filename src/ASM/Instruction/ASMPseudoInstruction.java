@@ -1,5 +1,7 @@
 package ASM.Instruction;
 
+import ASM.ASMBasicBlock;
+
 public class ASMPseudoInstruction extends ASMInstruction {
     public enum InstType {
         li, mv, call, ret, j, la,
@@ -10,7 +12,7 @@ public class ASMPseudoInstruction extends ASMInstruction {
         }
     }
 
-    public ASMPseudoInstruction(InstType type) {
-        super(type.toString());
+    public ASMPseudoInstruction(ASMBasicBlock parentBlock, InstType type) {
+        super(parentBlock, type.toString());
     }
 }

@@ -1,10 +1,11 @@
 package ASM.Instruction;
 
+import ASM.ASMBasicBlock;
 import ASM.Operand.ASMRegister;
 
 public class ASMMoveInstruction extends ASMPseudoInstruction {
-    public ASMMoveInstruction(InstType type) {
-        super(type);
+    public ASMMoveInstruction(ASMBasicBlock parentBlock, InstType type) {
+        super(parentBlock, type);
     }
 
     public ASMRegister getRd() {

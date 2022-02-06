@@ -15,7 +15,7 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 
-public class MemoryToRegisterPromoter extends Optimize {
+public class MemoryToRegisterPromoter extends IROptimize {
     private IRFunction function;
     private final LinkedHashSet<IRAllocaInstruction> allocas = new LinkedHashSet<>();
     private final LinkedHashMap<IRRegister, ArrayList<IRBasicBlock>> allocaUserBlocks = new LinkedHashMap<>();
@@ -65,13 +65,13 @@ public class MemoryToRegisterPromoter extends Optimize {
             IROperand currentValue = null;
             ArrayList<IRInstruction> insts = new ArrayList<>(block.getInstructions());
             for (IRInstruction inst : insts) {
-                if (inst instanceof IRLoadInstruction && ((IRLoadInstruction) inst).getLoadValue() == memoryAddress) {
+                if (inst instanceof IRLoadInstruction && ((IRLoadInstruction) inst).getLoadAddress() == memoryAddress) {
                     assert currentValue != null;
                     IRRegister loadReg = ((IRLoadInstruction) inst).getLoadTarget();
                     for (IRInstruction user : loadReg.getUsers()) user.replaceUse(loadReg, currentValue);
                     inst.removeFromParentBlock();
                 }
-                if (inst instanceof IRStoreInstruction && ((IRStoreInstruction) inst).getStoreTarget() == memoryAddress) {
+                if (inst instanceof IRStoreInstruction && ((IRStoreInstruction) inst).getStoreAddress() == memoryAddress) {
                     currentValue = ((IRStoreInstruction) inst).getStoreValue();
                     inst.removeFromParentBlock();
                 }

@@ -32,6 +32,7 @@ public class NaiveAllocator {
 
     private final ASMFunction function;
     private final HashMap<ASMVirtualRegister, ASMAddress> vr2addr = new HashMap<>();
+    private ASMBasicBlock block;
     private ArrayList<ASMInstruction> newList;
 
     public NaiveAllocator(ASMFunction function) {
@@ -75,19 +76,19 @@ public class NaiveAllocator {
         int indexOfMinusSp = entry.getInstructions().indexOf(null), indexOfPlusSp = escape.getInstructions().indexOf(null);
         ASMArithmeticInstruction minusSp, plusSp;
         if (isValidImmediate(frameSize)) {
-            minusSp = new ASMArithmeticInstruction(ASMArithmeticInstruction.InstType.addi);
+            minusSp = new ASMArithmeticInstruction(entry, ASMArithmeticInstruction.InstType.addi);
             minusSp.addOperand(sp).addOperand(sp).addOperand(new ASMImmediate(-frameSize));
-            plusSp = new ASMArithmeticInstruction(ASMArithmeticInstruction.InstType.addi);
+            plusSp = new ASMArithmeticInstruction(escape, ASMArithmeticInstruction.InstType.addi);
             plusSp.addOperand(sp).addOperand(sp).addOperand(new ASMImmediate(frameSize));
         } else {
-            ASMPseudoInstruction liNegative = new ASMPseudoInstruction(ASMPseudoInstruction.InstType.li);
+            ASMPseudoInstruction liNegative = new ASMPseudoInstruction(entry, ASMPseudoInstruction.InstType.li);
             liNegative.addOperand(s(0)).addOperand(new ASMImmediate(-frameSize));
-            minusSp = new ASMArithmeticInstruction(ASMArithmeticInstruction.InstType.add);
+            minusSp = new ASMArithmeticInstruction(entry, ASMArithmeticInstruction.InstType.add);
             minusSp.addOperand(sp).addOperand(sp).addOperand(s(0));
             entry.getInstructions().add(indexOfMinusSp++, liNegative);
-            ASMPseudoInstruction liPositive = new ASMPseudoInstruction(ASMPseudoInstruction.InstType.li);
+            ASMPseudoInstruction liPositive = new ASMPseudoInstruction(escape, ASMPseudoInstruction.InstType.li);
             liPositive.addOperand(s(0)).addOperand(new ASMImmediate(frameSize));
-            plusSp = new ASMArithmeticInstruction(ASMArithmeticInstruction.InstType.add);
+            plusSp = new ASMArithmeticInstruction(escape, ASMArithmeticInstruction.InstType.add);
             plusSp.addOperand(sp).addOperand(sp).addOperand(s(0));
             escape.getInstructions().add(indexOfPlusSp++, liPositive);
             // si stores sp + 2048 * i
@@ -95,16 +96,16 @@ public class NaiveAllocator {
             int indexOfRetrieveBackup = indexOfPlusSp - 1;
             for (int i = 1; i <= frameSize / 2048; i++) {
                 // backup si to stack
-                ASMMemoryInstruction backup = new ASMMemoryInstruction(ASMMemoryInstruction.InstType.sw, s(i), sBackup.get(i));
+                ASMMemoryInstruction backup = new ASMMemoryInstruction(entry, ASMMemoryInstruction.InstType.sw, s(i), sBackup.get(i));
                 entry.getInstructions().add(indexOfInitializeStore++, backup);
-                ASMMemoryInstruction retrieve = new ASMMemoryInstruction(ASMMemoryInstruction.InstType.lw, s(i), sBackup.get(i));
+                ASMMemoryInstruction retrieve = new ASMMemoryInstruction(escape, ASMMemoryInstruction.InstType.lw, s(i), sBackup.get(i));
                 escape.getInstructions().add(indexOfRetrieveBackup++, retrieve);
                 indexOfPlusSp++;
                 // store sp + 2048 * i to si
-                ASMPseudoInstruction li2si = new ASMPseudoInstruction(ASMPseudoInstruction.InstType.li);
+                ASMPseudoInstruction li2si = new ASMPseudoInstruction(entry, ASMPseudoInstruction.InstType.li);
                 li2si.addOperand(ASMPhysicalRegister.getStoreRegister(i)).addOperand(new ASMImmediate(i * 2048));
                 entry.getInstructions().add(indexOfInitializeStore++, li2si);
-                ASMArithmeticInstruction add2si = new ASMArithmeticInstruction(ASMArithmeticInstruction.InstType.add);
+                ASMArithmeticInstruction add2si = new ASMArithmeticInstruction(entry, ASMArithmeticInstruction.InstType.add);
                 add2si.addOperand(ASMPhysicalRegister.getStoreRegister(i)).addOperand(sp).addOperand(ASMPhysicalRegister.getStoreRegister(i));
                 entry.getInstructions().add(indexOfInitializeStore++, add2si);
             }
@@ -117,6 +118,7 @@ public class NaiveAllocator {
 
     private void allocateBlock(ASMBasicBlock block) {
         newList = new ArrayList<>();
+        this.block = block;
         block.getInstructions().forEach(this::allocateInstruction);
         block.setInstructions(newList);
     }
@@ -127,7 +129,7 @@ public class NaiveAllocator {
         for (ASMRegister rs : use) {
             if (rs instanceof ASMVirtualRegister) {
                 ASMPhysicalRegister phyReg = registers.get(current++);
-                newList.add(new ASMMemoryInstruction(ASMMemoryInstruction.InstType.lw, phyReg, vr2addr.get((ASMVirtualRegister) rs)));
+                newList.add(new ASMMemoryInstruction(block, ASMMemoryInstruction.InstType.lw, phyReg, vr2addr.get((ASMVirtualRegister) rs)));
                 inst.replaceRegister((ASMVirtualRegister) rs, phyReg);
             }
         }
@@ -135,7 +137,7 @@ public class NaiveAllocator {
         for (ASMRegister rd : def) {
             if (rd instanceof ASMVirtualRegister) {
                 ASMPhysicalRegister phyReg = registers.get(current++);
-                newList.add(new ASMMemoryInstruction(ASMMemoryInstruction.InstType.sw, phyReg, vr2addr.get((ASMVirtualRegister) rd)));
+                newList.add(new ASMMemoryInstruction(block, ASMMemoryInstruction.InstType.sw, phyReg, vr2addr.get((ASMVirtualRegister) rd)));
                 inst.replaceRegister((ASMVirtualRegister) rd, phyReg);
             }
         }

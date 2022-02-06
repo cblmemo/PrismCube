@@ -1,5 +1,6 @@
 package ASM.Instruction;
 
+import ASM.ASMBasicBlock;
 import ASM.Operand.*;
 import BackEnd.ASMEmitter;
 
@@ -13,14 +14,20 @@ abstract public class ASMInstruction {
         return inst + " ".repeat(ASMEmitter.getAlignLength() - inst.length());
     }
 
+    private final ASMBasicBlock parentBlock;
     private final String instStr;
     private final ArrayList<ASMOperand> operands = new ArrayList<>();
     private final ArrayList<ASMRegister> defs = new ArrayList<>();
     private final ArrayList<ASMRegister> uses = new ArrayList<>();
 
-    public ASMInstruction(String instStr) {
+    public ASMInstruction(ASMBasicBlock parentBlock, String instStr) {
+        this.parentBlock = parentBlock;
         this.instStr = instStr;
         if (Objects.equals(instStr, "call")) ASMPhysicalRegister.getCallerSaveRegisters().forEach(this::addDef);
+    }
+
+    public void removeFromParentBlock() {
+        parentBlock.getInstructions().remove(this);
     }
 
     protected void addDef(ASMRegister reg) {
@@ -87,11 +94,19 @@ abstract public class ASMInstruction {
         operands.set(index, operand);
     }
 
-    private boolean isStoreInstruction() {
+    public boolean isJump() {
+        return Objects.equals(instStr, "j");
+    }
+
+    public boolean isLi() {
+        return Objects.equals(instStr, "li");
+    }
+
+    public boolean isStore() {
         return Objects.equals(instStr, "sb") || Objects.equals(instStr, "sw");
     }
 
-    private boolean isBranchInstruction() {
+    public boolean isBranch() {
         return Objects.equals(instStr, "beqz");
     }
 
@@ -113,13 +128,13 @@ abstract public class ASMInstruction {
 
     public void replaceRegister(ASMVirtualRegister oldReg, ASMRegister newReg) {
         if (this instanceof ASMArithmeticInstruction || this instanceof ASMPseudoInstruction) {
-            if (isBranchInstruction()) replaceUse(0, oldReg, newReg);
+            if (isBranch()) replaceUse(0, oldReg, newReg);
             else {
                 replaceDef(0, oldReg, newReg);
                 for (int i = 1; i < getOperands().size(); i++) replaceUse(i, oldReg, newReg);
             }
         } else { // this instanceof ASMMemoryInstruction
-            if (isStoreInstruction()) replaceUse(0, oldReg, newReg);
+            if (isStore()) replaceUse(0, oldReg, newReg);
             else replaceDef(0, oldReg, newReg);
             if (((ASMAddress) getOperands().get(1)).getRegister() == oldReg) {
                 ((ASMAddress) getOperands().get(1)).replaceRegister(newReg);

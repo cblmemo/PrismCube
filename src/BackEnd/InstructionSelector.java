@@ -17,7 +17,6 @@ import IR.IRGlobalDefine;
 import IR.IRModule;
 import IR.Instruction.*;
 import IR.Operand.*;
-import IR.TypeSystem.IRPointerType;
 import IR.TypeSystem.IRStructureType;
 import IR.TypeSystem.IRTypeSystem;
 import Memory.Memory;
@@ -74,13 +73,13 @@ public class InstructionSelector implements IRVisitor {
     }
 
     private void appendPseudoInst(ASMPseudoInstruction.InstType type, ASMOperand... operands) {
-        ASMPseudoInstruction pseudoInst = type.isMove() ? new ASMMoveInstruction(type) : new ASMPseudoInstruction(type);
+        ASMPseudoInstruction pseudoInst = type.isMove() ? new ASMMoveInstruction(currentBasicBlock, type) : new ASMPseudoInstruction(currentBasicBlock, type);
         for (ASMOperand operand : operands) pseudoInst.addOperand(operand);
         appendInst(pseudoInst);
     }
 
     private void appendArithmeticInst(ASMArithmeticInstruction.InstType type, ASMOperand... operands) {
-        ASMArithmeticInstruction arithmeticInstruction = new ASMArithmeticInstruction(type);
+        ASMArithmeticInstruction arithmeticInstruction = new ASMArithmeticInstruction(currentBasicBlock, type);
         for (ASMOperand operand : operands) arithmeticInstruction.addOperand(operand);
         appendInst(arithmeticInstruction);
     }
@@ -127,6 +126,25 @@ public class InstructionSelector implements IRVisitor {
         return toRegister(operand);
     }
 
+    private boolean isPowerOf2(int n) {
+        if (n <= 0) return false;
+        while (n != 1) {
+            if (n % 2 != 0) return false;
+            n /= 2;
+        }
+        return true;
+    }
+
+    private int log2(int n) {
+        assert isPowerOf2(n);
+        int ret = 0;
+        while (n != 1) {
+            n /= 2;
+            ret++;
+        }
+        return ret;
+    }
+
     private void parseArith(ASMArithmeticInstruction.InstType type, ASMRegister rd, IROperand rs1, IROperand rs2, boolean inverse) {
         ASMArithmeticInstruction.InstType newType;
         ASMOperand rs1V, rs2V;
@@ -135,6 +153,16 @@ public class InstructionSelector implements IRVisitor {
             rs1V = toRegister(rs2);
             rs2V = toOperand(rs1);
         } else {
+            if (type.isMul() && rs2 instanceof IRConstNumber && isPowerOf2(((IRConstNumber) rs2).getIntValue())) {
+                int logRS2 = log2(((IRConstNumber) rs2).getIntValue());
+                type = ASMArithmeticInstruction.InstType.sll;
+                rs2 = new IRConstInt(null, logRS2);
+            }
+            if (type.isDiv() && rs2 instanceof IRConstNumber && isPowerOf2(((IRConstNumber) rs2).getIntValue())) {
+                int logRS2 = log2(((IRConstNumber) rs2).getIntValue());
+                type = ASMArithmeticInstruction.InstType.sra;
+                rs2 = new IRConstInt(null, logRS2);
+            }
             rs1V = toRegister(rs1);
             rs2V = type.haveImmediateType() ? toOperand(rs2) : toRegister(rs2);
             newType = type.haveImmediateType() && rs2V instanceof ASMImmediate ? type.toImmediateType() : type;
@@ -202,7 +230,7 @@ public class InstructionSelector implements IRVisitor {
         for (int i = 8; i < function.getParameterNumber(); i++) {
             ASMAddress argumentAddress = new ASMAddress(ASMPhysicalRegister.getPhysicalRegister(ASMPhysicalRegister.PhysicalRegisterName.sp), new ASMImmediate(4 * (i - 8)));
             argumentAddress.markAsNeedAddFrameSize(currentFunction.getStackFrame());
-            appendInst(new ASMMemoryInstruction(ASMMemoryInstruction.InstType.lw, toRegister(function.getParameters().get(i)), argumentAddress));
+            appendInst(new ASMMemoryInstruction(currentBasicBlock, ASMMemoryInstruction.InstType.lw, toRegister(function.getParameters().get(i)), argumentAddress));
         }
         function.getBlocks().forEach(block -> block.accept(this));
     }
@@ -248,7 +276,7 @@ public class InstructionSelector implements IRVisitor {
             appendPseudoInst(ASMPseudoInstruction.InstType.mv, ASMPhysicalRegister.getArgumentRegister(i), toRegister(inst.getArgumentValues().get(i)));
         for (int i = 8; i < inst.getArgumentNumber(); i++) {
             ASMAddress argumentAddress = new ASMAddress(ASMPhysicalRegister.getPhysicalRegister(ASMPhysicalRegister.PhysicalRegisterName.sp), new ASMImmediate(4 * (i - 8)));
-            appendInst(new ASMMemoryInstruction(ASMMemoryInstruction.InstType.sw, toRegister(inst.getArgumentValues().get(i)), argumentAddress));
+            appendInst(new ASMMemoryInstruction(currentBasicBlock, ASMMemoryInstruction.InstType.sw, toRegister(inst.getArgumentValues().get(i)), argumentAddress));
         }
         ASMLabel functionLabel = getFunctionLabel(inst.getCallFunction().getFunctionName());
         appendPseudoInst(ASMPseudoInstruction.InstType.call, functionLabel);
@@ -260,18 +288,18 @@ public class InstructionSelector implements IRVisitor {
     public void visit(IRLoadInstruction inst) {
         ASMRegister loadTarget = toRegister(inst.getLoadTarget());
         ASMAddress loadSource;
-        if (inst.getLoadValue() instanceof IRGlobalVariableRegister) {
+        if (inst.getLoadAddress() instanceof IRGlobalVariableRegister) {
             ASMVirtualRegister address = new ASMVirtualRegister("global_address");
-            appendPseudoInst(ASMPseudoInstruction.InstType.la, address, asmModule.getGlobal(((IRGlobalVariableRegister) inst.getLoadValue()).getGlobalVariableName()));
+            appendPseudoInst(ASMPseudoInstruction.InstType.la, address, asmModule.getGlobal(((IRGlobalVariableRegister) inst.getLoadAddress()).getGlobalVariableName()));
             loadSource = new ASMAddress(address, null);
         } else {
-            if (currentFunction.getStackFrame().isAllocaRegister((IRRegister) inst.getLoadValue())) {
-                int offset = currentFunction.getStackFrame().getAllocaRegisterOffset((IRRegister) inst.getLoadValue());
+            if (currentFunction.getStackFrame().isAllocaRegister((IRRegister) inst.getLoadAddress())) {
+                int offset = currentFunction.getStackFrame().getAllocaRegisterOffset((IRRegister) inst.getLoadAddress());
                 loadSource = new ASMAddress(ASMPhysicalRegister.getPhysicalRegister(ASMPhysicalRegister.PhysicalRegisterName.sp), new ASMImmediate(offset));
-            } else loadSource = new ASMAddress(toRegister(inst.getLoadValue()), null);
+            } else loadSource = new ASMAddress(toRegister(inst.getLoadAddress()), null);
         }
         ASMMemoryInstruction.InstType loadType = inst.getLoadType().sizeof() == 1 ? ASMMemoryInstruction.InstType.lb : ASMMemoryInstruction.InstType.lw;
-        appendInst(new ASMMemoryInstruction(loadType, loadTarget, loadSource));
+        appendInst(new ASMMemoryInstruction(currentBasicBlock, loadType, loadTarget, loadSource));
     }
 
     @Override
@@ -297,18 +325,18 @@ public class InstructionSelector implements IRVisitor {
     public void visit(IRStoreInstruction inst) {
         ASMRegister storeValue = toRegister(inst.getStoreValue());
         ASMAddress storeTarget;
-        if (inst.getStoreTarget() instanceof IRGlobalVariableRegister) {
+        if (inst.getStoreAddress() instanceof IRGlobalVariableRegister) {
             ASMVirtualRegister address = new ASMVirtualRegister("global_address");
-            appendPseudoInst(ASMPseudoInstruction.InstType.la, address, asmModule.getGlobal(((IRGlobalVariableRegister) inst.getStoreTarget()).getGlobalVariableName()));
+            appendPseudoInst(ASMPseudoInstruction.InstType.la, address, asmModule.getGlobal(((IRGlobalVariableRegister) inst.getStoreAddress()).getGlobalVariableName()));
             storeTarget = new ASMAddress(address, null);
         } else {
-            if (currentFunction.getStackFrame().isAllocaRegister((IRRegister) inst.getStoreTarget())) {
-                int offset = currentFunction.getStackFrame().getAllocaRegisterOffset((IRRegister) inst.getStoreTarget());
+            if (currentFunction.getStackFrame().isAllocaRegister((IRRegister) inst.getStoreAddress())) {
+                int offset = currentFunction.getStackFrame().getAllocaRegisterOffset((IRRegister) inst.getStoreAddress());
                 storeTarget = new ASMAddress(ASMPhysicalRegister.getPhysicalRegister(ASMPhysicalRegister.PhysicalRegisterName.sp), new ASMImmediate(offset));
-            } else storeTarget = new ASMAddress(toRegister(inst.getStoreTarget()), null);
+            } else storeTarget = new ASMAddress(toRegister(inst.getStoreAddress()), null);
         }
         ASMMemoryInstruction.InstType storeType = inst.getStoreType().sizeof() == 1 ? ASMMemoryInstruction.InstType.sb : ASMMemoryInstruction.InstType.sw;
-        appendInst(new ASMMemoryInstruction(storeType, storeValue, storeTarget));
+        appendInst(new ASMMemoryInstruction(currentBasicBlock, storeType, storeValue, storeTarget));
     }
 
     private static final LinkedHashMap<String, ASMArithmeticInstruction.InstType> ir2asm = new LinkedHashMap<>(Map.of(
