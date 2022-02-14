@@ -41,7 +41,7 @@ public class IRModule {
             ; ModuleID = 'src.mx'
             source_filename = "src.mx"
             target datalayout = "e-m:o-i64:64-i128:128-n32:64-S128"
-            target triple = "arm64-apple-macosx12.0.0"
+            target triple = "riscv32"
             """;
 
     public IRModule() {
@@ -282,7 +282,7 @@ public class IRModule {
         return singleInitializeFunctions;
     }
 
-    public void relocationInitializeFunctionsAndAllocas() {
+    public void relocateInitializeFunctionsAndAllocas() {
         addFunction(globalConstructor);
         singleInitializeFunctions.forEach(this::addFunction);
         callGlobalInit = new IRCallInstruction(mainFunction.getEntryBlock(), getIRType("void"), globalConstructor);

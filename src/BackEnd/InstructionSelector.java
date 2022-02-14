@@ -119,7 +119,7 @@ public class InstructionSelector implements IRVisitor {
 
     private ASMOperand toOperand(IROperand operand) {
         if (operand instanceof IRRegister) return toRegister(operand);
-        assert operand instanceof IRConstNumber;
+        assert operand instanceof IRConstNumber : operand;
         int value = ((IRConstNumber) operand).getIntValue();
         if (value == 0) return ASMPhysicalRegister.getPhysicalRegister(ASMPhysicalRegister.PhysicalRegisterName.zero);
         if (isValidImmediate(value)) return new ASMImmediate(value);
@@ -263,6 +263,11 @@ public class InstructionSelector implements IRVisitor {
     @Override
     public void visit(IRPhiInstruction inst) {
         throw new ASMError("unexpected phi");
+    }
+
+    @Override
+    public void visit(IRMoveInstruction inst) {
+        appendPseudoInst(ASMPseudoInstruction.InstType.mv, toRegister(inst.getResultRegister()), toRegister(inst.getValue()));
     }
 
     @Override

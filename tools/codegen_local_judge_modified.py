@@ -78,15 +78,17 @@ def main():
             print(end=' ')
         start = time.time()
         if os.system('{}'.format(execute_cmd)):  # input redirect done in execute_cmd
-            print(color_red + "Compilation failed" + color_none)
+            print(color_red + "Compilation Failed" + color_none)
             continue_fail += 1
             continue
         print("(T=%.2fs)" % (time.time() - start), end=" ")
         if os.system('{} --input-file=./bin/test.in --output-file=./bin/test.out ./bin/test.s ./bin/builtin.s 1>./bin/ravel.out 2>/dev/null'.format(ravel_path)):
-            print(color_red + "Runtime error" + color_none)
+            print(color_red + "Runtime Error" + color_none)
+            continue_fail += 1
             continue
         if os.system('diff -B -b ./bin/test.out ./bin/test.ans > ./bin/diff.out'):
-            print(color_red + "Wrong answer" + color_none)
+            print(color_red + "Wrong Answer" + color_none)
+            continue_fail += 1
             continue
         passed += 1
         continue_fail = 0

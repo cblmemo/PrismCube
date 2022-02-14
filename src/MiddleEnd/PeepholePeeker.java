@@ -62,18 +62,16 @@ public class PeepholePeeker extends ASMOptimize {
         }
     }
 
-    private boolean removeUnreachableCode(ASMBasicBlock block) {
+    private void removeUnreachableCode(ASMBasicBlock block) {
         ArrayList<ASMInstruction> instructions = new ArrayList<>(block.getInstructions());
-        boolean remove = false, changed = false;
+        boolean remove = false;
         for (ASMInstruction inst : instructions) {
             if (remove) {
                 inst.removeFromParentBlock();
-                changed = true;
             } else {
                 if (inst.isJump()) remove = true;
             }
         }
-        return changed;
     }
 
     private boolean changed = true;
@@ -90,12 +88,18 @@ public class PeepholePeeker extends ASMOptimize {
                 if (inst.isJump()) {
                     ASMBasicBlock jumpTarget = ((ASMLabel) inst.getOperands().get(0)).belongTo();
                     if (directlyJumpBlocks.containsKey(jumpTarget)) {
-                        inst.getOperands().set(0, directlyJumpBlocks.get(jumpTarget).getLabel());
+                        ASMBasicBlock newTarget = directlyJumpBlocks.get(jumpTarget);
+                        inst.getOperands().set(0, newTarget.getLabel());
                         changed = true;
+                        block.removeSuccessor(jumpTarget);
+                        block.addSuccessor(newTarget);
+                        jumpTarget.removePredecessor(block);
+                        newTarget.addPredecessor(block);
                     }
                 }
             }
         }
+        changed |= function.removeUnreachableBlocks();
     }
 
     @Override
@@ -104,7 +108,6 @@ public class PeepholePeeker extends ASMOptimize {
         removeRedundantLoadStore();
         function.getBlocks().forEach(this::convertConstRegisterBranchToJump);
         function.getBlocks().forEach(this::removeUnreachableCode);
-        function.removeUnreachableBlocks();
         while (changed) controlFlowOptimize();
     }
 }

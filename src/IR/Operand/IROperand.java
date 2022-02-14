@@ -1,9 +1,15 @@
 package IR.Operand;
 
+import IR.Instruction.IRAllocaInstruction;
+import IR.Instruction.IRBitcastInstruction;
+import IR.Instruction.IRGetelementptrInstruction;
 import IR.Instruction.IRInstruction;
 import IR.TypeSystem.IRTypeSystem;
+import Utility.error.OptimizeError;
 
 import java.util.LinkedHashSet;
+
+import static Debug.MemoLog.log;
 
 abstract public class IROperand {
     private final IRTypeSystem irType;
@@ -37,6 +43,14 @@ abstract public class IROperand {
 
     public IRInstruction getDef() {
         return def;
+    }
+
+    public IRAllocaInstruction getAllocaDef() {
+        if (def instanceof IRAllocaInstruction) return (IRAllocaInstruction) def;
+        if (def instanceof IRBitcastInstruction) return ((IRBitcastInstruction) def).getPtrValue().getAllocaDef();
+        if (def instanceof IRGetelementptrInstruction) return ((IRGetelementptrInstruction) def).getPtrValue().getAllocaDef();
+        log.Debugf("failed when getAllocaDef, operand: %s\n", this);
+        return null;
     }
 
     @Override

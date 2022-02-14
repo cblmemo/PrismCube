@@ -145,6 +145,12 @@ public class IREmitter implements IRVisitor {
     }
 
     @Override
+    public void visit(IRMoveInstruction inst) {
+        ps.print(inst.toString());
+        ps.println(inst.getComment());
+    }
+
+    @Override
     public void visit(IRCallInstruction inst) {
         ps.print(inst.toString());
         ps.println(inst.getComment());

@@ -59,8 +59,8 @@ public class ASMBasicBlock {
         predecessors.remove(pred);
     }
 
-    public void removeSuccessor(ASMBasicBlock pred) {
-        successors.remove(pred);
+    public void removeSuccessor(ASMBasicBlock succ) {
+        successors.remove(succ);
     }
 
     public ArrayList<ASMBasicBlock> getPredecessors() {

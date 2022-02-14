@@ -136,15 +136,18 @@ public class ASMFunction {
         });
     }
 
-    public void removeUnreachableBlocks() {
+    public boolean removeUnreachableBlocks() {
+        boolean ret = false;
         reachableBlocks();
         ArrayList<ASMBasicBlock> blockBackup = new ArrayList<>(blocks);
-        blockBackup.forEach(block -> {
+        for (ASMBasicBlock block : blockBackup) {
             if (!reachable.contains(block)) {
                 blocks.remove(block);
+                ret = true;
                 block.getPredecessors().forEach(pred -> pred.removeSuccessor(block));
                 block.getSuccessors().forEach(succ -> succ.removePredecessor(block));
             }
-        });
+        }
+        return ret;
     }
 }

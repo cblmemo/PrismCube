@@ -1,6 +1,7 @@
 package IR;
 
 import FrontEnd.IRVisitor;
+import IR.Instruction.IRInstruction;
 import IR.Operand.IRRegister;
 import IR.TypeSystem.IRTypeSystem;
 import Utility.Type.ArrayType;
@@ -25,7 +26,7 @@ public class IRFunction {
     private final ArrayList<String> parameterName = new ArrayList<>();
     private final ArrayList<IRBasicBlock> blocks = new ArrayList<>();
     private final IRBasicBlock entryBlock;
-    private final IRBasicBlock returnBlock;
+    private IRBasicBlock returnBlock;
     private boolean hasCalled;
     private IRRegister thisRegister;
     private LinkedHashMap<IRBasicBlock, LinkedHashSet<IRBasicBlock>> dominatorFrontier;
@@ -229,7 +230,7 @@ public class IRFunction {
         ArrayList<IRBasicBlock> blockBackup = new ArrayList<>(blocks);
         blockBackup.forEach(block -> {
             if (!reachable.contains(block)) {
-                assert block != entryBlock && block != returnBlock;
+                assert block != entryBlock && block != returnBlock : block;
                 blocks.remove(block);
                 block.getPredecessors().forEach(pred -> pred.removeSuccessor(block));
                 block.getSuccessors().forEach(succ -> succ.removePredecessor(block));
@@ -244,6 +245,28 @@ public class IRFunction {
 
     public LinkedHashMap<IRBasicBlock, LinkedHashSet<IRBasicBlock>> getDominatorFrontier() {
         return dominatorFrontier;
+    }
+
+    public void relocatePhis() {
+        blocks.forEach(block -> {
+            ArrayList<IRInstruction> instructions = new ArrayList<>(block.getInstructions());
+            block.getInstructions().clear();
+            block.getInstructions().addAll(block.getPhis());
+            block.getInstructions().addAll(instructions);
+        });
+    }
+
+    public void addAllNewBlocks(LinkedHashSet<IRBasicBlock> newBlocks) {
+        assert blocks.get(blocks.size() - 1) == returnBlock;
+        blocks.remove(returnBlock);
+        blocks.addAll(newBlocks);
+        blocks.add(returnBlock);
+    }
+
+    public void relocateReturnBlock(IRBasicBlock newReturnBlock) {
+        returnBlock = newReturnBlock;
+        blocks.remove(returnBlock);
+        blocks.add(returnBlock);
     }
 
     public void accept(IRVisitor visitor) {

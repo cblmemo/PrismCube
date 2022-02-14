@@ -30,4 +30,5 @@ public interface IRVisitor {
     void visit(IRBitcastInstruction inst);
     void visit(IRJumpInstruction inst);
     void visit(IRPhiInstruction inst);
+    void visit(IRMoveInstruction inst);
 }

@@ -35,9 +35,10 @@ public class IRBlockFuser extends IROptimize {
                 IRBasicBlock succ = block.getSuccessors().get(0);
                 if (succ.getPredecessors().size() == 1) {
                     assert succ.getPredecessors().get(0) == block;
-                    // todo update phi
                     block.fuse(succ);
                     function.getBlocks().remove(succ);
+                    // ensure return block is the last element of blocks
+                    if (block.isReturnBlock()) function.relocateReturnBlock(block);
                     deleted.add(succ);
                     changed = true;
                 }

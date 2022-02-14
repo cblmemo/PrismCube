@@ -7,18 +7,21 @@ import IR.Operand.IRRegister;
 import IR.TypeSystem.IRTypeSystem;
 
 import java.util.ArrayList;
+import java.util.function.BiConsumer;
 
 public class IRPhiInstruction extends IRInstruction {
     private final IRRegister resultRegister;
     private final ArrayList<IROperand> values = new ArrayList<>();
     private final ArrayList<IRBasicBlock> blocks = new ArrayList<>();
     private final IRTypeSystem resultType;
+    private final IRAllocaInstruction belongsTo;
 
-    public IRPhiInstruction(IRBasicBlock parentBlock, IRRegister resultRegister, IRTypeSystem resultType) {
+    public IRPhiInstruction(IRBasicBlock parentBlock, IRRegister resultRegister, IRTypeSystem resultType, IRAllocaInstruction belongsTo) {
         super(parentBlock);
         this.resultRegister = resultRegister;
         this.resultType = resultType;
-        // todo set def
+        this.belongsTo = belongsTo;
+        resultRegister.setDef(this);
     }
 
     public void addCandidate(IROperand value, IRBasicBlock block) {
@@ -26,6 +29,19 @@ public class IRPhiInstruction extends IRInstruction {
         blocks.add(block);
         value.addUser(this);
         block.getLabel().addUser(this);
+    }
+
+    public void replaceSourceBlock(IRBasicBlock oldBlock, IRBasicBlock newBlock) {
+        for (int i = 0; i < blocks.size(); i++) {
+            if (blocks.get(i) == oldBlock) {
+                blocks.set(i, newBlock);
+                break;
+            }
+        }
+    }
+
+    public void forEachCandidate(BiConsumer<IRBasicBlock, IROperand> consumer) {
+        for (int i = 0; i < blocks.size(); i++) consumer.accept(blocks.get(i), values.get(i));
     }
 
     public IRRegister getResultRegister() {

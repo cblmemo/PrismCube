@@ -18,7 +18,7 @@ public class IRBasicBlock {
     private boolean isReturnBlock = false;
     private final ArrayList<IRBasicBlock> predecessors = new ArrayList<>();
     private final ArrayList<IRBasicBlock> successors = new ArrayList<>();
-    private final ArrayList<IRBasicBlock> dominatorTreePredecessors = new ArrayList<>();
+    private final ArrayList<IRBasicBlock> dominatorTreeSuccessors = new ArrayList<>();
 
     private boolean hasFinished = false;
 
@@ -80,12 +80,31 @@ public class IRBasicBlock {
         successor.getInstructions().forEach(inst -> inst.setParentBlock(this));
         this.escapeInstruction = successor.getEscapeInstruction();
         if (successor.getAllocas() != null) allocas.addAll(successor.getAllocas());
+        phis.addAll(successor.getPhis());
+        successor.getLabel().getUsers().forEach(user -> {
+            if (user instanceof IRPhiInstruction) ((IRPhiInstruction) user).replaceSourceBlock(successor, this);
+        });
         if (successor.isReturnBlock()) isReturnBlock = true;
         successors.clear();
         successor.getSuccessors().forEach(succSucc -> {
             if (!successors.contains(succSucc)) successors.add(succSucc);
             succSucc.replacePredecessor(successor, this);
         });
+    }
+
+    public void replaceControlFlowTarget(IRBasicBlock oldBlock, IRBasicBlock newBlock) {
+        if (escapeInstruction instanceof IRBrInstruction) ((IRBrInstruction) escapeInstruction).replaceControlFlowTarget(oldBlock, newBlock);
+        else if (escapeInstruction instanceof IRJumpInstruction) ((IRJumpInstruction) escapeInstruction).replaceControlFlowTarget(oldBlock, newBlock);
+        else assert false : "replaceControlFlowTarget for return block";
+        successors.remove(oldBlock);
+        successors.add(newBlock);
+    }
+
+    public void insertInstructionBeforeEscape(IRInstruction inst) {
+        assert instructions.get(instructions.size() - 1) == escapeInstruction;
+        instructions.remove(escapeInstruction);
+        instructions.add(inst);
+        instructions.add(escapeInstruction);
     }
 
     public void addPhi(IRPhiInstruction phi) {
@@ -125,12 +144,12 @@ public class IRBasicBlock {
         return instructions.isEmpty() && escapeInstruction == null;
     }
 
-    public void addDominatorTreePredecessor(IRBasicBlock predecessor) {
-        dominatorTreePredecessors.add(predecessor);
+    public void addDominatorTreeSuccessor(IRBasicBlock successor) {
+        dominatorTreeSuccessors.add(successor);
     }
 
-    public ArrayList<IRBasicBlock> getDominatorTreePredecessors() {
-        return dominatorTreePredecessors;
+    public ArrayList<IRBasicBlock> getDominatorTreeSuccessors() {
+        return dominatorTreeSuccessors;
     }
 
     public void addPredecessor(IRBasicBlock predecessor) {
@@ -146,10 +165,10 @@ public class IRBasicBlock {
         return predecessors;
     }
 
-    public void replacePredecessor(IRBasicBlock original, IRBasicBlock current) {
-        assert predecessors.contains(original);
-        predecessors.remove(original);
-        if (!predecessors.contains(current)) predecessors.add(current);
+    public void replacePredecessor(IRBasicBlock oldBlock, IRBasicBlock newBlock) {
+        assert predecessors.contains(oldBlock);
+        predecessors.remove(oldBlock);
+        if (!predecessors.contains(newBlock)) predecessors.add(newBlock);
     }
 
     private void addSuccessor(IRBasicBlock successor) {

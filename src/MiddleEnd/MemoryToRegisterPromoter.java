@@ -11,6 +11,8 @@ import Utility.error.OptimizeError;
 
 import java.util.*;
 
+import static Debug.MemoLog.log;
+
 public class MemoryToRegisterPromoter extends IROptimize {
     private IRFunction function;
     private final LinkedHashSet<IRAllocaInstruction> allocas = new LinkedHashSet<>();
@@ -30,6 +32,7 @@ public class MemoryToRegisterPromoter extends IROptimize {
 
     private void initialize() {
         resetAllocas();
+        phi2alloca.clear();
         allocaUserBlocks.clear();
         allocas.forEach(alloca -> {
             ArrayList<IRBasicBlock> userBlocks = new ArrayList<>();
@@ -38,6 +41,10 @@ public class MemoryToRegisterPromoter extends IROptimize {
             });
             allocaUserBlocks.put(alloca.getAllocaTarget(), userBlocks);
         });
+        this.dominatorFrontier = function.getDominatorFrontier();
+        Aorig.clear();
+        defsites.clear();
+        function.getBlocks().forEach(block -> Aorig.put(block, new LinkedHashSet<>()));
     }
 
     private void basicOptimize(IRAllocaInstruction alloca) {
@@ -82,45 +89,35 @@ public class MemoryToRegisterPromoter extends IROptimize {
     }
 
     private final LinkedHashMap<IRBasicBlock, LinkedHashSet<IRAllocaInstruction>> Aorig = new LinkedHashMap<>();
-    private final LinkedHashMap<IRBasicBlock, LinkedHashSet<IRAllocaInstruction>> Aphi = new LinkedHashMap<>();
     private final LinkedHashMap<IRAllocaInstruction, LinkedHashSet<IRBasicBlock>> defsites = new LinkedHashMap<>();
     private LinkedHashMap<IRBasicBlock, LinkedHashSet<IRBasicBlock>> dominatorFrontier;
 
-    private void initPlacingPhi() {
-        this.dominatorFrontier = function.getDominatorFrontier();
-        Aorig.clear();
-        Aphi.clear();
-        defsites.clear();
-        function.getBlocks().forEach(block -> {
-            Aorig.put(block, new LinkedHashSet<>());
-            Aphi.put(block, new LinkedHashSet<>());
-            block.getInstructions().forEach(inst -> {
-                // only store inst def alloca
-                if (inst instanceof IRStoreInstruction) {
-                    IRInstruction def = ((IRStoreInstruction) inst).getStoreValue().getDef();
-                    if (def instanceof IRAllocaInstruction && allocas.contains(def)) {
-                        Aorig.get(block).add((IRAllocaInstruction) def);
-                    }
-                }
-            });
-        });
-        allocas.forEach(a -> defsites.put(a, new LinkedHashSet<>()));
-    }
-
     private void placePhi() {
+        IRRegister.reset();
+        allocas.forEach(a -> defsites.put(a, new LinkedHashSet<>()));
+        // find all defs for alloca
+        function.getBlocks().forEach(block -> block.getInstructions().forEach(inst -> {
+            // only store inst def alloca
+            if (inst instanceof IRStoreInstruction) {
+                IRAllocaInstruction def = ((IRStoreInstruction) inst).getStoreAddress().getAllocaDef();
+                if (allocas.contains(def)) Aorig.get(block).add(def);
+            }
+        }));
         function.getBlocks().forEach(n -> Aorig.get(n).forEach(a -> defsites.get(a).add(n)));
         allocas.forEach(a -> {
             Queue<IRBasicBlock> workList = new LinkedList<>(defsites.get(a));
+            LinkedHashSet<IRBasicBlock> visited = new LinkedHashSet<>();
             while (!workList.isEmpty()) {
                 IRBasicBlock n = workList.poll();
+                assert dominatorFrontier.get(n) != null : n + " is not in dominatorFrontier";
                 dominatorFrontier.get(n).forEach(Y -> {
-                    if (!Aphi.get(Y).contains(a)) {
-                        IRPhiInstruction phi = new IRPhiInstruction(Y, new IRRegister(a.getAllocaType(), "phi"), a.getAllocaType());
-                        phi2alloca.put(phi, a);
-                        Y.addPhi(phi);
-                        Aphi.get(Y).add(a);
-                        if (!Aorig.get(n).contains(a)) workList.offer(Y);
-                    }
+                    if (visited.contains(Y)) return;
+                    visited.add(Y);
+                    IRPhiInstruction phi = new IRPhiInstruction(Y, new IRRegister(a.getAllocaType(), "phi"), a.getAllocaType(), a);
+                    log.Debugf("placing phi [%s] for alloca [%s] in BasicBlock [%s]\n", phi, a, Y);
+                    phi2alloca.put(phi, a);
+                    Y.addPhi(phi);
+                    workList.offer(Y);
                 });
             }
         });
@@ -130,49 +127,64 @@ public class MemoryToRegisterPromoter extends IROptimize {
 
     private void initRename() {
         stack.clear();
-        allocas.forEach(a -> stack.put(a, new Stack<>()));
+        allocas.forEach(a -> {
+            Stack<IROperand> aStack = new Stack<>();
+            stack.put(a, aStack);
+        });
     }
 
     private void rename(IRBasicBlock block) {
+        log.Debugf("start renaming block [%s]\n", block);
         LinkedHashSet<IRAllocaInstruction> defer = new LinkedHashSet<>();
-        phi2alloca.forEach((phi, a) -> {
-            stack.get(a).add(phi.getResultRegister());
+        block.getPhis().forEach(phi -> {
+            IRAllocaInstruction a = phi2alloca.get(phi);
+            stack.get(a).push(phi.getResultRegister());
+            log.Debugf("push %s to %s\n", phi.getResultRegister(), a);
             defer.add(a);
         });
         ArrayList<IRInstruction> instructions = new ArrayList<>(block.getInstructions());
         instructions.forEach(inst -> {
-            // only load inst use alloca
-            if (inst instanceof IRLoadInstruction) {
-                IRAllocaInstruction x = (IRAllocaInstruction) ((IRLoadInstruction) inst).getLoadAddress().getDef();
-                assert allocas.contains(x) : x;
-                IROperand val = stack.get(x).isEmpty() ? new IRNull(null) : stack.get(x).peek();
-                ((IRLoadInstruction) inst).getResultRegister().getUsers().forEach(user -> user.replaceUse(((IRLoadInstruction) inst).getResultRegister(), val));
+            if (inst instanceof IRLoadInstruction) { // only load inst use alloca
+                IRAllocaInstruction x = ((IRLoadInstruction) inst).getLoadAddress().getAllocaDef();
+                if (!allocas.contains(x)) return;
+                assert !stack.get(x).isEmpty();
+                IROperand val = stack.get(x).peek();
+                LinkedHashSet<IRInstruction> users = new LinkedHashSet<>(((IRLoadInstruction) inst).getResultRegister().getUsers());
+                users.forEach(user -> user.replaceUse(((IRLoadInstruction) inst).getResultRegister(), val));
                 inst.removeFromParentBlock();
             } else if (inst instanceof IRStoreInstruction) {
-                IRAllocaInstruction a = (IRAllocaInstruction) ((IRStoreInstruction) inst).getStoreAddress().getDef();
-                assert allocas.contains(a) : a;
+                IRAllocaInstruction a = ((IRStoreInstruction) inst).getStoreAddress().getAllocaDef();
+                if (!allocas.contains(a)) return;
+                if (defer.contains(a)) stack.get(a).pop();
+                else defer.add(a);
                 stack.get(a).push(((IRStoreInstruction) inst).getStoreValue());
-                defer.add(a);
+                log.Debugf("push %s to %s\n", ((IRStoreInstruction) inst).getStoreValue(), a);
                 inst.removeFromParentBlock();
             } else if (inst instanceof IRAllocaInstruction) inst.removeFromParentBlock();
         });
-        block.getSuccessors().forEach(succ -> succ.getPhis().forEach(phi -> {
-            assert phi2alloca.containsKey(phi);
-            phi.addCandidate(stack.get(phi2alloca.get(phi)).peek(), block);
-        }));
-        block.getDominatorTreePredecessors().forEach(this::rename);
+        block.getSuccessors().forEach(succ -> {
+            log.Debugf("add phi candidate for %s\n", succ);
+            succ.getPhis().forEach(phi -> {
+                log.Debugf("manage phi: %s\n", phi);
+                assert phi2alloca.containsKey(phi);
+                IRAllocaInstruction a = phi2alloca.get(phi);
+                phi.addCandidate(stack.get(a).isEmpty() ? phi.getResultRegister() : stack.get(a).peek(), block);
+            });
+        });
+        block.getDominatorTreeSuccessors().forEach(this::rename);
         defer.forEach(a -> stack.get(a).pop());
     }
 
     @Override
     protected void visit(IRFunction function) {
+        new DominatorTreeBuilder().build(function);
         this.function = function;
         initialize();
         for (IRAllocaInstruction alloca : allocas) basicOptimize(alloca);
-//        resetAllocas();
-//        initPlacingPhi();
-//        placePhi();
-//        initRename();
-//        rename(function.getEntryBlock());
+        resetAllocas();
+        placePhi();
+        initRename();
+        rename(function.getEntryBlock());
+        function.relocatePhis();
     }
 }

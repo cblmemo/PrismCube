@@ -28,7 +28,6 @@ public class PrismCube {
             new IREmitter().emit(memory);
             // ir optimize
             new IRGlobalInitializeEliminator().eliminate(memory);
-            new DominatorTreeBuilder().build(memory);
             new MemoryToRegisterPromoter().promote(memory);
             new PhiResolver().resolve(memory);
             new IRBlockFuser().fuse(memory);

@@ -30,7 +30,7 @@ public class IRConstString extends IRConst {
         return id;
     }
 
-    public int getLength(){
+    public int getLength() {
         return length;
     }
 

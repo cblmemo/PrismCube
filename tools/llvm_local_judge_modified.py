@@ -1,25 +1,15 @@
 #!python3
 
-import os, time
-import sys
+import os
+import time
 
-"""
-    Modify following configurations to adapt to your environment.
-"""
-# test_cases_dir = './testcases/sema/'
-# test_cases_dir = './testcases/codegen/'
-# test_cases_dir = './testcases/optim/'
-# test_cases_dir = './testcases/optim-new/'
-test_cases_dir = './testcases/' + sys.argv[1] + '/'
+test_cases_dir = './testcases/codegen/'
 compile_cmd = "bash ./build.bash"
-execute_cmd = "bash ./semantic.bash"
 excluded_test_cases = ["foo.mx"]
-ravel_path = "ravel --enable-cache"
 builtin_path = "./builtin/builtin.ll"
 bin_path = "./bin/"
 halt_on_3_fails = True
 calculate_score = False
-test_codegen = True
 # When test_codegen && use_llvm is true, the output should be a .ll file, and we will use llc to
 # compile it into asm. You can test the correctness of your IR-gen with this.
 use_llvm = True
@@ -60,57 +50,55 @@ def parse_test_case(test_case_path):
     return src_text, input_text, output_text
 
 
-def clear():
-    os.system("rm test.*")
-    os.system("rm *.out")
-    os.system("rm *.ll")
-
-
 def main():
     if os.system(compile_cmd):
         print(color_red + "Fail when building your compiler...")
         return
     test_cases = collect_test_cases()
     #     os.system('clang -S -emit-llvm builtin/builtin.c -o builtin/builtin.ll')
-    os.system('cp %s ./builtin.ll' % builtin_path)
+    os.system('cp {} ./bin/b.ll'.format(builtin_path))
     total = 0
     passed = 0
     continue_fail = 0
     max_len = max(len(i) for i in test_cases)
+    max_len += 5
     for t in test_cases:
         if halt_on_3_fails and (continue_fail > 2):
-            clear()
             exit(1)
         total += 1
         src_text, input_text, output_text = parse_test_case(test_cases_dir + t)
-        with open('test.mx', 'w') as f:
+        with open('./bin/test.mx', 'w') as f:
             f.write(src_text)
-        with open('test.in', 'w') as f:
+        with open('./bin/test.in', 'w') as f:
             f.write(input_text)
-        with open('test.ans', 'w') as f:
+        with open('./bin/test.ans', 'w') as f:
             f.write(output_text)
 
         print(t + ':', end='')
         for i in range(len(t), max_len):
             print(end=' ')
         start = time.time()
-        if os.system('%s < ./test.mx > test.ll' % "bash ./ir.bash"):
-            print(color_red + "Compilation failed" + color_none)
+        if os.system('bash ./ir.bash < ./bin/test.mx > ./bin/test.ll'):
+            print(color_red + "Compilation Failed" + color_none)
             continue_fail += 1
             continue
-        print("(T=%.2fs)" % (time.time() - start), end="\n")
-        if test_codegen:
-            os.system("clang test.ll builtin.ll -o a.out")
-            os.system("./a.out < test.in > test.out")
-            if os.system('diff -B -b test.out test.ans > diff.out'):
-                print(color_red + "Wrong answer" + color_none)
-                continue
+        print("(T=%.2fs)" % (time.time() - start), end=" ")
+        os.system("clang ./bin/test.ll ./bin/b.ll -o ./bin/a.out -Wno-override-module")
+        # if os.system("./bin/a.out < ./bin/test.in > ./bin/test.out"):
+        #     print(color_red + "Runtime Error" + color_none)
+        #     continue_fail += 1
+        #     continue
+        os.system("./bin/a.out < ./bin/test.in > ./bin/test.out")
+        if os.system('diff -B -b ./bin/test.out ./bin/test.ans > ./bin/diff.out'):
+            print(color_red + "Wrong Answer" + color_none)
+            continue_fail += 1
+            continue
         passed += 1
         continue_fail = 0
+        print(color_green + "Accepted" + color_none)
 
     print("total {}, passed {}, ratio {}".format(total, passed, passed / total))
 
 
 if __name__ == '__main__':
     main()
-    clear()

@@ -31,6 +31,7 @@ abstract public class IRInstruction {
             assert parentBlock.getAllocas() != null : this + "'s parent block " + parentBlock + " has no allocas";
             parentBlock.getAllocas().remove(this);
         }
+        if (this instanceof IRPhiInstruction) parentBlock.getPhis().remove(this);
         users.forEach(user -> user.removeUser(this));
     }
 

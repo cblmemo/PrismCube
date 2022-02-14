@@ -2,48 +2,31 @@ package MiddleEnd;
 
 import IR.IRBasicBlock;
 import IR.IRFunction;
-import Memory.Memory;
 
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 
-public class DominatorTreeBuilder extends IROptimize {
-    private IRFunction function;
+import static Debug.MemoLog.log;
 
+public class DominatorTreeBuilder {
+    private IRFunction function;
     // auxiliary
     private final LinkedHashMap<IRBasicBlock, IRBasicBlock> idom = new LinkedHashMap<>();
     private final LinkedHashMap<IRBasicBlock, IRBasicBlock> semi = new LinkedHashMap<>();
     private final LinkedHashMap<IRBasicBlock, Integer> dfn = new LinkedHashMap<>();
     private final LinkedHashMap<IRBasicBlock, IRBasicBlock> dfsFather = new LinkedHashMap<>();
     private final ArrayList<IRBasicBlock> order = new ArrayList<>();
-
     // disjoint set
     private final LinkedHashMap<IRBasicBlock, IRBasicBlock> fa = new LinkedHashMap<>();
     private final LinkedHashMap<IRBasicBlock, IRBasicBlock> mn = new LinkedHashMap<>();
-
     // dominator tree
     private final LinkedHashMap<IRBasicBlock, LinkedHashSet<IRBasicBlock>> semiDominatorTree = new LinkedHashMap<>();
     private final LinkedHashMap<IRBasicBlock, LinkedHashSet<IRBasicBlock>> dominatorFrontier = new LinkedHashMap<>();
 
-    public void build(Memory memory) {
-        if (doOptimize) {
-            new IRBlockFuser().fuse(memory); // remove unreachable block
-            memory.getIRModule().getFunctions().values().forEach(this::visit);
-        }
-    }
-
     private void initialize() {
-        idom.clear();
-        semi.clear();
-        dfn.clear();
-        dfsFather.clear();
-        order.clear();
-        fa.clear();
-        mn.clear();
-        semiDominatorTree.clear();
-        dominatorFrontier.clear();
         ArrayList<IRBasicBlock> blocks = function.reachableBlocks();
+        log.Debugf("reachable blocks: %s\n", blocks);
         blocks.forEach(block -> {
             idom.put(block, null);
             semi.put(block, block);
@@ -58,7 +41,7 @@ public class DominatorTreeBuilder extends IROptimize {
         dfn.put(current, order.size());
         order.add(current);
         current.getSuccessors().forEach(succ -> {
-            if (!order.contains(succ)) {
+            if (!dfn.containsKey(succ)) {
                 dfsFather.put(succ, current);
                 dfsOrder(succ);
             }
@@ -96,8 +79,17 @@ public class DominatorTreeBuilder extends IROptimize {
         }
         // store to block
         idom.forEach((succ, pred) -> {
-            if (pred != null) pred.addDominatorTreePredecessor(succ);
+            if (pred != null) {
+                pred.addDominatorTreeSuccessor(succ);
+                log.Debugf("%s dom %s\n", pred, succ);
+            } else log.Debugf("%s has no idom\n", succ);
         });
+    }
+
+    private boolean dom(IRBasicBlock m, IRBasicBlock n) { // return whether m dom n
+        if (idom.get(n) == m) return true;
+        if (idom.get(n) == null) return false;
+        return dom(idom.get(n), m);
     }
 
     private void calculateDominatorFrontier() {
@@ -115,11 +107,12 @@ public class DominatorTreeBuilder extends IROptimize {
         });
         // store to function
         function.setDominatorFrontier(dominatorFrontier);
+        log.Debugf("dominatorFrontier: %s\n", dominatorFrontier);
     }
 
-    @Override
-    protected void visit(IRFunction function) {
+    public void build(IRFunction function) {
         this.function = function;
+        function.removeUnreachableBlocks();
         initialize();
         dfsOrder(function.getEntryBlock());
         buildDominatorTree();
