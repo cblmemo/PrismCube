@@ -149,9 +149,9 @@ public class InstructionSelector implements IRVisitor {
         ASMArithmeticInstruction.InstType newType;
         ASMOperand rs1V, rs2V;
         if (type.swappable() && rs1 instanceof IRConstNumber && !(rs2 instanceof IRConstNumber)) {
-            newType = type.toImmediateType();
             rs1V = toRegister(rs2);
             rs2V = toOperand(rs1);
+            newType = rs2V instanceof ASMImmediate ? type.toImmediateType() : type;
         } else {
             if (type.isMul() && rs2 instanceof IRConstNumber && isPowerOf2(((IRConstNumber) rs2).getIntValue())) {
                 int logRS2 = log2(((IRConstNumber) rs2).getIntValue());
