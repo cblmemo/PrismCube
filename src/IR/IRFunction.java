@@ -30,6 +30,7 @@ public class IRFunction {
     private boolean hasCalled;
     private IRRegister thisRegister;
     private LinkedHashMap<IRBasicBlock, LinkedHashSet<IRBasicBlock>> dominatorFrontier;
+    private LinkedHashMap<IRBasicBlock, LinkedHashSet<IRBasicBlock>> postDominatorFrontier;
 
     // [[--NOTICE--]] need to call setReturnType and addParameterType manually after created an IRFunction instance.
     public IRFunction(String functionName) {
@@ -245,6 +246,14 @@ public class IRFunction {
 
     public LinkedHashMap<IRBasicBlock, LinkedHashSet<IRBasicBlock>> getDominatorFrontier() {
         return dominatorFrontier;
+    }
+
+    public void setPostDominatorFrontier(LinkedHashMap<IRBasicBlock, LinkedHashSet<IRBasicBlock>> postDominatorFrontier) {
+        this.postDominatorFrontier = postDominatorFrontier;
+    }
+
+    public LinkedHashMap<IRBasicBlock, LinkedHashSet<IRBasicBlock>> getPostDominatorFrontier() {
+        return postDominatorFrontier;
     }
 
     public void relocatePhis() {

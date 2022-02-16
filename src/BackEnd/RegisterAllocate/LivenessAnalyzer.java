@@ -20,6 +20,7 @@ public class LivenessAnalyzer {
     }
 
     private void constructBlockDefUse() {
+        log.Debugf("start constructBlockDefUse.\n");
         function.getBlocks().forEach(block -> {
             LinkedHashSet<ASMRegister> blockDef = new LinkedHashSet<>();
             LinkedHashSet<ASMRegister> blockUse = new LinkedHashSet<>();
@@ -36,27 +37,30 @@ public class LivenessAnalyzer {
     }
 
     private void constructLiveInOut() {
-        function.getBlocks().forEach(block -> {
+        log.Debugf("start constructLiveInOut.\n");
+        ArrayList<ASMBasicBlock> blocks = function.getTopologicalOrder();
+        log.Debugf("finish topological order.\n");
+        blocks.forEach(block -> {
             liveIn.put(block, new LinkedHashSet<>());
             liveOut.put(block, new LinkedHashSet<>());
         });
         boolean flag;
-        ArrayList<ASMBasicBlock> blocks = function.getTopologicalOrder();
         do {
             flag = false;
             for (ASMBasicBlock block : blocks) {
                 int oldInSize = liveIn.get(block).size(), oldOutSize = liveOut.get(block).size();
                 LinkedHashSet<ASMRegister> newOut = new LinkedHashSet<>();
-                block.getSuccessors().forEach(successorBlock -> newOut.addAll(liveIn.get(successorBlock)));
+                block.getSuccessors().forEach(succ -> newOut.addAll(liveIn.get(succ)));
                 LinkedHashSet<ASMRegister> newIn = new LinkedHashSet<>(newOut);
                 newIn.removeAll(def.get(block));
                 newIn.addAll(use.get(block));
-                liveIn.replace(block, newIn);
-                liveOut.replace(block, newOut);
+                liveIn.put(block, newIn);
+                liveOut.put(block, newOut);
                 flag |= !(newIn.size() == oldInSize && newOut.size() == oldOutSize);
             }
         } while (flag);
         function.getBlocks().forEach(block -> block.setLiveOut(liveOut.get(block)));
+        log.Debugf("constructLiveInOut finished.\n");
     }
 
     public void analyze() {

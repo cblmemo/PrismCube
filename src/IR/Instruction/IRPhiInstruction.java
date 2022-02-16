@@ -28,7 +28,15 @@ public class IRPhiInstruction extends IRInstruction {
         values.add(value);
         blocks.add(block);
         value.addUser(this);
-        block.getLabel().addUser(this);
+    }
+
+    public void removeCandidate(IRBasicBlock block) {
+        int index = blocks.indexOf(block);
+        assert index > 0;
+        blocks.remove(index);
+        values.get(index).removeUser(this);
+        removeUse(values.get(index));
+        values.remove(index);
     }
 
     public void replaceSourceBlock(IRBasicBlock oldBlock, IRBasicBlock newBlock) {

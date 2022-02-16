@@ -9,7 +9,7 @@ import Utility.Scope.GlobalScope;
 import Utility.error.IRError;
 
 import java.util.ArrayList;
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.Objects;
 
 import static Debug.MemoLog.log;
@@ -22,12 +22,12 @@ import static Debug.MemoLog.log;
 //          -- IRInstruction
 
 public class IRModule {
-    private final HashMap<String, IRTypeSystem> types = new HashMap<>();
-    private final HashMap<String, IRFunction> builtinFunctions = new HashMap<>();
+    private final LinkedHashMap<String, IRTypeSystem> types = new LinkedHashMap<>();
+    private final LinkedHashMap<String, IRFunction> builtinFunctions = new LinkedHashMap<>();
     private final ArrayList<IRStructureType> classes = new ArrayList<>();
-    private final HashMap<String, IRFunction> functions = new HashMap<>();
-    private final HashMap<String, IRGlobalDefine> globalDefines = new HashMap<>();
-    private final HashMap<String, IRConstString> strings = new HashMap<>();
+    private final LinkedHashMap<String, IRFunction> functions = new LinkedHashMap<>();
+    private final LinkedHashMap<String, IRGlobalDefine> globalDefines = new LinkedHashMap<>();
+    private final LinkedHashMap<String, IRConstString> strings = new LinkedHashMap<>();
     private int stringCnt = 0;
     private IRFunction mainFunction;
     private final IRFunction globalConstructor;
@@ -262,19 +262,19 @@ public class IRModule {
         return classes;
     }
 
-    public HashMap<String, IRGlobalDefine> getGlobalDefines() {
+    public LinkedHashMap<String, IRGlobalDefine> getGlobalDefines() {
         return globalDefines;
     }
 
-    public HashMap<String, IRConstString> getStrings() {
+    public LinkedHashMap<String, IRConstString> getStrings() {
         return strings;
     }
 
-    public HashMap<String, IRFunction> getFunctions() {
+    public LinkedHashMap<String, IRFunction> getFunctions() {
         return functions;
     }
 
-    public HashMap<String, IRFunction> getBuiltinFunctions() {
+    public LinkedHashMap<String, IRFunction> getBuiltinFunctions() {
         return builtinFunctions;
     }
 
@@ -316,8 +316,11 @@ public class IRModule {
         if (globalConstructor.getEntryBlock().getInstructions().size() == 1) {
             functions.remove(globalConstructor.getFunctionName());
             int index = mainFunction.getEntryBlock().getInstructions().indexOf(callGlobalInit);
-            log.Debugf("remove inst %s when tryRemoveGlobalConstructor\n", mainFunction.getEntryBlock().getInstructions().get(index));
-            mainFunction.getEntryBlock().getInstructions().remove(index);
+            // might already delete by AggressiveDeadCodeEliminator
+            if (index >= 0) {
+                log.Debugf("remove inst %s when tryRemoveGlobalConstructor\n", mainFunction.getEntryBlock().getInstructions().get(index));
+                mainFunction.getEntryBlock().getInstructions().remove(index);
+            }
         }
     }
 

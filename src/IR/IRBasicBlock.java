@@ -73,6 +73,12 @@ public class IRBasicBlock {
         return escapeInstruction;
     }
 
+    public void removeFromParentFunction() {
+        parentFunction.getBlocks().remove(this);
+        predecessors.forEach(pred -> removeSuccessor(this));
+        successors.forEach(succ -> removePredecessor(this));
+    }
+
     public void fuse(IRBasicBlock successor) {
         assert hasFinished;
         instructions.remove(instructions.get(instructions.size() - 1));

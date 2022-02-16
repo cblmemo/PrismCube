@@ -5,7 +5,6 @@ import IR.Instruction.IRBitcastInstruction;
 import IR.Instruction.IRGetelementptrInstruction;
 import IR.Instruction.IRInstruction;
 import IR.TypeSystem.IRTypeSystem;
-import Utility.error.OptimizeError;
 
 import java.util.LinkedHashSet;
 
@@ -26,7 +25,7 @@ abstract public class IROperand {
 
     public void addUser(IRInstruction instruction) {
         users.add(instruction);
-        instruction.addUser(this);
+        instruction.addUse(this);
     }
 
     public void removeUser(IRInstruction instruction) {

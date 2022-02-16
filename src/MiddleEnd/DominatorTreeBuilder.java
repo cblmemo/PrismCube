@@ -11,6 +11,7 @@ import static Debug.MemoLog.log;
 
 public class DominatorTreeBuilder {
     private IRFunction function;
+    private boolean reverse;
     // auxiliary
     private final LinkedHashMap<IRBasicBlock, IRBasicBlock> idom = new LinkedHashMap<>();
     private final LinkedHashMap<IRBasicBlock, IRBasicBlock> semi = new LinkedHashMap<>();
@@ -40,7 +41,7 @@ public class DominatorTreeBuilder {
     private void dfsOrder(IRBasicBlock current) {
         dfn.put(current, order.size());
         order.add(current);
-        current.getSuccessors().forEach(succ -> {
+        (reverse ? current.getPredecessors() : current.getSuccessors()).forEach(succ -> {
             if (!dfn.containsKey(succ)) {
                 dfsFather.put(succ, current);
                 dfsOrder(succ);
@@ -59,7 +60,7 @@ public class DominatorTreeBuilder {
     private void buildDominatorTree() {
         for (int i = order.size() - 1; i > 0; i--) {
             IRBasicBlock t = order.get(i);
-            for (IRBasicBlock y : t.getPredecessors()) {
+            for (IRBasicBlock y : (reverse ? t.getSuccessors() : t.getPredecessors())) {
                 if (!dfn.containsKey(y)) return;
                 find(y);
                 if (dfn.get(semi.get(mn.get(y))) < dfn.get(semi.get(t))) semi.replace(t, semi.get(mn.get(y)));
@@ -78,7 +79,7 @@ public class DominatorTreeBuilder {
             if (idom.get(t) != semi.get(t)) idom.replace(t, idom.get(idom.get(t)));
         }
         // store to block
-        idom.forEach((succ, pred) -> {
+        if (!reverse) idom.forEach((succ, pred) -> {
             if (pred != null) {
                 pred.addDominatorTreeSuccessor(succ);
                 log.Debugf("%s dom %s\n", pred, succ);
@@ -86,16 +87,10 @@ public class DominatorTreeBuilder {
         });
     }
 
-    private boolean dom(IRBasicBlock m, IRBasicBlock n) { // return whether m dom n
-        if (idom.get(n) == m) return true;
-        if (idom.get(n) == null) return false;
-        return dom(idom.get(n), m);
-    }
-
     private void calculateDominatorFrontier() {
         order.forEach(b -> {
-            if (b.getPredecessors().size() >= 2) {
-                b.getPredecessors().forEach(p -> {
+            if ((reverse ? b.getSuccessors() : b.getPredecessors()).size() >= 2) {
+                (reverse ? b.getSuccessors() : b.getPredecessors()).forEach(p -> {
                     IRBasicBlock runner = p;
                     while (runner != idom.get(b)) {
                         assert dominatorFrontier.containsKey(runner) : runner + " is not in dominatorFrontier";
@@ -106,15 +101,17 @@ public class DominatorTreeBuilder {
             }
         });
         // store to function
-        function.setDominatorFrontier(dominatorFrontier);
-        log.Debugf("dominatorFrontier: %s\n", dominatorFrontier);
+        if (reverse) function.setPostDominatorFrontier(dominatorFrontier);
+        else function.setDominatorFrontier(dominatorFrontier);
+        log.Debugf("%sdominatorFrontier: %s\n", reverse ? "reverse " : "", dominatorFrontier);
     }
 
-    public void build(IRFunction function) {
+    public void build(IRFunction function, boolean reverse) {
         this.function = function;
+        this.reverse = reverse;
         function.removeUnreachableBlocks();
         initialize();
-        dfsOrder(function.getEntryBlock());
+        dfsOrder(reverse ? function.getReturnBlock() : function.getEntryBlock());
         buildDominatorTree();
         calculateDominatorFrontier();
     }

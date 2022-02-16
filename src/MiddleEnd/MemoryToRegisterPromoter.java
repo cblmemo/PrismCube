@@ -177,7 +177,7 @@ public class MemoryToRegisterPromoter extends IROptimize {
 
     @Override
     protected void visit(IRFunction function) {
-        new DominatorTreeBuilder().build(function);
+        new DominatorTreeBuilder().build(function, false);
         this.function = function;
         initialize();
         for (IRAllocaInstruction alloca : allocas) basicOptimize(alloca);

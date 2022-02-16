@@ -11,7 +11,7 @@ abstract public class IRInstruction {
 
     private String comment = null;
     private IRBasicBlock parentBlock;
-    private final LinkedHashSet<IROperand> users = new LinkedHashSet<>();
+    private final LinkedHashSet<IROperand> uses = new LinkedHashSet<>();
 
     public IRInstruction(IRBasicBlock parentBlock) {
         this.parentBlock = parentBlock;
@@ -32,17 +32,27 @@ abstract public class IRInstruction {
             parentBlock.getAllocas().remove(this);
         }
         if (this instanceof IRPhiInstruction) parentBlock.getPhis().remove(this);
-        users.forEach(user -> user.removeUser(this));
+        uses.forEach(user -> user.removeUser(this));
     }
 
-    public void addUser(IROperand operand) {
-        users.add(operand);
+    public void addUse(IROperand operand) {
+        uses.add(operand);
+    }
+
+    public void removeUse(IROperand operand) {
+        uses.remove(operand);
+    }
+
+    public LinkedHashSet<IROperand> getUses() {
+        return uses;
     }
 
     public void replaceUse(IROperand oldOperand, IROperand newOperand) {
-        if (users.contains(oldOperand)) {
-            users.remove(oldOperand);
-            users.add(newOperand);
+        if (uses.contains(oldOperand)) {
+            uses.remove(oldOperand);
+            uses.add(newOperand);
+            oldOperand.removeUser(this);
+            newOperand.addUser(this);
         }
     }
 
