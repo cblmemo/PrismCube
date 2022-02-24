@@ -36,6 +36,7 @@ public class IREmitter implements IRVisitor {
     private static PrintStream irStream = null;
     private static boolean printOpt = false;
     private static PrintStream optStream = null;
+    private static boolean printDebug = false;
 
     public static void enable(PrintStream irStream) {
         IREmitter.irStream = irStream;
@@ -45,6 +46,10 @@ public class IREmitter implements IRVisitor {
     public static void enableOpt(PrintStream optStream) {
         IREmitter.optStream = optStream;
         printOpt = true;
+    }
+
+    public static void enableDebug() {
+        printDebug = true;
     }
 
     public static void disable() {
@@ -71,15 +76,17 @@ public class IREmitter implements IRVisitor {
         }
     }
 
-    public void emitToFile(Memory memory, String fileName) {
-        PrintStream temp = ps;
-        try {
-            ps = new PrintStream(fileName);
-        } catch (FileNotFoundException err) {
-            err.printStackTrace();
+    public void emitDebug(Memory memory, String fileName) {
+        if (printDebug) {
+            PrintStream temp = ps;
+            try {
+                ps = new PrintStream(fileName);
+            } catch (FileNotFoundException err) {
+                err.printStackTrace();
+            }
+            memory.getIRModule().accept(this);
+            ps = temp;
         }
-        memory.getIRModule().accept(this);
-        ps = temp;
     }
 
     @Override

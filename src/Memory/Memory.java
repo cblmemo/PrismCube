@@ -145,6 +145,7 @@ public class Memory {
                     ASTPrinter.enable();
                     ScopePrinter.enable();
                 }
+                case "-printInnerIR" -> IREmitter.enableDebug();
                 case "-print-reg-name" -> IRRegister.printRegisterName();
                 default -> err("wrong argument format");
             }
