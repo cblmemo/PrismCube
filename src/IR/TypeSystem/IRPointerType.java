@@ -1,5 +1,7 @@
 package IR.TypeSystem;
 
+import IR.IRModule;
+import IR.Operand.IRConstNumber;
 import IR.Operand.IRNull;
 import IR.Operand.IROperand;
 import Memory.Memory;
@@ -27,7 +29,12 @@ public class IRPointerType extends IRTypeSystem {
 
     @Override
     public IROperand getDefaultValue() {
-        return new IRNull(this);
+        return new IRNull(IRModule.nullType);
+    }
+
+    @Override
+    public IRConstNumber getCorrespondingConstOperandType() {
+        return new IRNull(null);
     }
 
     @Override

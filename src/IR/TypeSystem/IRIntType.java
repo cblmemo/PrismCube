@@ -1,7 +1,7 @@
 package IR.TypeSystem;
 
-import IR.Operand.IRConstInt;
-import IR.Operand.IROperand;
+import IR.IRModule;
+import IR.Operand.*;
 
 public class IRIntType extends IRTypeSystem {
     private final int bandWidth;
@@ -22,6 +22,24 @@ public class IRIntType extends IRTypeSystem {
     @Override
     public IROperand getDefaultValue() {
         return new IRConstInt(this, 0);
+    }
+
+    @Override
+    public IRConstNumber getCorrespondingConstOperandType() {
+        switch (bandWidth) {
+            case 1 -> {
+                return new IRConstBool(IRModule.boolType, true);
+            }
+            case 8 -> {
+                return new IRConstChar(IRModule.charType, 0);
+            }
+            case 32 -> {
+                return new IRConstInt(IRModule.intType, 0);
+            }
+            default -> {
+                return null;
+            }
+        }
     }
 
     @Override

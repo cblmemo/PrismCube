@@ -3,26 +3,24 @@ package MiddleEnd;
 import IR.IRBasicBlock;
 import IR.IRFunction;
 import IR.Instruction.*;
-import IR.Operand.IRNull;
 import IR.Operand.IROperand;
 import IR.Operand.IRRegister;
 import Memory.Memory;
+import MiddleEnd.Pass.IRFunctionPass;
 import Utility.error.OptimizeError;
 
 import java.util.*;
 
 import static Debug.MemoLog.log;
 
-public class MemoryToRegisterPromoter extends IROptimize {
+public class MemoryToRegisterPromoter implements IRFunctionPass {
     private IRFunction function;
     private final LinkedHashSet<IRAllocaInstruction> allocas = new LinkedHashSet<>();
     private final LinkedHashMap<IRPhiInstruction, IRAllocaInstruction> phi2alloca = new LinkedHashMap<>();
     private final LinkedHashMap<IRRegister, ArrayList<IRBasicBlock>> allocaUserBlocks = new LinkedHashMap<>();
 
     public void promote(Memory memory) {
-        if (doOptimize) {
-            memory.getIRModule().getFunctions().values().forEach(this::visit);
-        }
+        memory.getIRModule().getFunctions().values().forEach(this::visit);
     }
 
     private void resetAllocas() {
@@ -113,8 +111,8 @@ public class MemoryToRegisterPromoter extends IROptimize {
                 dominatorFrontier.get(n).forEach(Y -> {
                     if (visited.contains(Y)) return;
                     visited.add(Y);
-                    IRPhiInstruction phi = new IRPhiInstruction(Y, new IRRegister(a.getAllocaType(), "phi"), a.getAllocaType(), a);
-                    log.Debugf("placing phi [%s] for alloca [%s] in BasicBlock [%s]\n", phi, a, Y);
+                    IRPhiInstruction phi = new IRPhiInstruction(Y, new IRRegister(a.getAllocaType(), "phi_" + a.getAllocaTarget().getName()), a.getAllocaType(), a);
+                    log.Tracef("placing phi [%s] for alloca [%s] in BasicBlock [%s]\n", phi, a, Y);
                     phi2alloca.put(phi, a);
                     Y.addPhi(phi);
                     workList.offer(Y);
@@ -134,12 +132,12 @@ public class MemoryToRegisterPromoter extends IROptimize {
     }
 
     private void rename(IRBasicBlock block) {
-        log.Debugf("start renaming block [%s]\n", block);
+        log.Tracef("start renaming block [%s]\n", block);
         LinkedHashSet<IRAllocaInstruction> defer = new LinkedHashSet<>();
         block.getPhis().forEach(phi -> {
             IRAllocaInstruction a = phi2alloca.get(phi);
             stack.get(a).push(phi.getResultRegister());
-            log.Debugf("push %s to %s\n", phi.getResultRegister(), a);
+            log.Tracef("push %s to %s\n", phi.getResultRegister(), a);
             defer.add(a);
         });
         ArrayList<IRInstruction> instructions = new ArrayList<>(block.getInstructions());
@@ -149,8 +147,7 @@ public class MemoryToRegisterPromoter extends IROptimize {
                 if (!allocas.contains(x)) return;
                 assert !stack.get(x).isEmpty();
                 IROperand val = stack.get(x).peek();
-                LinkedHashSet<IRInstruction> users = new LinkedHashSet<>(((IRLoadInstruction) inst).getResultRegister().getUsers());
-                users.forEach(user -> user.replaceUse(((IRLoadInstruction) inst).getResultRegister(), val));
+                inst.replaceAllUseWithValue(val);
                 inst.removeFromParentBlock();
             } else if (inst instanceof IRStoreInstruction) {
                 IRAllocaInstruction a = ((IRStoreInstruction) inst).getStoreAddress().getAllocaDef();
@@ -158,14 +155,14 @@ public class MemoryToRegisterPromoter extends IROptimize {
                 if (defer.contains(a)) stack.get(a).pop();
                 else defer.add(a);
                 stack.get(a).push(((IRStoreInstruction) inst).getStoreValue());
-                log.Debugf("push %s to %s\n", ((IRStoreInstruction) inst).getStoreValue(), a);
+                log.Tracef("push %s to %s\n", ((IRStoreInstruction) inst).getStoreValue(), a);
                 inst.removeFromParentBlock();
             } else if (inst instanceof IRAllocaInstruction) inst.removeFromParentBlock();
         });
         block.getSuccessors().forEach(succ -> {
-            log.Debugf("add phi candidate for %s\n", succ);
+            log.Tracef("add phi candidate for %s\n", succ);
             succ.getPhis().forEach(phi -> {
-                log.Debugf("manage phi: %s\n", phi);
+                log.Tracef("manage phi: %s\n", phi);
                 assert phi2alloca.containsKey(phi);
                 IRAllocaInstruction a = phi2alloca.get(phi);
                 phi.addCandidate(stack.get(a).isEmpty() ? phi.getResultRegister() : stack.get(a).peek(), block);
@@ -176,7 +173,7 @@ public class MemoryToRegisterPromoter extends IROptimize {
     }
 
     @Override
-    protected void visit(IRFunction function) {
+    public void visit(IRFunction function) {
         new DominatorTreeBuilder().build(function, false);
         this.function = function;
         initialize();

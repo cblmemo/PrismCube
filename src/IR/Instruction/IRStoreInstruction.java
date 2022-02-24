@@ -3,6 +3,7 @@ package IR.Instruction;
 import FrontEnd.IRVisitor;
 import IR.IRBasicBlock;
 import IR.Operand.IROperand;
+import IR.Operand.IRRegister;
 import IR.TypeSystem.IRPointerType;
 import IR.TypeSystem.IRTypeSystem;
 
@@ -50,6 +51,11 @@ public class IRStoreInstruction extends IRInstruction {
             storeValue = newOperand;
             newOperand.addUser(this);
         }
+    }
+
+    @Override
+    public IRRegister getDef() {
+        return null;
     }
 
     @Override

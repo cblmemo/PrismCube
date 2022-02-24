@@ -3,6 +3,7 @@ package IR.Instruction;
 import IR.IRBasicBlock;
 import FrontEnd.IRVisitor;
 import IR.Operand.IROperand;
+import IR.Operand.IRRegister;
 import Utility.error.OptimizeError;
 
 public class IRBrInstruction extends IRInstruction {
@@ -20,6 +21,8 @@ public class IRBrInstruction extends IRInstruction {
         thenBlock.addPredecessor(parentBlock);
         elseBlock.addPredecessor(parentBlock);
         condition.addUser(this);
+        thenBlock.getLabel().addUser(this);
+        elseBlock.getLabel().addUser(this);
     }
 
     public IROperand getCondition() {
@@ -55,6 +58,11 @@ public class IRBrInstruction extends IRInstruction {
             condition = newOperand;
             newOperand.addUser(this);
         }
+    }
+
+    @Override
+    public IRRegister getDef() {
+        return null;
     }
 
     @Override

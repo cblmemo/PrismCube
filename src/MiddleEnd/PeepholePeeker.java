@@ -8,18 +8,17 @@ import ASM.Instruction.ASMPseudoInstruction;
 import ASM.Operand.ASMImmediate;
 import ASM.Operand.ASMLabel;
 import Memory.Memory;
+import MiddleEnd.Pass.ASMFunctionPass;
 
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.Objects;
 
-public class PeepholePeeker extends ASMOptimize {
+public class PeepholePeeker implements ASMFunctionPass {
     private ASMFunction function;
 
     public void peek(Memory memory) {
-        if (doOptimize) {
-            memory.getAsmModule().getFunctions().values().forEach(this::visit);
-        }
+        memory.getAsmModule().getFunctions().values().forEach(this::visit);
     }
 
     private void removeRedundantLoadStore() {
@@ -103,11 +102,12 @@ public class PeepholePeeker extends ASMOptimize {
     }
 
     @Override
-    protected void visit(ASMFunction function) {
+    public void visit(ASMFunction function) {
         this.function = function;
         removeRedundantLoadStore();
         function.getBlocks().forEach(this::convertConstRegisterBranchToJump);
         function.getBlocks().forEach(this::removeUnreachableCode);
-        while (changed) controlFlowOptimize();
+        int cnt = 0;
+        while (changed && cnt++ < 20) controlFlowOptimize();
     }
 }

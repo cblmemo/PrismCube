@@ -1,25 +1,13 @@
 package MiddleEnd;
 
 public abstract class Optimize {
-    protected static boolean doOptimize = false;
-
-    public static void enable() {
-        doOptimize = true;
+    public enum OptimizeLevel {
+        O0, O1, O2
     }
 
-    public static void disable() {
-        doOptimize = false;
-    }
+    protected static OptimizeLevel level = OptimizeLevel.O0;
 
-    // todo replace flag with this:
-    //  class OptimizationManager {
-    //  public Array<Optimization> getOptimizations (String level) {
-    //    if (level.equals("-O0")) return [];
-    //    if (level.equals("-O1")) return [
-    //      new FooOptimization(),
-    //      new BarOptimization(/* level */ 1)
-    //    ];
-    //    // ...
-    //  }
-    //}
+    public static void setLevel(OptimizeLevel level) {
+        Optimize.level = level;
+    }
 }

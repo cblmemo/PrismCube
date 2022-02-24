@@ -4,26 +4,26 @@ import IR.IRBasicBlock;
 import IR.IRFunction;
 import IR.Instruction.IRJumpInstruction;
 import Memory.Memory;
+import MiddleEnd.Pass.IRFunctionPass;
 
 import java.util.ArrayList;
 import java.util.LinkedHashSet;
 
-public class IRBlockFuser extends IROptimize {
-    private boolean changed = true;
+import static Debug.MemoLog.log;
 
-    public void fuse(Memory memory) {
-        if (doOptimize) {
-            while (changed) {
-                memory.getIRModule().getFunctions().values().forEach(this::visit);
-            }
-        }
+public class IRBlockFuser implements IRFunctionPass {
+    private boolean changed = false;
+
+    public boolean fuse(Memory memory) {
+        memory.getIRModule().getFunctions().values().forEach(this::visit);
+        if (changed) log.Infof("Program changed in fuse.\n");
+        return changed;
     }
 
     @Override
-    protected void visit(IRFunction function) {
-        changed = false;
+    public void visit(IRFunction function) {
         // remove unreachable blocks
-        changed = function.removeUnreachableBlocks();
+        changed |= function.removeUnreachableBlocks();
         // cannot fuse entry block and exit block
         if (function.getBlocks().size() <= 2) return;
         // fuse blocks
@@ -31,7 +31,7 @@ public class IRBlockFuser extends IROptimize {
         LinkedHashSet<IRBasicBlock> deleted = new LinkedHashSet<>();
         blocks.forEach(block -> {
             if (!deleted.contains(block) && block.getEscapeInstruction() instanceof IRJumpInstruction) {
-                assert block.getSuccessors().size() == 1;
+                assert block.getSuccessors().size() == 1 : "jump: [" + block.getEscapeInstruction() + "], succ: [" + block.getSuccessors() + "]";
                 IRBasicBlock succ = block.getSuccessors().get(0);
                 if (succ.getPredecessors().size() == 1) {
                     assert succ.getPredecessors().get(0) == block;

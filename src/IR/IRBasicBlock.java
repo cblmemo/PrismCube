@@ -19,6 +19,7 @@ public class IRBasicBlock {
     private final ArrayList<IRBasicBlock> predecessors = new ArrayList<>();
     private final ArrayList<IRBasicBlock> successors = new ArrayList<>();
     private final ArrayList<IRBasicBlock> dominatorTreeSuccessors = new ArrayList<>();
+    private IRBasicBlock postIdom = null;
 
     private boolean hasFinished = false;
 
@@ -27,7 +28,7 @@ public class IRBasicBlock {
 
     public IRBasicBlock(IRFunction parentFunction, String labelName) {
         this.parentFunction = parentFunction;
-        this.label = new IRLabel(prefix + parentFunction.getFunctionName() + delim + labelName);
+        this.label = new IRLabel(prefix + parentFunction.getFunctionName() + delim + labelName, this);
         this.labelName = labelName;
     }
 
@@ -87,7 +88,8 @@ public class IRBasicBlock {
         this.escapeInstruction = successor.getEscapeInstruction();
         if (successor.getAllocas() != null) allocas.addAll(successor.getAllocas());
         phis.addAll(successor.getPhis());
-        successor.getLabel().getUsers().forEach(user -> {
+        ArrayList<IRInstruction> users = new ArrayList<>(successor.getLabel().getUsers());
+        users.forEach(user -> {
             if (user instanceof IRPhiInstruction) ((IRPhiInstruction) user).replaceSourceBlock(successor, this);
         });
         if (successor.isReturnBlock()) isReturnBlock = true;
@@ -96,6 +98,14 @@ public class IRBasicBlock {
             if (!successors.contains(succSucc)) successors.add(succSucc);
             succSucc.replacePredecessor(successor, this);
         });
+    }
+
+    public void replaceInstructions(IRInstruction oldInst, IRInstruction newInst) {
+        assert instructions.contains(oldInst);
+        int index = instructions.indexOf(oldInst);
+        instructions.add(index, newInst);
+        oldInst.removeFromParentBlock();
+        if (escapeInstruction == oldInst) escapeInstruction = newInst;
     }
 
     public void replaceControlFlowTarget(IRBasicBlock oldBlock, IRBasicBlock newBlock) {
@@ -159,11 +169,14 @@ public class IRBasicBlock {
     }
 
     public void addPredecessor(IRBasicBlock predecessor) {
-        predecessors.add(predecessor);
-        predecessor.addSuccessor(this);
+        if (!predecessors.contains(predecessor)) {
+            predecessors.add(predecessor);
+            predecessor.addSuccessor(this);
+        }
     }
 
     public void removePredecessor(IRBasicBlock predecessor) {
+        assert predecessors.contains(predecessor);
         predecessors.remove(predecessor);
     }
 
@@ -182,6 +195,7 @@ public class IRBasicBlock {
     }
 
     public void removeSuccessor(IRBasicBlock successor) {
+        assert successors.contains(successor);
         successors.remove(successor);
     }
 
@@ -197,6 +211,14 @@ public class IRBasicBlock {
             builder.append(predecessors.get(i).getLabel());
         }
         return builder.toString();
+    }
+
+    public void setPostIdom(IRBasicBlock postIdom) {
+        this.postIdom = postIdom;
+    }
+
+    public IRBasicBlock getPostIdom() {
+        return postIdom;
     }
 
     @Override

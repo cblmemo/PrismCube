@@ -1,6 +1,7 @@
 package IR.Operand;
 
 import IR.TypeSystem.IRTypeSystem;
+import Utility.error.OptimizeError;
 
 public class IRConstBool extends IRConstNumber {
     private final boolean value;
@@ -17,6 +18,19 @@ public class IRConstBool extends IRConstNumber {
     @Override
     public int getIntValue() {
         return value ? 1 : 0;
+    }
+
+    @Override
+    public IRConstNumber cloneFromIntValue(int value) {
+        switch (value) {
+            case 0 -> {
+                return new IRConstBool(this.getIRType(), false);
+            }
+            case 1 -> {
+                return new IRConstBool(this.getIRType(), true);
+            }
+            default -> throw new OptimizeError("clone const bool with value " + value);
+        }
     }
 
     @Override

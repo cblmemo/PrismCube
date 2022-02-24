@@ -8,23 +8,22 @@ import IR.Instruction.IRStoreInstruction;
 import IR.Operand.IRConst;
 import IR.Operand.IRGlobalVariableRegister;
 import Memory.Memory;
+import MiddleEnd.Pass.IRFunctionPass;
 
 import java.util.ArrayList;
 
-public class IRGlobalInitializeEliminator extends IROptimize {
+public class IRGlobalInitializeEliminator implements IRFunctionPass {
     private IRModule module;
 
     public void eliminate(Memory memory) {
-        if (doOptimize) {
-            this.module = memory.getIRModule();
-            ArrayList<IRFunction> initFuncs = new ArrayList<>(module.getSingleInitializeFunctions());
-            initFuncs.forEach(this::visit);
-            module.tryRemoveGlobalConstructor();
-        }
+        this.module = memory.getIRModule();
+        ArrayList<IRFunction> initFuncs = new ArrayList<>(module.getSingleInitializeFunctions());
+        initFuncs.forEach(this::visit);
+        module.tryRemoveGlobalConstructor();
     }
 
     @Override
-    protected void visit(IRFunction function) {
+    public void visit(IRFunction function) {
         if (function.getBlocks().size() == 2) {
             ArrayList<IRInstruction> instructions = function.getEntryBlock().getInstructions();
             assert instructions.size() >= 2;

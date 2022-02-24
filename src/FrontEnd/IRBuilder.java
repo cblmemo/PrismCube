@@ -261,7 +261,7 @@ public class IRBuilder implements ASTVisitor {
             IRRegister variableRegister;
             if (variableIRType.isClassPointer()) {
                 if (node.hasInitializeValue()) {
-                    variableRegister = new IRRegister(new IRPointerType(variableIRType), "alloca", true);
+                    variableRegister = new IRRegister(new IRPointerType(variableIRType), "alloca_" + node.getVariableNameStr(), true);
                     appendInst(new IRAllocaInstruction(currentFunction.getEntryBlock(), variableIRType, variableRegister));
                     node.getInitializeValue().accept(this);
                     IROperand initVal = node.getInitializeValue().getIRResultValue();
@@ -275,20 +275,18 @@ public class IRBuilder implements ASTVisitor {
                     appendInst(callInst);
                     IRRegister classRegister = new IRRegister(variableIRType, "class_ptr");
                     appendInst(new IRBitcastInstruction(currentBasicBlock, classRegister, classCharPtr, variableIRType));
-                    variableRegister = new IRRegister(new IRPointerType(variableIRType), "alloca", true);
+                    variableRegister = new IRRegister(new IRPointerType(variableIRType), "alloca_" + node.getVariableNameStr(), true);
                     appendInst(new IRAllocaInstruction(currentFunction.getEntryBlock(), variableIRType, variableRegister));
                     appendInst(new IRStoreInstruction(currentBasicBlock, variableIRType, variableRegister, classRegister));
                 }
             } else {
-                variableRegister = new IRRegister(new IRPointerType(variableIRType), "alloca", true);
+                variableRegister = new IRRegister(new IRPointerType(variableIRType), "alloca_" + node.getVariableNameStr(), true);
                 appendInst(new IRAllocaInstruction(currentFunction.getEntryBlock(), variableIRType, variableRegister));
                 IROperand initVal;
                 if (node.hasInitializeValue()) {
                     node.getInitializeValue().accept(this);
                     initVal = node.getInitializeValue().getIRResultValue();
-                } else {
-                    initVal = variableIRType.getDefaultValue();
-                }
+                } else initVal = variableIRType.getDefaultValue();
                 appendInst(new IRStoreInstruction(currentBasicBlock, variableIRType, variableRegister, initVal));
             }
             currentScope.getVariableEntityRecursively(node.getVariableNameStr()).setCurrentRegister(variableRegister);

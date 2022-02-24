@@ -1,6 +1,7 @@
 package IR.TypeSystem;
 
 import FrontEnd.IRVisitor;
+import IR.Operand.IRConstNumber;
 import IR.Operand.IROperand;
 import IR.Operand.IRZeroInitializer;
 
@@ -71,6 +72,11 @@ public class IRStructureType extends IRTypeSystem {
     @Override
     public IROperand getDefaultValue() {
         return new IRZeroInitializer(this);
+    }
+
+    @Override
+    public IRConstNumber getCorrespondingConstOperandType() {
+        return null;
     }
 
     @Override

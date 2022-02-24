@@ -27,12 +27,7 @@ public class PrismCube {
             new IRBuilder().build(memory);
             new IREmitter().emit(memory);
             // ir optimize
-            new MemoryToRegisterPromoter().promote(memory);
-            new AggressiveDeadCodeEliminator().eliminate(memory);
-            new PhiResolver().resolve(memory);
-            new IRBlockFuser().fuse(memory);
-            new IRGlobalInitializeEliminator().eliminate(memory);
-            new IREmitter().emitOpt(memory);
+            new IROptimizer().invoke(memory);
             // assembly
             new InstructionSelector().select(memory);
             new RegisterAllocator().allocate(memory);

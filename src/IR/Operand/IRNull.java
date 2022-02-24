@@ -13,6 +13,12 @@ public class IRNull extends IRConstNumber {
     }
 
     @Override
+    public IRConstNumber cloneFromIntValue(int value) {
+        assert value == 0;
+        return new IRNull(this.getIRType());
+    }
+
+    @Override
     public String toString() {
         return "null";
     }

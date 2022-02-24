@@ -3,31 +3,37 @@ package MiddleEnd;
 import IR.IRBasicBlock;
 import IR.IRFunction;
 import IR.Instruction.*;
+import IR.Operand.IRLabel;
 import Memory.Memory;
+import MiddleEnd.Pass.IRFunctionPass;
 
 import java.util.*;
 
-public class AggressiveDeadCodeEliminator extends IROptimize {
+import static Debug.MemoLog.log;
+
+public class AggressiveDeadCodeEliminator implements IRFunctionPass {
     private LinkedHashMap<String, IRFunction> functions;
     private LinkedHashMap<String, IRFunction> builtins;
     private final LinkedHashSet<IRFunction> functionsWithSideEffect = new LinkedHashSet<>();
     private final LinkedHashMap<IRFunction, LinkedHashSet<IRFunction>> functionCallers = new LinkedHashMap<>();
     private final LinkedHashSet<IRInstruction> live = new LinkedHashSet<>();
+    private final LinkedHashSet<IRBasicBlock> liveBlock = new LinkedHashSet<>();
     private final Queue<IRInstruction> workList = new LinkedList<>();
+    private boolean changed = false;
 
     private void build(IRFunction function) {
         new DominatorTreeBuilder().build(function, true);
     }
 
-    public void eliminate(Memory memory) {
-        if (doOptimize) {
-            functions = memory.getIRModule().getFunctions();
-            builtins = memory.getIRModule().getBuiltinFunctions();
-            functions.values().forEach(this::build);
-            initialize();
-            iteration();
-            functions.values().forEach(this::visit);
-        }
+    public boolean eliminate(Memory memory) {
+        functions = memory.getIRModule().getFunctions();
+        builtins = memory.getIRModule().getBuiltinFunctions();
+        functions.values().forEach(this::build);
+        initialize();
+        iteration();
+        functions.values().forEach(this::visit);
+        if (changed) log.Infof("Program changed in adce.\n");
+        return changed;
     }
 
     private AggressiveDeadCodeEliminator addToSideEffect(IRFunction functionWithSideEffect) {
@@ -41,6 +47,7 @@ public class AggressiveDeadCodeEliminator extends IROptimize {
     private void markAsLiveInstruction(IRInstruction inst) {
         if (!live.contains(inst) && inst != null) {
             live.add(inst);
+            liveBlock.add(inst.getParentBlock());
             workList.offer(inst);
         }
     }
@@ -66,7 +73,10 @@ public class AggressiveDeadCodeEliminator extends IROptimize {
     private void iteration() {
         while (!workList.isEmpty()) {
             IRInstruction current = workList.poll();
-            current.getUses().forEach(use -> markAsLiveInstruction(use.getDef()));
+            current.getUses().forEach(use -> {
+                if (use instanceof IRLabel) markAsLiveInstruction(((IRLabel) use).belongTo().getEscapeInstruction());
+                markAsLiveInstruction(use.getDef());
+            });
             if (current instanceof IRPhiInstruction)
                 ((IRPhiInstruction) current).forEachCandidate((block, val) -> markAsLiveInstruction(block.getEscapeInstruction()));
             if (current == current.getParentBlock().getEscapeInstruction())
@@ -76,14 +86,30 @@ public class AggressiveDeadCodeEliminator extends IROptimize {
     }
 
     @Override
-    protected void visit(IRFunction function) { // eliminate
+    public void visit(IRFunction function) { // eliminate
         ArrayList<IRBasicBlock> blocks = new ArrayList<>(function.getBlocks());
         blocks.forEach(block -> {
             ArrayList<IRInstruction> instructions = new ArrayList<>(block.getInstructions());
             instructions.forEach(inst -> {
                 if (!live.contains(inst)) {
-                    if (inst instanceof IRBrInstruction || inst instanceof IRJumpInstruction) return;
-                    inst.removeFromParentBlock();
+                    if (inst instanceof IRJumpInstruction) return;
+                    changed = true;
+                    if (inst instanceof IRBrInstruction) {
+                        // replace br with
+                        IRBasicBlock tar = block.getPostIdom();
+                        // return block is live so don't need to worry tar == null
+                        while (!liveBlock.contains(tar)) tar = tar.getPostIdom();
+                        assert tar != null;
+                        IRJumpInstruction jump = new IRJumpInstruction(block, tar);
+                        block.removeSuccessor(((IRBrInstruction) inst).getThenBlock());
+                        ((IRBrInstruction) inst).getThenBlock().removePredecessor(block);
+                        ((IRBrInstruction) inst).getThenBlock().getPhis().forEach(phi -> phi.removeCandidate(block));
+                        block.removeSuccessor(((IRBrInstruction) inst).getElseBlock());
+                        ((IRBrInstruction) inst).getElseBlock().removePredecessor(block);
+                        ((IRBrInstruction) inst).getElseBlock().getPhis().forEach(phi -> phi.removeCandidate(block));
+                        tar.addPredecessor(block);
+                        block.replaceInstructions(inst, jump);
+                    } else inst.removeFromParentBlock();
                 }
             });
         });

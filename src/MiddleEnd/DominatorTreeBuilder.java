@@ -27,7 +27,7 @@ public class DominatorTreeBuilder {
 
     private void initialize() {
         ArrayList<IRBasicBlock> blocks = function.reachableBlocks();
-        log.Debugf("reachable blocks: %s\n", blocks);
+        log.Tracef("reachable blocks: %s\n", blocks);
         blocks.forEach(block -> {
             idom.put(block, null);
             semi.put(block, block);
@@ -79,11 +79,12 @@ public class DominatorTreeBuilder {
             if (idom.get(t) != semi.get(t)) idom.replace(t, idom.get(idom.get(t)));
         }
         // store to block
-        if (!reverse) idom.forEach((succ, pred) -> {
+        if (reverse) idom.forEach(IRBasicBlock::setPostIdom);
+        else idom.forEach((succ, pred) -> {
             if (pred != null) {
                 pred.addDominatorTreeSuccessor(succ);
-                log.Debugf("%s dom %s\n", pred, succ);
-            } else log.Debugf("%s has no idom\n", succ);
+                log.Tracef("%s dom %s\n", pred, succ);
+            } else log.Tracef("%s has no idom\n", succ);
         });
     }
 
@@ -103,7 +104,7 @@ public class DominatorTreeBuilder {
         // store to function
         if (reverse) function.setPostDominatorFrontier(dominatorFrontier);
         else function.setDominatorFrontier(dominatorFrontier);
-        log.Debugf("%sdominatorFrontier: %s\n", reverse ? "reverse " : "", dominatorFrontier);
+        log.Tracef("%sDominatorFrontier: %s\n", reverse ? "reverse " : "", dominatorFrontier);
     }
 
     public void build(IRFunction function, boolean reverse) {

@@ -3,6 +3,7 @@ package IR.Instruction;
 import FrontEnd.IRVisitor;
 import IR.IRBasicBlock;
 import IR.Operand.IROperand;
+import IR.Operand.IRRegister;
 import Utility.error.OptimizeError;
 
 public class IRJumpInstruction extends IRInstruction {
@@ -12,6 +13,7 @@ public class IRJumpInstruction extends IRInstruction {
         super(parentBlock);
         this.targetBlock = targetBlock;
         targetBlock.addPredecessor(parentBlock);
+        targetBlock.getLabel().addUser(this);
     }
 
     public IRBasicBlock getTargetBlock() {
@@ -26,6 +28,11 @@ public class IRJumpInstruction extends IRInstruction {
     @Override
     public void replaceUse(IROperand oldOperand, IROperand newOperand) {
         // do nothing since no use in jump
+    }
+
+    @Override
+    public IRRegister getDef() {
+        return null;
     }
 
     @Override

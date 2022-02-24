@@ -116,7 +116,7 @@ public class Memory {
                     if (mode != Mode.NONE) err("argument conflict");
                     mode = Mode.CODEGEN;
                 }
-                case "-O2" -> Optimize.enable();
+                case "-O2" -> Optimize.setLevel(Optimize.OptimizeLevel.O2);
                 case "-printV" -> {
                     String arg = (i + 1 < args.length && args[i + 1].charAt(0) != '-') ? args[++i] : "./bin/virtual.s";
                     PrintStream virtualStream = new PrintStream(arg);
@@ -157,7 +157,7 @@ public class Memory {
                 InstructionSelector.disable();
                 RegisterAllocator.disable();
                 ASMEmitter.disable();
-                Optimize.disable();
+                Optimize.setLevel(Optimize.OptimizeLevel.O0);
             }
             case LLVM -> {
                 ConstStringCollector.enable();
@@ -184,7 +184,7 @@ public class Memory {
         inputStream = System.in;
         IREmitter.disable();
         ASMEmitter.disableVirtual();
-        Optimize.disable();
+        Optimize.setLevel(Optimize.OptimizeLevel.O0);
     }
 
     public void setParseTreeRoot(ParseTree parseTreeRoot) {

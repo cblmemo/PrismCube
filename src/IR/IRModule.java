@@ -37,6 +37,12 @@ public class IRModule {
     private boolean generatedInitializeFunction = false;
     private final String globalInitializeFunctionName = "__mx_global_init";
 
+    public static IRTypeSystem nullType;
+    public static IRTypeSystem voidType;
+    public static IRTypeSystem boolType;
+    public static IRTypeSystem charType;
+    public static IRTypeSystem intType;
+
     private static final String llvmDetails = """
             ; ModuleID = 'src.mx'
             source_filename = "src.mx"
@@ -45,11 +51,11 @@ public class IRModule {
             """;
 
     public IRModule() {
-        addIRType("null", new IRNullType());
-        addIRType("void", new IRVoidType());
-        addIRType("bool", new IRIntType(1));
-        addIRType("char", new IRIntType(8));
-        addIRType("int", new IRIntType(32));
+        addIRType("null", nullType = new IRNullType());
+        addIRType("void", voidType = new IRVoidType());
+        addIRType("bool", boolType = new IRIntType(1));
+        addIRType("char", charType = new IRIntType(8));
+        addIRType("int", intType = new IRIntType(32));
         addIRType("string", new IRPointerType(getIRType("char")));
         addIRType("void *", new IRPointerType(getIRType("void")));
 

@@ -3,6 +3,7 @@ package IR.Instruction;
 import FrontEnd.IRVisitor;
 import IR.IRBasicBlock;
 import IR.Operand.IROperand;
+import IR.Operand.IRRegister;
 import IR.TypeSystem.IRTypeSystem;
 
 import java.util.Objects;
@@ -36,6 +37,11 @@ public class IRReturnInstruction extends IRInstruction {
             returnValue = newOperand;
             newOperand.addUser(this);
         }
+    }
+
+    @Override
+    public IRRegister getDef() {
+        return null;
     }
 
     @Override

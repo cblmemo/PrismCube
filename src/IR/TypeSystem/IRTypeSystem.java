@@ -1,5 +1,6 @@
 package IR.TypeSystem;
 
+import IR.Operand.IRConstNumber;
 import IR.Operand.IROperand;
 
 import java.util.Objects;
@@ -8,6 +9,8 @@ abstract public class IRTypeSystem {
     abstract public String toString();
 
     abstract public IROperand getDefaultValue();
+
+    abstract public IRConstNumber getCorrespondingConstOperandType();
 
     public abstract int sizeof();
 

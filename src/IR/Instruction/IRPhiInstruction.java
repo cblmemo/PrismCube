@@ -28,11 +28,14 @@ public class IRPhiInstruction extends IRInstruction {
         values.add(value);
         blocks.add(block);
         value.addUser(this);
+        block.getLabel().addUser(this);
     }
 
     public void removeCandidate(IRBasicBlock block) {
         int index = blocks.indexOf(block);
-        assert index > 0;
+        assert index >= 0 : blocks + " " + block;
+        blocks.get(index).getLabel().removeUser(this);
+        removeUse(blocks.get(index).getLabel());
         blocks.remove(index);
         values.get(index).removeUser(this);
         removeUse(values.get(index));
@@ -40,19 +43,50 @@ public class IRPhiInstruction extends IRInstruction {
     }
 
     public void replaceSourceBlock(IRBasicBlock oldBlock, IRBasicBlock newBlock) {
+        boolean replaced = false;
         for (int i = 0; i < blocks.size(); i++) {
             if (blocks.get(i) == oldBlock) {
                 blocks.set(i, newBlock);
+                oldBlock.getLabel().removeUser(this);
+                removeUse(oldBlock.getLabel());
+                newBlock.getLabel().addUser(this);
+                replaced = true;
                 break;
             }
         }
+        assert replaced : this + " " + blocks + " " + oldBlock + " " + newBlock;
     }
 
     public void forEachCandidate(BiConsumer<IRBasicBlock, IROperand> consumer) {
         for (int i = 0; i < blocks.size(); i++) consumer.accept(blocks.get(i), values.get(i));
     }
 
+    public ArrayList<IRBasicBlock> getBlocks() {
+        return blocks;
+    }
+
+    public ArrayList<IROperand> getValues() {
+        return values;
+    }
+
     public IRRegister getResultRegister() {
+        return resultRegister;
+    }
+
+    @Override
+    public void replaceUse(IROperand oldOperand, IROperand newOperand) {
+        super.replaceUse(oldOperand, newOperand);
+        for (int i = 0; i < values.size(); i++) {
+            if (values.get(i) == oldOperand) {
+                oldOperand.removeUser(this);
+                values.set(i, newOperand);
+                newOperand.addUser(this);
+            }
+        }
+    }
+
+    @Override
+    public IRRegister getDef() {
         return resultRegister;
     }
 

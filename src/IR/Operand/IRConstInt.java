@@ -20,6 +20,11 @@ public class IRConstInt extends IRConstNumber {
     }
 
     @Override
+    public IRConstNumber cloneFromIntValue(int value) {
+        return new IRConstInt(this.getIRType(), value);
+    }
+
+    @Override
     public String toString() {
         return Integer.toString(value);
     }

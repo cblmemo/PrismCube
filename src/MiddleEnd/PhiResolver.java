@@ -7,17 +7,16 @@ import IR.Instruction.IRMoveInstruction;
 import IR.Instruction.IRPhiInstruction;
 import IR.Operand.IRRegister;
 import Memory.Memory;
+import MiddleEnd.Pass.IRFunctionPass;
 
 import java.util.ArrayList;
 import java.util.LinkedHashSet;
 
-public class PhiResolver extends IROptimize {
+public class PhiResolver implements IRFunctionPass {
     private IRFunction function;
 
     public void resolve(Memory memory) {
-        if (doOptimize) {
-            memory.getIRModule().getFunctions().values().forEach(this::visit);
-        }
+        memory.getIRModule().getFunctions().values().forEach(this::visit);
     }
 
     private void criticalEdgeSplit() {
@@ -52,7 +51,7 @@ public class PhiResolver extends IROptimize {
     }
 
     @Override
-    protected void visit(IRFunction function) {
+    public void visit(IRFunction function) {
         this.function = function;
         criticalEdgeSplit();
         replacePhiWithMove();

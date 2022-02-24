@@ -48,7 +48,7 @@ abstract public class IROperand {
         if (def instanceof IRAllocaInstruction) return (IRAllocaInstruction) def;
         if (def instanceof IRBitcastInstruction) return ((IRBitcastInstruction) def).getPtrValue().getAllocaDef();
         if (def instanceof IRGetelementptrInstruction) return ((IRGetelementptrInstruction) def).getPtrValue().getAllocaDef();
-        log.Debugf("failed when getAllocaDef, operand: %s\n", this);
+        log.Tracef("failed when getAllocaDef, operand: %s\n", this);
         return null;
     }
 

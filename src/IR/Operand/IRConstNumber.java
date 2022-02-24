@@ -9,6 +9,8 @@ abstract public class IRConstNumber extends IRConst {
 
     abstract public int getIntValue();
 
+    abstract public IRConstNumber cloneFromIntValue(int value);
+
     @Override
     public IROperand toIROperand() {
         return new IRConstInt(null, getIntValue());

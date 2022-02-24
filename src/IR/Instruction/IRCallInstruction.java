@@ -84,6 +84,11 @@ public class IRCallInstruction extends IRInstruction {
     }
 
     @Override
+    public IRRegister getDef() {
+        return resultRegister;
+    }
+
+    @Override
     public boolean noUsersAndSafeToRemove() {
         return false;
     }

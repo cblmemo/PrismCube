@@ -3,18 +3,17 @@ package MiddleEnd;
 import IR.IRFunction;
 import IR.Instruction.IRInstruction;
 import Memory.Memory;
+import MiddleEnd.Pass.IRFunctionPass;
 
 import java.util.ArrayList;
 
-public class TrivialDeadCodeEliminator extends IROptimize {
+public class TrivialDeadCodeEliminator implements IRFunctionPass {
     public void eliminate(Memory memory) {
-        if (doOptimize) {
-            memory.getIRModule().getFunctions().values().forEach(this::visit);
-        }
+        memory.getIRModule().getFunctions().values().forEach(this::visit);
     }
 
     @Override
-    protected void visit(IRFunction function) {
+    public void visit(IRFunction function) {
         function.getBlocks().forEach(block -> {
             ArrayList<IRInstruction> instructions = new ArrayList<>(block.getInstructions());
             instructions.forEach(inst -> {

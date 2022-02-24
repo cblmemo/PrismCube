@@ -278,6 +278,11 @@ public class IRFunction {
         blocks.add(returnBlock);
     }
 
+    @Override
+    public String toString() {
+        return functionName;
+    }
+
     public void accept(IRVisitor visitor) {
         visitor.visit(this);
     }

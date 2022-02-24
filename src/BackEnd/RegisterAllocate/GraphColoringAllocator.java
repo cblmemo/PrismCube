@@ -56,7 +56,7 @@ public class GraphColoringAllocator {
     }
 
     private void clear() {
-        log.Debugf("start clear.\n");
+        log.Tracef("start clear.\n");
         preColored.clear();
         initial.clear();
         simplifyWorkList.clear();
@@ -79,7 +79,7 @@ public class GraphColoringAllocator {
         alias.clear();
         color.clear();
         memoryLocation.clear();
-        log.Debugf("clear finished.\n");
+        log.Tracef("clear finished.\n");
     }
 
     private void initialize() {
@@ -94,8 +94,8 @@ public class GraphColoringAllocator {
             initial.addAll(inst.getUses());
         }));
         ASMPhysicalRegister.getPreColoredRegisters().forEach(initial::remove);
-        log.Debugf("initial registers (%d): %s\n", initial.size(), initial.toString());
-        log.Debugf("preColored registers (%d): %s\n", preColored.size(), preColored.toString());
+        log.Tracef("initial registers (%d): %s\n", initial.size(), initial.toString());
+        log.Tracef("preColored registers (%d): %s\n", preColored.size(), preColored.toString());
 
         // initialize other LinkedHashSet
         initial.forEach(reg -> {
@@ -188,16 +188,16 @@ public class GraphColoringAllocator {
     }
 
     private void makeWorkList() {
-        log.Infof("start make work list.\n");
+        log.Tracef("start make work list.\n");
         initial.forEach(n -> {
             if (degree.get(n) >= K) spillWorkList.add(n);
             else if (moveRelated(n)) freezeWorkList.add(n);
             else simplifyWorkList.add(n);
-            if (degree.get(n) >= K) log.Debugf("add [%s] to spillWorkList\n", n);
-            else if (moveRelated(n)) log.Debugf("add [%s] to freezeWorkList\n", n);
-            else log.Debugf("add [%s] to simplifyWorkList\n", n);
+            if (degree.get(n) >= K) log.Tracef("add [%s] to spillWorkList\n", n);
+            else if (moveRelated(n)) log.Tracef("add [%s] to freezeWorkList\n", n);
+            else log.Tracef("add [%s] to simplifyWorkList\n", n);
         });
-        log.Infof("make work list finished.\n");
+        log.Tracef("make work list finished.\n");
     }
 
     private LinkedHashSet<ASMRegister> adjacent(ASMRegister n) {
@@ -230,7 +230,7 @@ public class GraphColoringAllocator {
             enableMoves(nodes);
             assert spillWorkList.contains(m) : m + " is not in spillWorkList";
             spillWorkList.remove(m);
-            log.Debugf("remove [%s] to spillWorkList due to decrement degree\n", m);
+            log.Tracef("remove [%s] to spillWorkList due to decrement degree\n", m);
             if (moveRelated(m)) freezeWorkList.add(m);
             else simplifyWorkList.add(m);
         }
@@ -301,12 +301,12 @@ public class GraphColoringAllocator {
         boolean ret;
         if (preColored.contains(u)) ret = GeorgeStrategy(u, v);
         else ret = BriggsStrategy(u, v);
-        if (ret) log.Debugf("applying %s strategy success.\n", preColored.contains(u) ? "George" : "Briggs");
+        if (ret) log.Tracef("applying %s strategy success.\n", preColored.contains(u) ? "George" : "Briggs");
         return ret;
     }
 
     private void combine(ASMRegister u, ASMRegister v) {
-        log.Debugf("combine u:[%s] with v:[%s]\n", u, v);
+        log.Tracef("combine u:[%s] with v:[%s]\n", u, v);
         // execute coalesce means all nodes in simplifyWorkList have been simplified and remove from it
         // therefore u, v either in freezeWorkList or in spillWorkList
         if (freezeWorkList.contains(v)) freezeWorkList.remove(v);
@@ -393,7 +393,7 @@ public class GraphColoringAllocator {
 
     private void selectSpill() {
         ASMRegister m = selectRegisterToSpill();
-        log.Debugf("select [%s] to spill\n", m);
+        log.Tracef("select [%s] to spill\n", m);
         spillWorkList.remove(m);
         simplifyWorkList.add(m);
         freezeMoves(m);
@@ -416,7 +416,7 @@ public class GraphColoringAllocator {
                 coloredNodes.add(n);
                 ASMPhysicalRegister c = okColors.iterator().next();
                 color.put(n, c);
-                log.Debugf("temporary assign color [%s] to [%s]\n", c, n);
+                log.Tracef("temporary assign color [%s] to [%s]\n", c, n);
             }
         }
         coalescedNodes.forEach(n -> color.put(n, color.get(getAlias(n))));
@@ -467,22 +467,22 @@ public class GraphColoringAllocator {
     }
 
     private void rewriteProgram() {
-        log.Debugf("start rewrite program.\n");
-        log.Debugf("spilledNodes: %s\n", spilledNodes.toString());
+        log.Tracef("start rewrite program.\n");
+        log.Tracef("spilledNodes: %s\n", spilledNodes.toString());
         spilledNodes.forEach(v -> {
             int loc = function.getStackFrame().spillToStack();
             memoryLocation.put(v, loc);
-            log.Debugf("spill [%s] to (%d)sp.\n", v, loc);
+            log.Tracef("spill [%s] to (%d)sp.\n", v, loc);
         });
         function.getBlocks().forEach(this::rewriteBlock);
-        log.Debugf("rewrite program finished.\n");
+        log.Tracef("rewrite program finished.\n");
     }
 
     private void logCurrentFunction(String message) {
-        log.Debugf("------------------------------------------------------------------------------------------\n");
-        log.Debugf(message);
-        log.Debugf("%s", new ASMEmitter().emitFunctionToString(function));
-        log.Debugf("------------------------------------------------------------------------------------------\n");
+        log.Tracef("------------------------------------------------------------------------------------------\n");
+        log.Tracef(message);
+        log.Tracef("%s", new ASMEmitter().emitFunctionToString(function));
+        log.Tracef("------------------------------------------------------------------------------------------\n");
     }
 
     private void coloring() {
@@ -507,7 +507,7 @@ public class GraphColoringAllocator {
     private void aftermath() {
         color.forEach((v, c) -> {
             if (v instanceof ASMPhysicalRegister) assert v == c : "physical register assigned to a color that not itself";
-            else log.Debugf("assign color [%s] to [%s]\n", c, v);
+            else log.Tracef("assign color [%s] to [%s]\n", c, v);
         });
         ASMBasicBlock entry = function.getBlocks().get(0), escape = function.getBlocks().get(function.getBlocks().size() - 1);
         int indexOfMinusSp = entry.getInstructions().indexOf(null), indexOfPlusSp = escape.getInstructions().indexOf(null);

@@ -16,6 +16,11 @@ public class IRConstChar extends IRConstNumber {
     }
 
     @Override
+    public IRConstNumber cloneFromIntValue(int value) {
+        return new IRConstChar(this.getIRType(), value);
+    }
+
+    @Override
     public String toString() {
         return Integer.toString(value);
     }

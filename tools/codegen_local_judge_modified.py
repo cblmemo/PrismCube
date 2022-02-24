@@ -2,6 +2,7 @@
 
 import os
 import time
+import sys
 
 """
     Modify following configurations to adapt to your environment.
@@ -9,7 +10,12 @@ import time
 # test_cases_dir = './testcases/sema/'
 # test_cases_dir = './testcases/codegen/'
 # test_cases_dir = './testcases/optim/'
+# test_cases_dir = './testcases/optim-new/'
+
 test_cases_dir = './testcases/optim-new/'
+if len(sys.argv) > 1:
+    test_cases_dir = './testcases/' + sys.argv[1] + '/'
+
 compile_cmd = "bash ./build.bash"
 execute_cmd = "java -ea -cp lib/antlr-4.9.1-complete.jar:./myout PrismCube -emit-asm -i ./bin/test.mx -o ./bin/test.s -arch x86_64 -O2"
 excluded_test_cases = ["foo.mx"]

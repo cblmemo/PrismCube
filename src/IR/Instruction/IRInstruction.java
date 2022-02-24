@@ -3,6 +3,7 @@ package IR.Instruction;
 import FrontEnd.IRVisitor;
 import IR.IRBasicBlock;
 import IR.Operand.IROperand;
+import IR.Operand.IRRegister;
 
 import java.util.LinkedHashSet;
 
@@ -55,6 +56,14 @@ abstract public class IRInstruction {
             newOperand.addUser(this);
         }
     }
+
+    public void replaceAllUseWithValue(IROperand value) {
+        assert getDef() != null;
+        LinkedHashSet<IRInstruction> users = new LinkedHashSet<>(getDef().getUsers());
+        users.forEach(user -> user.replaceUse(getDef(), value));
+    }
+
+    abstract public IRRegister getDef();
 
     public static boolean useAlign() {
         return useAlign;

@@ -54,6 +54,11 @@ public class IRBinaryInstruction extends IRInstruction {
     }
 
     @Override
+    public IRRegister getDef() {
+        return resultRegister;
+    }
+
+    @Override
     public boolean noUsersAndSafeToRemove() {
         return resultRegister.getUsers().isEmpty();
     }

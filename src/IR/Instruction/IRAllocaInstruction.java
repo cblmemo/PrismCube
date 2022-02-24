@@ -36,6 +36,11 @@ public class IRAllocaInstruction extends IRInstruction {
     }
 
     @Override
+    public IRRegister getDef() {
+        return allocaTarget;
+    }
+
+    @Override
     public boolean noUsersAndSafeToRemove() {
         return false;
     }

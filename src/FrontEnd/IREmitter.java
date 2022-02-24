@@ -6,6 +6,7 @@ import IR.Operand.IRConstString;
 import IR.TypeSystem.IRStructureType;
 import Memory.Memory;
 
+import java.io.FileNotFoundException;
 import java.io.PrintStream;
 
 /**
@@ -68,6 +69,17 @@ public class IREmitter implements IRVisitor {
             ps = optStream;
             memory.getIRModule().accept(this);
         }
+    }
+
+    public void emitToFile(Memory memory, String fileName) {
+        PrintStream temp = ps;
+        try {
+            ps = new PrintStream(fileName);
+        } catch (FileNotFoundException err) {
+            err.printStackTrace();
+        }
+        memory.getIRModule().accept(this);
+        ps = temp;
     }
 
     @Override
