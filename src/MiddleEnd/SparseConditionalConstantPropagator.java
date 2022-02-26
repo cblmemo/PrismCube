@@ -172,10 +172,30 @@ public class SparseConditionalConstantPropagator implements IRFunctionPass {
         IRConstNumber lhs = extractConst(inst.getLhs()), rhs = extractConst(inst.getRhs());
         IRRegister res = inst.getResultRegister();
         if (lhs == null || rhs == null) {
-            constType.put(res, LatticeType.overdefined);
+            if (lhs != null || rhs != null) {
+                int val = lhs == null ? rhs.getIntValue() : lhs.getIntValue();
+                if (inst.isLogicBinary()) {
+                    if (val == 0 && Objects.equals(inst.getOp(), "and")) {
+                        constType.put(res, LatticeType.defined);
+                        putValue(res, 0);
+                    } else if (val == 1 && Objects.equals(inst.getOp(), "or")) {
+                        constType.put(res, LatticeType.defined);
+                        putValue(res, 1);
+                    } else constType.put(res, LatticeType.overdefined);
+                } else if (Objects.equals(inst.getOp(), "sdiv")) {
+                    if (val == 0) {
+                        constType.put(res, LatticeType.defined);
+                        putValue(res, 0);
+                    } else constType.put(res, LatticeType.overdefined);
+                } else constType.put(res, LatticeType.overdefined);
+            } else constType.put(res, LatticeType.overdefined);
             return;
         }
         int lhsVal = lhs.getIntValue(), rhsVal = rhs.getIntValue();
+        if (rhsVal == 0 && Objects.equals(inst.getOp(), "sdiv")) {
+            constType.put(res, LatticeType.overdefined);
+            return;
+        }
         constType.put(res, LatticeType.defined);
         switch (inst.getOp()) {
             case "add" -> putValue(res, lhsVal + rhsVal);
@@ -218,11 +238,19 @@ public class SparseConditionalConstantPropagator implements IRFunctionPass {
         constType.put(inst.getResultRegister(), LatticeType.overdefined);
     }
 
+    private boolean containsEqual(String op) {
+        return Objects.equals(op, "sle") || Objects.equals(op, "sge") || Objects.equals(op, "seq");
+    }
+
     private void propagateIcmp(IRIcmpInstruction inst) {
         IRConstNumber lhs = extractConst(inst.getLhs()), rhs = extractConst(inst.getRhs());
         IRRegister res = inst.getResultRegister();
         if (lhs == null || rhs == null) {
-            constType.put(res, LatticeType.overdefined);
+            if (inst.getLhs() == inst.getRhs()) {
+                if (containsEqual(inst.getOp())) putValue(res, 1);
+                else putValue(res, 0);
+                constType.put(res, LatticeType.defined);
+            } else constType.put(res, LatticeType.overdefined);
             return;
         }
         int lhsVal = lhs.getIntValue(), rhsVal = rhs.getIntValue();

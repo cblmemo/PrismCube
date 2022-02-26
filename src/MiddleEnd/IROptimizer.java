@@ -55,7 +55,10 @@ public class IROptimizer extends Optimize {
         new IREmitter().emitOpt(memory);
 
         AtomicInteger num = new AtomicInteger();
-        memory.getIRModule().getFunctions().values().forEach(function -> num.addAndGet(function.getBlocks().size()));
+        memory.getIRModule().getFunctions().values().forEach(function -> {
+            log.Debugf("block size (%s): %d\n", function, function.getBlocks().size());
+            num.addAndGet(function.getBlocks().size());
+        });
         log.Infof("block size (in total): %d\n", num.get());
     }
 }

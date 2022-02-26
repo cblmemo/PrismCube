@@ -15,6 +15,8 @@ public class IRBinaryInstruction extends IRInstruction {
     private IROperand lhs;
     private IROperand rhs;
 
+    private boolean isLogicBinary = false;
+
     public IRBinaryInstruction(IRBasicBlock parentBlock, String op, IRRegister resultRegister, IROperand lhs, IROperand rhs) {
         super(parentBlock);
         this.op = op;
@@ -40,6 +42,15 @@ public class IRBinaryInstruction extends IRInstruction {
 
     public IROperand getRhs() {
         return rhs;
+    }
+
+    public IRBinaryInstruction setLogicBinary() {
+        isLogicBinary = true;
+        return this;
+    }
+
+    public boolean isLogicBinary() {
+        return isLogicBinary;
     }
 
     @Override

@@ -2,8 +2,10 @@ package IR.Instruction;
 
 import FrontEnd.IRVisitor;
 import IR.IRBasicBlock;
+import IR.Operand.IRNull;
 import IR.Operand.IROperand;
 import IR.Operand.IRRegister;
+import IR.TypeSystem.IRNullType;
 import IR.TypeSystem.IRPointerType;
 import IR.TypeSystem.IRTypeSystem;
 import Utility.CloneManager;
@@ -20,8 +22,8 @@ public class IRGetelementptrInstruction extends IRInstruction {
 
     public IRGetelementptrInstruction(IRBasicBlock parentBlock, IRRegister resultRegister, IRTypeSystem elementType, IROperand ptrValue) {
         super(parentBlock);
-        assert ptrValue.getIRType() instanceof IRPointerType;
-        assert Objects.equals(elementType, ((IRPointerType) ptrValue.getIRType()).getBaseType());
+        assert ptrValue.getIRType() instanceof IRPointerType || ptrValue.getIRType() instanceof IRNullType : ptrValue;
+        assert !(ptrValue.getIRType() instanceof IRPointerType) || Objects.equals(elementType, ((IRPointerType) ptrValue.getIRType()).getBaseType());
         this.resultRegister = resultRegister;
         this.elementType = elementType;
         this.ptrValue = ptrValue;

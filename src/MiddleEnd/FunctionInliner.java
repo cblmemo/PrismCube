@@ -47,13 +47,13 @@ public class FunctionInliner implements IRFunctionPass {
         couldInline.addAll(functions);
         couldInline.remove(module.getMainFunction());
         functions.forEach(this::visit);
-        log.Debugf("couldInline: %s\n", couldInline);
+        log.Tracef("couldInline: %s\n", couldInline);
         functions.forEach(func -> func.getBlocks().forEach(block -> block.getInstructions().forEach(inst -> {
             if (inst instanceof IRCallInstruction && inlineAvailable(((IRCallInstruction) inst).getCallFunction())) {
                 toBeOptimized.add((IRCallInstruction) inst);
             }
         })));
-        log.Debugf("toBeOptimized: %s\n", toBeOptimized);
+        log.Tracef("toBeOptimized: %s\n", toBeOptimized);
         toBeOptimized.forEach(this::inlineFunction);
         module.removeUnusedFunction();
         if (changed) log.Infof("Program changed in inline.\n");
@@ -164,7 +164,8 @@ public class FunctionInliner implements IRFunctionPass {
         for (IRBasicBlock block : function.getBlocks()) {
             for (IRInstruction inst : block.getInstructions()) {
                 instCnt++;
-                if (inst instanceof IRCallInstruction) couldInline.remove(function);
+                if (inst instanceof IRCallInstruction && !module.getBuiltinFunctions().containsValue(((IRCallInstruction) inst).getCallFunction()))
+                    couldInline.remove(function);
             }
         }
         instNum.put(function, instCnt);

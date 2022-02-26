@@ -8,6 +8,7 @@ import Memory.Memory;
 
 import java.io.FileNotFoundException;
 import java.io.PrintStream;
+import java.util.Objects;
 
 /**
  * This class print llvm ir to output file,
