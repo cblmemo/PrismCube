@@ -110,6 +110,10 @@ abstract public class ASMInstruction {
         return Objects.equals(instStr, "beqz");
     }
 
+    public boolean isAddi() {
+        return Objects.equals(instStr, "addi");
+    }
+
     private void replaceDef(int index, ASMVirtualRegister oldReg, ASMRegister newReg) {
         if (getOperands().get(index) == oldReg) {
             setOperand(index, newReg);

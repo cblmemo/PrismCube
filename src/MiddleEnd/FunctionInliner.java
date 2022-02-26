@@ -17,7 +17,7 @@ import java.util.*;
 import static Debug.MemoLog.log;
 
 public class FunctionInliner implements IRFunctionPass {
-    static private final int INSTRUCTION_LIMITATION = 500, BLOCK_LIMITATION = 50;
+    static private final int INSTRUCTION_LIMITATION = 1000, BLOCK_LIMITATION = 100;
     private static int cnt = 0;
 
     private boolean changed = false;
@@ -36,7 +36,6 @@ public class FunctionInliner implements IRFunctionPass {
         functions.forEach(func -> func.getBlocks().forEach(block -> block.getInstructions().forEach(inst -> {
             if (inst instanceof IRCallInstruction && couldInline.contains(((IRCallInstruction) inst).getCallFunction())) {
                 toBeOptimized.add((IRCallInstruction) inst);
-                changed = true;
             }
         })));
         log.Debugf("toBeOptimized: %s\n", toBeOptimized);
@@ -64,6 +63,7 @@ public class FunctionInliner implements IRFunctionPass {
     private void inlineFunction(IRCallInstruction call) {
         IRFunction funcToInline = call.getCallFunction();
         if (!inlineAvailable(funcToInline)) return;
+        changed = true;
         IRBasicBlock parentBlock = call.getParentBlock();
         IRFunction parentFunc = parentBlock.getParentFunction();
         IRBasicBlock inlineSplit = new IRBasicBlock(parentFunc, "inline_split_" + (++cnt));

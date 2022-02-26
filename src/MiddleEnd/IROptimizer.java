@@ -6,7 +6,7 @@ import Memory.Memory;
 import static Debug.MemoLog.log;
 
 public class IROptimizer extends Optimize {
-    static private final int rounds = 20;
+    static private final int rounds = 30;
 
     public void invoke(Memory memory) {
         if (level == OptimizeLevel.O0) return;
