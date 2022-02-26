@@ -4,7 +4,11 @@ import IR.IRBasicBlock;
 import FrontEnd.IRVisitor;
 import IR.Operand.IROperand;
 import IR.Operand.IRRegister;
+import Utility.CloneManager;
 import Utility.error.OptimizeError;
+
+import java.util.LinkedHashMap;
+import java.util.function.Consumer;
 
 public class IRBrInstruction extends IRInstruction {
     private IROperand condition;
@@ -58,6 +62,16 @@ public class IRBrInstruction extends IRInstruction {
             condition = newOperand;
             newOperand.addUser(this);
         }
+    }
+
+    @Override
+    public void forEachNonLabelOperand(Consumer<IROperand> consumer) {
+
+    }
+
+    @Override
+    public IRInstruction cloneMySelf(CloneManager m) {
+        return new IRBrInstruction(m.get(getParentBlock()), m.get(condition), m.get(thenBlock), m.get(elseBlock));
     }
 
     @Override

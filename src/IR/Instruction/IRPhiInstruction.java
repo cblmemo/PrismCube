@@ -5,22 +5,22 @@ import IR.IRBasicBlock;
 import IR.Operand.IROperand;
 import IR.Operand.IRRegister;
 import IR.TypeSystem.IRTypeSystem;
+import Utility.CloneManager;
 
 import java.util.ArrayList;
 import java.util.function.BiConsumer;
+import java.util.function.Consumer;
 
 public class IRPhiInstruction extends IRInstruction {
     private final IRRegister resultRegister;
     private final ArrayList<IROperand> values = new ArrayList<>();
     private final ArrayList<IRBasicBlock> blocks = new ArrayList<>();
     private final IRTypeSystem resultType;
-    private final IRAllocaInstruction belongsTo;
 
-    public IRPhiInstruction(IRBasicBlock parentBlock, IRRegister resultRegister, IRTypeSystem resultType, IRAllocaInstruction belongsTo) {
+    public IRPhiInstruction(IRBasicBlock parentBlock, IRRegister resultRegister, IRTypeSystem resultType) {
         super(parentBlock);
         this.resultRegister = resultRegister;
         this.resultType = resultType;
-        this.belongsTo = belongsTo;
         resultRegister.setDef(this);
     }
 
@@ -83,6 +83,19 @@ public class IRPhiInstruction extends IRInstruction {
                 newOperand.addUser(this);
             }
         }
+    }
+
+    @Override
+    public void forEachNonLabelOperand(Consumer<IROperand> consumer) {
+        consumer.accept(resultRegister);
+        values.forEach(consumer);
+    }
+
+    @Override
+    public IRInstruction cloneMySelf(CloneManager m) {
+        IRPhiInstruction phi = new IRPhiInstruction(m.get(getParentBlock()), (IRRegister) m.get(resultRegister), resultType);
+        forEachCandidate((block, value) -> phi.addCandidate(m.get(value), m.get(block)));
+        return phi;
     }
 
     @Override

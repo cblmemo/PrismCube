@@ -95,6 +95,7 @@ public class IREmitter implements IRVisitor {
         module.getBuiltinFunctions().forEach((name, func) -> {
             if (func.hasCalled()) func.accept(this);
         });
+        ps.println();
         module.getStrings().values().forEach(string -> string.accept(this));
         if (module.getStrings().size() != 0) ps.println();
         module.getClasses().forEach(type -> type.accept(this));

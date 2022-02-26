@@ -4,8 +4,10 @@ import FrontEnd.IRVisitor;
 import IR.IRBasicBlock;
 import IR.Operand.IROperand;
 import IR.Operand.IRRegister;
+import Utility.CloneManager;
 
 import java.util.LinkedHashSet;
+import java.util.function.Consumer;
 
 abstract public class IRInstruction {
     private static final boolean useAlign = true;
@@ -33,7 +35,7 @@ abstract public class IRInstruction {
             parentBlock.getAllocas().remove(this);
         }
         if (this instanceof IRPhiInstruction) parentBlock.getPhis().remove(this);
-        uses.forEach(user -> user.removeUser(this));
+        uses.forEach(usedOperand -> usedOperand.removeUser(this));
     }
 
     public void addUse(IROperand operand) {
@@ -62,6 +64,10 @@ abstract public class IRInstruction {
         LinkedHashSet<IRInstruction> users = new LinkedHashSet<>(getDef().getUsers());
         users.forEach(user -> user.replaceUse(getDef(), value));
     }
+
+    abstract public void forEachNonLabelOperand(Consumer<IROperand> consumer);
+
+    abstract public IRInstruction cloneMySelf(CloneManager m);
 
     abstract public IRRegister getDef();
 

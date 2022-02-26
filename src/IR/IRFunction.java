@@ -24,7 +24,7 @@ public class IRFunction {
     private final ArrayList<IRRegister> parameters = new ArrayList<>();
     private final ArrayList<IRTypeSystem> parameterType = new ArrayList<>();
     private final ArrayList<String> parameterName = new ArrayList<>();
-    private final ArrayList<IRBasicBlock> blocks = new ArrayList<>();
+    private ArrayList<IRBasicBlock> blocks = new ArrayList<>();
     private final IRBasicBlock entryBlock;
     private IRBasicBlock returnBlock;
     private boolean hasCalled;
@@ -39,7 +39,7 @@ public class IRFunction {
         entryBlock = new IRBasicBlock(this, "entry");
         entryBlock.markAsEntryBlock();
         returnBlock = new IRBasicBlock(this, "return");
-        returnBlock.markAsReturnBlock();
+        returnBlock.markReturnBlock(true);
     }
 
     public IRFunction(String functionName, boolean declare) {
@@ -48,7 +48,7 @@ public class IRFunction {
         entryBlock = new IRBasicBlock(this, "entry");
         entryBlock.markAsEntryBlock();
         returnBlock = new IRBasicBlock(this, "return");
-        returnBlock.markAsReturnBlock();
+        returnBlock.markReturnBlock(true);
     }
 
     public void appendBasicBlock(IRBasicBlock block) {
@@ -210,6 +210,10 @@ public class IRFunction {
         return thisRegister;
     }
 
+    public void setBlocks(ArrayList<IRBasicBlock> blocks) {
+        this.blocks = blocks;
+    }
+
     private final ArrayList<IRBasicBlock> reachable = new ArrayList<>();
 
     public ArrayList<IRBasicBlock> reachableBlocks() {
@@ -276,6 +280,10 @@ public class IRFunction {
         returnBlock = newReturnBlock;
         blocks.remove(returnBlock);
         blocks.add(returnBlock);
+    }
+
+    public void setReturnBlock(IRBasicBlock returnBlock) {
+        this.returnBlock = returnBlock;
     }
 
     @Override

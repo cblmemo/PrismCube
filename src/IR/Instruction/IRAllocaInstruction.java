@@ -6,8 +6,11 @@ import IR.Operand.IROperand;
 import IR.Operand.IRRegister;
 import IR.TypeSystem.IRPointerType;
 import IR.TypeSystem.IRTypeSystem;
+import Utility.CloneManager;
 
+import java.util.LinkedHashMap;
 import java.util.Objects;
+import java.util.function.Consumer;
 
 public class IRAllocaInstruction extends IRInstruction {
     private final IRTypeSystem allocaType;
@@ -33,6 +36,16 @@ public class IRAllocaInstruction extends IRInstruction {
     @Override
     public void replaceUse(IROperand oldOperand, IROperand newOperand) {
         // do nothing since no use in alloca
+    }
+
+    @Override
+    public void forEachNonLabelOperand(Consumer<IROperand> consumer) {
+        consumer.accept(allocaTarget);
+    }
+
+    @Override
+    public IRInstruction cloneMySelf(CloneManager m) {
+        return new IRAllocaInstruction(m.get(getParentBlock()), allocaType, (IRRegister) m.get(allocaTarget));
     }
 
     @Override

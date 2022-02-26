@@ -6,6 +6,9 @@ import IR.Operand.IROperand;
 import IR.Operand.IRRegister;
 import IR.TypeSystem.IRIntType;
 import IR.TypeSystem.IRTypeSystem;
+import Utility.CloneManager;
+
+import java.util.function.Consumer;
 
 public class IRZextInstruction extends IRInstruction {
     private final IRRegister resultRegister;
@@ -42,6 +45,17 @@ public class IRZextInstruction extends IRInstruction {
             zextTarget = newOperand;
             newOperand.addUser(this);
         }
+    }
+
+    @Override
+    public void forEachNonLabelOperand(Consumer<IROperand> consumer) {
+        consumer.accept(resultRegister);
+        consumer.accept(zextTarget);
+    }
+
+    @Override
+    public IRInstruction cloneMySelf(CloneManager m) {
+        return new IRZextInstruction(m.get(getParentBlock()), (IRRegister) m.get(resultRegister), m.get(zextTarget), resultType);
     }
 
     @Override

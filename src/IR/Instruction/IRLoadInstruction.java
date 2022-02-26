@@ -6,8 +6,10 @@ import IR.Operand.IROperand;
 import IR.Operand.IRRegister;
 import IR.TypeSystem.IRPointerType;
 import IR.TypeSystem.IRTypeSystem;
+import Utility.CloneManager;
 
 import java.util.Objects;
+import java.util.function.Consumer;
 
 public class IRLoadInstruction extends IRInstruction {
     private final IRTypeSystem loadType;
@@ -46,6 +48,17 @@ public class IRLoadInstruction extends IRInstruction {
             loadAddress = newOperand;
             newOperand.addUser(this);
         }
+    }
+
+    @Override
+    public void forEachNonLabelOperand(Consumer<IROperand> consumer) {
+        consumer.accept(resultRegister);
+        consumer.accept(loadAddress);
+    }
+
+    @Override
+    public IRInstruction cloneMySelf(CloneManager m) {
+        return new IRLoadInstruction(m.get(getParentBlock()), loadType, (IRRegister) m.get(resultRegister), m.get(loadAddress));
     }
 
     @Override

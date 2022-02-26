@@ -5,8 +5,11 @@ import IR.IRBasicBlock;
 import IR.Operand.IROperand;
 import IR.Operand.IRRegister;
 import IR.TypeSystem.IRTypeSystem;
+import Utility.CloneManager;
+import Utility.error.OptimizeError;
 
 import java.util.Objects;
+import java.util.function.Consumer;
 
 public class IRReturnInstruction extends IRInstruction {
     private final IRTypeSystem returnType;
@@ -37,6 +40,16 @@ public class IRReturnInstruction extends IRInstruction {
             returnValue = newOperand;
             newOperand.addUser(this);
         }
+    }
+
+    @Override
+    public void forEachNonLabelOperand(Consumer<IROperand> consumer) {
+        consumer.accept(returnValue);
+    }
+
+    @Override
+    public IRInstruction cloneMySelf(CloneManager m) {
+        throw new OptimizeError("unexpected clone of return " + this);
     }
 
     @Override

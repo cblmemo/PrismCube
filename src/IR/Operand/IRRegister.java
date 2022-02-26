@@ -37,7 +37,7 @@ public class IRRegister extends IROperand {
     }
 
     public String getName() {
-        return name + Math.abs(id);
+        return name + "_" + Math.abs(id);
     }
 
     public static void printRegisterName() {

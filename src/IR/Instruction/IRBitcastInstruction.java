@@ -6,8 +6,11 @@ import IR.Operand.IROperand;
 import IR.Operand.IRRegister;
 import IR.TypeSystem.IRPointerType;
 import IR.TypeSystem.IRTypeSystem;
+import Utility.CloneManager;
 
+import java.util.LinkedHashMap;
 import java.util.Objects;
+import java.util.function.Consumer;
 
 public class IRBitcastInstruction extends IRInstruction {
     private final IRRegister resultRegister;
@@ -42,6 +45,17 @@ public class IRBitcastInstruction extends IRInstruction {
             ptrValue = newOperand;
             newOperand.addUser(this);
         }
+    }
+
+    @Override
+    public void forEachNonLabelOperand(Consumer<IROperand> consumer) {
+        consumer.accept(resultRegister);
+        consumer.accept(ptrValue);
+    }
+
+    @Override
+    public IRInstruction cloneMySelf(CloneManager m) {
+        return new IRBitcastInstruction(m.get(getParentBlock()), (IRRegister) m.get(resultRegister), m.get(ptrValue), targetType);
     }
 
     @Override

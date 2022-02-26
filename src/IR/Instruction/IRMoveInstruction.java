@@ -4,6 +4,9 @@ import FrontEnd.IRVisitor;
 import IR.IRBasicBlock;
 import IR.Operand.IROperand;
 import IR.Operand.IRRegister;
+import Utility.CloneManager;
+
+import java.util.function.Consumer;
 
 public class IRMoveInstruction extends IRInstruction {
     private final IRRegister resultRegister;
@@ -23,6 +26,17 @@ public class IRMoveInstruction extends IRInstruction {
 
     public IROperand getValue() {
         return value;
+    }
+
+    @Override
+    public void forEachNonLabelOperand(Consumer<IROperand> consumer) {
+        consumer.accept(resultRegister);
+        consumer.accept(value);
+    }
+
+    @Override
+    public IRInstruction cloneMySelf(CloneManager m) {
+        return new IRMoveInstruction(m.get(getParentBlock()), (IRRegister) m.get(resultRegister), m.get(value));
     }
 
     @Override

@@ -35,7 +35,7 @@ public class IRModule {
     private IRCallInstruction callGlobalInit;
 
     private boolean generatedInitializeFunction = false;
-    private final String globalInitializeFunctionName = "__mx_global_init";
+    static private final String globalInitializeFunctionName = "__mx_global_init";
 
     public static IRTypeSystem nullType;
     public static IRTypeSystem voidType;
@@ -188,7 +188,7 @@ public class IRModule {
 //        return "@llvm.global_ctors = appending global [1 x { i32, void ()*, i8* }] [{ i32, void ()*, i8* } { i32 65535, void ()* @" + globalConstructor.getFunctionName() + ", i8* null }]";
 //    }
 
-    public String getGlobalInitializeFunctionName() {
+    static public String getGlobalInitializeFunctionName() {
         return globalInitializeFunctionName;
     }
 
@@ -255,7 +255,7 @@ public class IRModule {
 
     public void addNewConstString(String value) {
         if (strings.containsKey(value)) return;
-        log.Debugf("receive new string constant \"%s\".\n", value);
+        log.Tracef("receive new string constant \"%s\".\n", value);
         strings.put(value, new IRConstString(getIRType("string"), value, stringCnt++));
     }
 
@@ -328,6 +328,15 @@ public class IRModule {
                 mainFunction.getEntryBlock().getInstructions().remove(index);
             }
         }
+    }
+
+    public void removeFunction(IRFunction function) {
+        functions.remove(function.getFunctionName());
+        singleInitializeFunctions.remove(function);
+    }
+
+    public IRFunction getMainFunction() {
+        return mainFunction;
     }
 
     public void accept(IRVisitor visitor) {

@@ -6,9 +6,11 @@ import IR.Operand.IROperand;
 import IR.Operand.IRRegister;
 import IR.TypeSystem.IRPointerType;
 import IR.TypeSystem.IRTypeSystem;
+import Utility.CloneManager;
 
 import java.util.ArrayList;
 import java.util.Objects;
+import java.util.function.Consumer;
 
 public class IRGetelementptrInstruction extends IRInstruction {
     private final IRRegister resultRegister;
@@ -55,6 +57,7 @@ public class IRGetelementptrInstruction extends IRInstruction {
             oldOperand.removeUser(this);
             ptrValue = newOperand;
             newOperand.addUser(this);
+
         }
         for (int i = 0; i < indices.size(); i++) {
             if (indices.get(i) == oldOperand) {
@@ -63,6 +66,20 @@ public class IRGetelementptrInstruction extends IRInstruction {
                 newOperand.addUser(this);
             }
         }
+    }
+
+    @Override
+    public void forEachNonLabelOperand(Consumer<IROperand> consumer) {
+        consumer.accept(resultRegister);
+        consumer.accept(ptrValue);
+        indices.forEach(consumer);
+    }
+
+    @Override
+    public IRInstruction cloneMySelf(CloneManager m) {
+        IRGetelementptrInstruction gep = new IRGetelementptrInstruction(m.get(getParentBlock()), (IRRegister) m.get(resultRegister), elementType, m.get(ptrValue));
+        indices.forEach(index -> gep.addIndex(m.get(index)));
+        return gep;
     }
 
     @Override

@@ -4,7 +4,10 @@ import FrontEnd.IRVisitor;
 import IR.IRBasicBlock;
 import IR.Operand.IROperand;
 import IR.Operand.IRRegister;
+import Utility.CloneManager;
 import Utility.error.OptimizeError;
+
+import java.util.function.Consumer;
 
 public class IRJumpInstruction extends IRInstruction {
     private IRBasicBlock targetBlock;
@@ -28,6 +31,16 @@ public class IRJumpInstruction extends IRInstruction {
     @Override
     public void replaceUse(IROperand oldOperand, IROperand newOperand) {
         // do nothing since no use in jump
+    }
+
+    @Override
+    public void forEachNonLabelOperand(Consumer<IROperand> consumer) {
+
+    }
+
+    @Override
+    public IRInstruction cloneMySelf(CloneManager m) {
+        return new IRJumpInstruction(m.get(getParentBlock()), m.get(targetBlock));
     }
 
     @Override

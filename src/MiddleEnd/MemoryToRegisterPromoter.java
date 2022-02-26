@@ -111,7 +111,7 @@ public class MemoryToRegisterPromoter implements IRFunctionPass {
                 dominatorFrontier.get(n).forEach(Y -> {
                     if (visited.contains(Y)) return;
                     visited.add(Y);
-                    IRPhiInstruction phi = new IRPhiInstruction(Y, new IRRegister(a.getAllocaType(), "phi_" + a.getAllocaTarget().getName()), a.getAllocaType(), a);
+                    IRPhiInstruction phi = new IRPhiInstruction(Y, new IRRegister(a.getAllocaType(), "phi_" + a.getAllocaTarget().getName()), a.getAllocaType());
                     log.Tracef("placing phi [%s] for alloca [%s] in BasicBlock [%s]\n", phi, a, Y);
                     phi2alloca.put(phi, a);
                     Y.addPhi(phi);

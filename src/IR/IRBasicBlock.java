@@ -44,8 +44,16 @@ public class IRBasicBlock {
         return labelName;
     }
 
+    public String getLabelWithFunctionName() {
+        return parentFunction.getFunctionName() + "_" + labelName;
+    }
+
     public void appendInstruction(IRInstruction inst) {
         assert !hasFinished;
+        instructions.add(inst);
+    }
+
+    public void appendInstructionWithoutCheck(IRInstruction inst) {
         instructions.add(inst);
     }
 
@@ -56,6 +64,10 @@ public class IRBasicBlock {
     public void setEscapeInstruction(IRInstruction escapeInstruction) {
         assert this.escapeInstruction == null;
         assert escapeInstruction instanceof IRReturnInstruction || escapeInstruction instanceof IRBrInstruction || escapeInstruction instanceof IRJumpInstruction;
+        this.escapeInstruction = escapeInstruction;
+    }
+
+    public void setEscapeInstructionWithoutCheck(IRInstruction escapeInstruction) {
         this.escapeInstruction = escapeInstruction;
     }
 
@@ -139,8 +151,8 @@ public class IRBasicBlock {
         return allocas;
     }
 
-    public void markAsReturnBlock() {
-        isReturnBlock = true;
+    public void markReturnBlock(boolean isReturnBlock) {
+        this.isReturnBlock = isReturnBlock;
     }
 
     public boolean isReturnBlock() {

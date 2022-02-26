@@ -68,9 +68,10 @@ def main():
     continue_fail = 0
     max_len = max(len(i) for i in test_cases)
     max_len += 5
+    failed_cases = []
     for t in test_cases:
         if halt_on_3_fails and (continue_fail > 2):
-            exit(1)
+            break
         total += 1
         src_text, input_text, output_text = parse_test_case(test_cases_dir + t)
         with open('./bin/test.mx', 'w') as f:
@@ -87,21 +88,26 @@ def main():
         if os.system('{}'.format(execute_cmd)):  # input redirect done in execute_cmd
             print(color_red + "Compilation Failed" + color_none)
             continue_fail += 1
+            failed_cases.append((t, len(src_text)))
             continue
         print("(T=%.2fs)" % (time.time() - start), end=" ")
         if os.system('{} --input-file=./bin/test.in --output-file=./bin/test.out ./bin/test.s ./bin/builtin.s 1>./bin/ravel.out 2>/dev/null'.format(ravel_path)):
             print(color_red + "Runtime Error" + color_none)
             continue_fail += 1
+            failed_cases.append((t, len(src_text)))
             continue
         if os.system('diff -B -b ./bin/test.out ./bin/test.ans > ./bin/diff.out'):
             print(color_red + "Wrong Answer" + color_none)
             continue_fail += 1
+            failed_cases.append((t, len(src_text)))
             continue
         passed += 1
         continue_fail = 0
         print(color_green + "Accepted" + color_none)
 
     print("total {}, passed {}, ratio {}%".format(total, passed, passed / total * 100))
+    if len(failed_cases) > 0:
+        print("failed cases (name, src code size):", failed_cases)
 
 
 if __name__ == '__main__':

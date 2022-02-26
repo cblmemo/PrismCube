@@ -6,9 +6,12 @@ import FrontEnd.IRVisitor;
 import IR.Operand.IROperand;
 import IR.Operand.IRRegister;
 import IR.TypeSystem.IRTypeSystem;
+import Utility.CloneManager;
+import Utility.error.OptimizeError;
 
 import java.util.ArrayList;
 import java.util.Objects;
+import java.util.function.Consumer;
 
 public class IRCallInstruction extends IRInstruction {
     private final IRTypeSystem returnType;
@@ -81,6 +84,17 @@ public class IRCallInstruction extends IRInstruction {
                 newOperand.addUser(this);
             }
         }
+    }
+
+    @Override
+    public void forEachNonLabelOperand(Consumer<IROperand> consumer) {
+        if (resultRegister != null) consumer.accept(resultRegister);
+        argumentValues.forEach(consumer);
+    }
+
+    @Override
+    public IRInstruction cloneMySelf(CloneManager m) {
+        throw new OptimizeError("unexpected clone of call " + this);
     }
 
     @Override

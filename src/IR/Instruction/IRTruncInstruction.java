@@ -5,6 +5,9 @@ import IR.IRBasicBlock;
 import IR.Operand.IROperand;
 import IR.Operand.IRRegister;
 import IR.TypeSystem.IRTypeSystem;
+import Utility.CloneManager;
+
+import java.util.function.Consumer;
 
 public class IRTruncInstruction extends IRInstruction {
     private final IRRegister resultRegister;
@@ -41,6 +44,17 @@ public class IRTruncInstruction extends IRInstruction {
             truncTarget = newOperand;
             newOperand.addUser(this);
         }
+    }
+
+    @Override
+    public void forEachNonLabelOperand(Consumer<IROperand> consumer) {
+        consumer.accept(resultRegister);
+        consumer.accept(truncTarget);
+    }
+
+    @Override
+    public IRInstruction cloneMySelf(CloneManager m) {
+        return new IRTruncInstruction(m.get(getParentBlock()), (IRRegister) m.get(resultRegister), m.get(truncTarget), resultType);
     }
 
     @Override

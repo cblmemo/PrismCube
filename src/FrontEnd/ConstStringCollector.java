@@ -206,7 +206,7 @@ public class ConstStringCollector implements ASTVisitor {
     @Override
     public void visit(StringConstantPrimaryNode node) {
         String value = node.getStringConstant();
-        log.Debugf("visit a string constant %s\n", value);
+        log.Tracef("visit a string constant %s\n", value);
         module.addNewConstString(value);
     }
 

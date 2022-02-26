@@ -4,6 +4,9 @@ import FrontEnd.IRVisitor;
 import IR.IRBasicBlock;
 import IR.Operand.IROperand;
 import IR.Operand.IRRegister;
+import Utility.CloneManager;
+
+import java.util.function.Consumer;
 
 public class IRIcmpInstruction extends IRInstruction {
     private final String op;
@@ -51,6 +54,18 @@ public class IRIcmpInstruction extends IRInstruction {
             rhs = newOperand;
             newOperand.addUser(this);
         }
+    }
+
+    @Override
+    public void forEachNonLabelOperand(Consumer<IROperand> consumer) {
+        consumer.accept(resultRegister);
+        consumer.accept(lhs);
+        consumer.accept(rhs);
+    }
+
+    @Override
+    public IRInstruction cloneMySelf(CloneManager m) {
+        return new IRIcmpInstruction(m.get(getParentBlock()), op, (IRRegister) m.get(resultRegister), m.get(lhs), m.get(rhs));
     }
 
     @Override

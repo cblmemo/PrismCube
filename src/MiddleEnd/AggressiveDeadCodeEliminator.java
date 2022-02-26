@@ -56,7 +56,11 @@ public class AggressiveDeadCodeEliminator implements IRFunctionPass {
         functions.values().forEach(func -> functionCallers.put(func, new LinkedHashSet<>()));
         builtins.values().forEach(func -> functionCallers.put(func, new LinkedHashSet<>()));
         functions.values().forEach(function -> function.getBlocks().forEach(block -> block.getInstructions().forEach(inst -> {
-            if (inst instanceof IRCallInstruction) functionCallers.get(((IRCallInstruction) inst).getCallFunction()).add(function);
+            if (inst instanceof IRCallInstruction) {
+                IRFunction callFunc = ((IRCallInstruction) inst).getCallFunction();
+                assert functionCallers.containsKey(callFunc) : callFunc + " is not in functionCallers";
+                functionCallers.get(callFunc).add(function);
+            }
         })));
         addToSideEffect(builtins.get("print")).addToSideEffect(builtins.get("printInt")).addToSideEffect(builtins.get("println")).addToSideEffect(builtins.get("printlnInt"));
         addToSideEffect(builtins.get("getString")).addToSideEffect(builtins.get("getInt"));

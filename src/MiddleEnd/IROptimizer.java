@@ -15,20 +15,29 @@ public class IROptimizer extends Optimize {
         while (cnt++ < 10) {
             log.Infof("Optimize round %d\n", cnt);
             changed = false;
+
             new IREmitter().emitDebug(memory, "./bin/opt-adce-before-" + cnt + ".ll");
             changed |= new AggressiveDeadCodeEliminator().eliminate(memory);
             new ControlFlowGraphChecker("after adce in round " + cnt).check(memory);
+
             new IREmitter().emitDebug(memory, "./bin/opt-sccp-before-" + cnt + ".ll");
             changed |= new SparseConditionalConstantPropagator().propagate(memory);
             new ControlFlowGraphChecker("after sccp in round " + cnt).check(memory);
+
+            new IREmitter().emitDebug(memory, "./bin/opt-inline-before-" + cnt + ".ll");
+            changed |= new FunctionInliner().inline(memory);
+            new ControlFlowGraphChecker("after inline in round " + cnt).check(memory);
+
             new IREmitter().emitDebug(memory, "./bin/opt-fuse-before-" + cnt + ".ll");
             changed |= new IRBlockFuser().fuse(memory);
             new ControlFlowGraphChecker("after fuse in round " + cnt).check(memory);
+
             new IREmitter().emitDebug(memory, "./bin/opt-optimize-after-" + cnt + ".ll");
             if (!changed) break;
         }
         new PhiResolver().resolve(memory);
-        new IRGlobalInitializeEliminator().eliminate(memory);
+        // following pass' function was covered by FunctionInliner
+        // new IRGlobalInitializeEliminator().eliminate(memory);
         new IREmitter().emitOpt(memory);
     }
 }
