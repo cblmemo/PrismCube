@@ -126,7 +126,7 @@ public class IREmitter implements IRVisitor {
     public void visit(IRBasicBlock block) {
         if (!block.isEmpty()) {
             ps.print(block.getLabel().toBasicBlockLabel());
-            ps.println(" ".repeat(100 - block.getLabel().toBasicBlockLabel().length()) + block.getPreds());
+            ps.println(" ".repeat(Math.max(10, 100 - block.getLabel().toBasicBlockLabel().length())) + block.getPreds());
             block.getInstructions().forEach(instruction -> {
                 // indent non-label instructions
                 ps.print("\t");

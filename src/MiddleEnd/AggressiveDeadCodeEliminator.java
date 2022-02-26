@@ -58,7 +58,7 @@ public class AggressiveDeadCodeEliminator implements IRFunctionPass {
         functions.values().forEach(function -> function.getBlocks().forEach(block -> block.getInstructions().forEach(inst -> {
             if (inst instanceof IRCallInstruction) {
                 IRFunction callFunc = ((IRCallInstruction) inst).getCallFunction();
-                assert functionCallers.containsKey(callFunc) : callFunc + " is not in functionCallers";
+                assert functionCallers.containsKey(callFunc) : callFunc + " is not in functionCallers, error inst: " + inst;
                 functionCallers.get(callFunc).add(function);
             }
         })));

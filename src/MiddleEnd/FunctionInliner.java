@@ -10,6 +10,7 @@ import IR.Operand.IRRegister;
 import Memory.Memory;
 import MiddleEnd.Pass.IRFunctionPass;
 import Utility.CloneManager;
+import Utility.error.OptimizeError;
 
 import java.util.*;
 
@@ -40,7 +41,7 @@ public class FunctionInliner implements IRFunctionPass {
         })));
         log.Debugf("toBeOptimized: %s\n", toBeOptimized);
         toBeOptimized.forEach(this::inlineFunction);
-        couldInline.forEach(func -> memory.getIRModule().removeFunction(func));
+        memory.getIRModule().removeUnusedFunction();
         if (changed) log.Infof("Program changed in inline.\n");
         return changed;
     }
@@ -117,6 +118,7 @@ public class FunctionInliner implements IRFunctionPass {
                 else {
                     cBlock.appendInstruction(cInst);
                     if (cInst instanceof IRPhiInstruction) cBlock.addPhi((IRPhiInstruction) cInst);
+                    if (cInst instanceof IRAllocaInstruction) throw new OptimizeError("unexpected alloca in inline (should eliminated in mem2reg)");
                 }
             });
             cBlock.finishBlock();

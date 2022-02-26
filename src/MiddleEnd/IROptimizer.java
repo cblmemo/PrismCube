@@ -6,13 +6,15 @@ import Memory.Memory;
 import static Debug.MemoLog.log;
 
 public class IROptimizer extends Optimize {
+    static private final int rounds = 20;
+
     public void invoke(Memory memory) {
         if (level == OptimizeLevel.O0) return;
         new IREmitter().emitDebug(memory, "./bin/opt-mem2reg-before.ll");
         new MemoryToRegisterPromoter().promote(memory);
         int cnt = 0;
         boolean changed;
-        while (cnt++ < 10) {
+        while (cnt++ < rounds) {
             log.Infof("Optimize round %d\n", cnt);
             changed = false;
 

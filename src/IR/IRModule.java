@@ -10,7 +10,9 @@ import Utility.error.IRError;
 
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.Objects;
+import java.util.function.Consumer;
 
 import static Debug.MemoLog.log;
 
@@ -330,9 +332,23 @@ public class IRModule {
         }
     }
 
-    public void removeFunction(IRFunction function) {
-        functions.remove(function.getFunctionName());
-        singleInitializeFunctions.remove(function);
+    public void forEachInstruction(Consumer<IRInstruction> consumer) {
+        functions.values().forEach(function -> function.getBlocks().forEach(block -> block.getInstructions().forEach(consumer)));
+    }
+
+    public void removeUnusedFunction() {
+        LinkedHashSet<IRFunction> called = new LinkedHashSet<>();
+        called.add(mainFunction);
+        forEachInstruction(inst -> {
+            if (inst instanceof IRCallInstruction) called.add(((IRCallInstruction) inst).getCallFunction());
+        });
+        LinkedHashSet<IRFunction> all = new LinkedHashSet<>(functions.values());
+        all.forEach(function -> {
+            if (!called.contains(function)) {
+                functions.remove(function.getFunctionName());
+                singleInitializeFunctions.remove(function);
+            }
+        });
     }
 
     public IRFunction getMainFunction() {
