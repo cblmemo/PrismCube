@@ -156,12 +156,16 @@ public class InstructionSelector implements IRVisitor {
             if (type.isMul() && rs2 instanceof IRConstNumber && isPowerOf2(((IRConstNumber) rs2).getIntValue())) {
                 int logRS2 = log2(((IRConstNumber) rs2).getIntValue());
                 type = ASMArithmeticInstruction.InstType.sll;
-                rs2 = new IRConstInt(null, logRS2);
+                rs2 = new IRConstInt(IRModule.intType, logRS2);
             }
             if (type.isDiv() && rs2 instanceof IRConstNumber && isPowerOf2(((IRConstNumber) rs2).getIntValue())) {
                 int logRS2 = log2(((IRConstNumber) rs2).getIntValue());
                 type = ASMArithmeticInstruction.InstType.sra;
-                rs2 = new IRConstInt(null, logRS2);
+                rs2 = new IRConstInt(IRModule.intType, logRS2);
+            }
+            if (type.isSub() && rs2 instanceof IRConstNumber && isValidImmediate(-((IRConstNumber) rs2).getIntValue())) {
+                type = ASMArithmeticInstruction.InstType.add;
+                rs2 = new IRConstInt(IRModule.intType, -((IRConstNumber) rs2).getIntValue());
             }
             rs1V = toRegister(rs1);
             rs2V = type.haveImmediateType() ? toOperand(rs2) : toRegister(rs2);
@@ -410,7 +414,7 @@ public class InstructionSelector implements IRVisitor {
             case 1 -> {
                 assert inst.getPtrValue() instanceof IRRegister;
                 ASMVirtualRegister offsetRegister = new ASMVirtualRegister("gep_offset");
-                parseArith(ASMArithmeticInstruction.InstType.mul, offsetRegister, inst.getIndices().get(0), new IRConstInt(null, inst.getElementType().sizeof()), false);
+                parseArith(ASMArithmeticInstruction.InstType.mul, offsetRegister, inst.getIndices().get(0), new IRConstInt(IRModule.intType, inst.getElementType().sizeof()), false);
                 appendArithmeticInst(ASMArithmeticInstruction.InstType.add, result, toRegister(inst.getPtrValue()), offsetRegister);
             }
             case 2 -> { // member access
@@ -422,7 +426,7 @@ public class InstructionSelector implements IRVisitor {
                 int index = ((IRConstInt) inst.getIndices().get(1)).getIntValue();
                 IRStructureType classType = (IRStructureType) inst.getElementType();
                 int offset = classType.getMemberOffset(index);
-                parseArith(ASMArithmeticInstruction.InstType.add, result, inst.getPtrValue(), new IRConstInt(null, offset), false);
+                parseArith(ASMArithmeticInstruction.InstType.add, result, inst.getPtrValue(), new IRConstInt(IRModule.intType, offset), false);
             }
             default -> throw new ASMError("invalid gep indices num");
         }

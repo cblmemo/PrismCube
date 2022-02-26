@@ -31,6 +31,10 @@ public class ASMArithmeticInstruction extends ASMInstruction {
         public boolean isDiv() {
             return ordinal() == div.ordinal();
         }
+
+        public boolean isSub() {
+            return ordinal() == sub.ordinal();
+        }
     }
 
     public ASMArithmeticInstruction(ASMBasicBlock parentBlock, InstType type) {
