@@ -3,6 +3,8 @@ package MiddleEnd;
 import FrontEnd.IREmitter;
 import Memory.Memory;
 
+import java.util.concurrent.atomic.AtomicInteger;
+
 import static Debug.MemoLog.log;
 
 public class IROptimizer extends Optimize {
@@ -51,5 +53,9 @@ public class IROptimizer extends Optimize {
         new PhiResolver().resolve(memory);
 
         new IREmitter().emitOpt(memory);
+
+        AtomicInteger num = new AtomicInteger();
+        memory.getIRModule().getFunctions().values().forEach(function -> num.addAndGet(function.getBlocks().size()));
+        log.Infof("block size (in total): %d\n", num.get());
     }
 }

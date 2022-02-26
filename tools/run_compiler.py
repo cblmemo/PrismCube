@@ -1,5 +1,6 @@
 import os
 import sys
+import time
 
 ravel_path = "./lib/ravel"
 
@@ -35,6 +36,7 @@ def ir_gen_executable():
 
 
 def run_asm(debug):
+    start_time = time.time()
     exe("rm ./bin/*.s")
     exe("rm ./bin/*.ll")
     if debug:
@@ -44,10 +46,14 @@ def run_asm(debug):
     exe("scp ./builtin/builtin.s ./bin/b.s")
     exe("scp ./bin/test.s ./bin/t.s")
     print("asm generate finished.")
+    gen_end_time = time.time()
+    print("generate asm cost time: {}s".format(gen_end_time - start_time))
     if debug:
         exe("{} ./bin/t.s ./bin/b.s --input-file=./bin/std.in".format(ravel_path))
     else:
         exe("{} ./bin/t.s ./bin/b.s".format(ravel_path))
+    run_end_time = time.time()
+    print("run cost time: {}s".format(run_end_time - gen_end_time))
 
 
 def run_executable():
