@@ -31,6 +31,7 @@ public class IRFunction {
     private IRRegister thisRegister;
     private LinkedHashMap<IRBasicBlock, LinkedHashSet<IRBasicBlock>> dominatorFrontier;
     private LinkedHashMap<IRBasicBlock, LinkedHashSet<IRBasicBlock>> postDominatorFrontier;
+    private int forceInlineCnt = 0;
 
     // [[--NOTICE--]] need to call setReturnType and addParameterType manually after created an IRFunction instance.
     public IRFunction(String functionName) {
@@ -284,6 +285,14 @@ public class IRFunction {
 
     public void setReturnBlock(IRBasicBlock returnBlock) {
         this.returnBlock = returnBlock;
+    }
+
+    public int getForceInlineCnt() {
+        return forceInlineCnt;
+    }
+
+    public void incrementForceInlineCnt() {
+        forceInlineCnt++;
     }
 
     @Override

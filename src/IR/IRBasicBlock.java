@@ -77,7 +77,7 @@ public class IRBasicBlock {
 
     public void finishBlock() {
         assert !hasFinished;
-        assert escapeInstruction != null;
+        assert escapeInstruction != null : this;
         hasFinished = true;
         instructions.add(escapeInstruction);
     }

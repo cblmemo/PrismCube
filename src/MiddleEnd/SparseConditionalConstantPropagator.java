@@ -78,9 +78,6 @@ public class SparseConditionalConstantPropagator implements IRFunctionPass {
         while (!variableWorkList.isEmpty() || !blockWorkList.isEmpty()) {
             if (!variableWorkList.isEmpty()) {
                 IRRegister cur = variableWorkList.poll();
-                if (Objects.equals(cur.toString(), "%phi_alloca_count3_1")) {
-                    System.err.println("h");
-                }
                 cur.getUsers().forEach(this::propagateInstruction);
             }
             if (!blockWorkList.isEmpty()) {
@@ -121,7 +118,7 @@ public class SparseConditionalConstantPropagator implements IRFunctionPass {
                     if (inst instanceof IRPhiInstruction) {
                         ArrayList<IRBasicBlock> candidates = new ArrayList<>(((IRPhiInstruction) inst).getBlocks());
                         candidates.forEach(c -> {
-                            if (!executed.contains(c)) ((IRPhiInstruction) inst).removeCandidate(c);
+                            if (!executed.contains(c) && ((IRPhiInstruction) inst).getBlocks().size() > 1) ((IRPhiInstruction) inst).removeCandidate(c);
                         });
                         if (((IRPhiInstruction) inst).getBlocks().size() == 1) {
                             IRMoveInstruction move = new IRMoveInstruction(block, ((IRPhiInstruction) inst).getResultRegister(), ((IRPhiInstruction) inst).getValues().get(0));

@@ -94,7 +94,10 @@ public class IRCallInstruction extends IRInstruction {
 
     @Override
     public IRInstruction cloneMySelf(CloneManager m) {
-        throw new OptimizeError("unexpected clone of call " + this);
+        IRCallInstruction call = new IRCallInstruction(m.get(getParentBlock()), returnType, callFunction);
+        if (resultRegister != null) call.setResultRegister((IRRegister) m.get(resultRegister));
+        argumentValues.forEach(val -> call.addArgument(m.get(val), val.getIRType()));
+        return call;
     }
 
     @Override
