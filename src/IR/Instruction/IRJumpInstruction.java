@@ -4,7 +4,7 @@ import FrontEnd.IRVisitor;
 import IR.IRBasicBlock;
 import IR.Operand.IROperand;
 import IR.Operand.IRRegister;
-import Utility.CloneManager;
+import MiddleEnd.Utils.CloneManager;
 import Utility.error.OptimizeError;
 
 import java.util.function.Consumer;

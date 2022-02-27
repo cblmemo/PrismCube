@@ -4,6 +4,7 @@ import FrontEnd.IRVisitor;
 import IR.Instruction.IRInstruction;
 import IR.Operand.IRRegister;
 import IR.TypeSystem.IRTypeSystem;
+import MiddleEnd.Utils.IRLoop;
 import Utility.Type.ArrayType;
 import Utility.Type.ClassType;
 import Utility.Type.Type;
@@ -32,6 +33,7 @@ public class IRFunction {
     private LinkedHashMap<IRBasicBlock, LinkedHashSet<IRBasicBlock>> dominatorFrontier;
     private LinkedHashMap<IRBasicBlock, LinkedHashSet<IRBasicBlock>> postDominatorFrontier;
     private int forceInlineCnt = 0;
+    private final LinkedHashSet<IRLoop> topLoops = new LinkedHashSet<>();
 
     // [[--NOTICE--]] need to call setReturnType and addParameterType manually after created an IRFunction instance.
     public IRFunction(String functionName) {
@@ -293,6 +295,14 @@ public class IRFunction {
 
     public void incrementForceInlineCnt() {
         forceInlineCnt++;
+    }
+
+    public void addTopLoop(IRLoop loop) {
+        topLoops.add(loop);
+    }
+
+    public LinkedHashSet<IRLoop> getTopLoops() {
+        return topLoops;
     }
 
     @Override

@@ -1,4 +1,4 @@
-package Utility;
+package MiddleEnd.Utils;
 
 import IR.IRBasicBlock;
 import IR.Operand.IROperand;

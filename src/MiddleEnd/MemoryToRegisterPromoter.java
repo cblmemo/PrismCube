@@ -7,6 +7,7 @@ import IR.Operand.IROperand;
 import IR.Operand.IRRegister;
 import Memory.Memory;
 import MiddleEnd.Pass.IRFunctionPass;
+import MiddleEnd.Utils.DominatorTreeBuilder;
 import Utility.error.OptimizeError;
 
 import java.util.*;
@@ -177,7 +178,7 @@ public class MemoryToRegisterPromoter implements IRFunctionPass {
         new DominatorTreeBuilder().build(function, false);
         this.function = function;
         initialize();
-        for (IRAllocaInstruction alloca : allocas) basicOptimize(alloca);
+        allocas.forEach(this::basicOptimize);
         resetAllocas();
         placePhi();
         initRename();

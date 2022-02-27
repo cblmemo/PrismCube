@@ -13,18 +13,18 @@ import java.util.Objects;
 /**
  * This class print llvm ir to output file,
  * and could run by the following command:
- * ----------------------------------------
- * $ clang test.ll builtin.ll -o a.out
- * $ ./a.out
- * ----------------------------------------
- * or:
+ * <br>----------------------------------------
+ * <br>$ clang test.ll builtin.ll -o a.out
+ * <br>$ ./a.out
+ * <br>----------------------------------------
+ * <br>or:
  * (not recommend since lli has some bug
  * when encounter malloc)
- * ----------------------------------------
- * $ llvm-link test.ll builtin.ll -o link.ll
- * $ lli link.ll
- * ----------------------------------------
- * clang version: 6.0.0-1ubuntu2 (tags/RELEASE_600/final)
+ * <br>----------------------------------------
+ * <br>$ llvm-link test.ll builtin.ll -o link.ll
+ * v$ lli link.ll
+ * <br>----------------------------------------
+ * <br>clang version: 6.0.0-1ubuntu2 (tags/RELEASE_600/final)
  *
  * @author rainy memory
  * @version 1.0.0

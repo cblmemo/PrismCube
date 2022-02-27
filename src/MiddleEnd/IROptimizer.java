@@ -1,6 +1,7 @@
 package MiddleEnd;
 
 import FrontEnd.IREmitter;
+import IR.Instruction.IRInstruction;
 import Memory.Memory;
 
 import java.util.concurrent.atomic.AtomicInteger;
@@ -25,6 +26,10 @@ public class IROptimizer extends Optimize {
             changed |= new SparseConditionalConstantPropagator().propagate(memory);
             new ControlFlowGraphChecker("after sccp in round " + cnt).check(memory);
 
+            new IREmitter().emitDebug(memory, String.format("./bin/opt-%s%s-before-%d.ll", msg, "loop", cnt));
+            changed |= new LoopStrengthReductor().reduce(memory);
+            new ControlFlowGraphChecker("after loop in round " + cnt).check(memory);
+
             new IREmitter().emitDebug(memory, String.format("./bin/opt-%s%s-before-%d.ll", msg, "inline", cnt));
             changed |= new FunctionInliner().inline(memory);
             new ControlFlowGraphChecker("after inline in round " + cnt).check(memory);
@@ -44,14 +49,18 @@ public class IROptimizer extends Optimize {
         new IREmitter().emitDebug(memory, "./bin/opt-mem2reg-before.ll");
         new MemoryToRegisterPromoter().promote(memory);
 
-        FunctionInliner.disableForceInline();
-        ssaOptimize(memory, "");
+        if (level == OptimizeLevel.O2) {
+            FunctionInliner.disableForceInline();
+            ssaOptimize(memory, "");
 
-        FunctionInliner.enableForceInline();
-        ssaOptimize(memory, "force-inline-");
+            FunctionInliner.enableForceInline();
+            ssaOptimize(memory, "force-inline-");
+        }
 
+        new IREmitter().emitDebug(memory, "./bin/opt-phiResolve-before.ll");
         new PhiResolver().resolve(memory);
 
+        IRInstruction.checkRemoved();
         new IREmitter().emitOpt(memory);
 
         AtomicInteger num = new AtomicInteger();

@@ -4,10 +4,9 @@ import IR.IRBasicBlock;
 import FrontEnd.IRVisitor;
 import IR.Operand.IROperand;
 import IR.Operand.IRRegister;
-import Utility.CloneManager;
+import MiddleEnd.Utils.CloneManager;
 import Utility.error.OptimizeError;
 
-import java.util.LinkedHashMap;
 import java.util.function.Consumer;
 
 public class IRBrInstruction extends IRInstruction {

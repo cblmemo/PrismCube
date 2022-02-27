@@ -6,7 +6,7 @@ import IR.Operand.IROperand;
 import IR.Operand.IRRegister;
 import IR.TypeSystem.IRPointerType;
 import IR.TypeSystem.IRTypeSystem;
-import Utility.CloneManager;
+import MiddleEnd.Utils.CloneManager;
 
 import java.util.Objects;
 import java.util.function.Consumer;

@@ -1,4 +1,4 @@
-package MiddleEnd;
+package MiddleEnd.Utils;
 
 import IR.IRBasicBlock;
 import IR.IRFunction;
@@ -80,12 +80,15 @@ public class DominatorTreeBuilder {
         }
         // store to block
         if (reverse) idom.forEach(IRBasicBlock::setPostIdom);
-        else idom.forEach((succ, pred) -> {
-            if (pred != null) {
-                pred.addDominatorTreeSuccessor(succ);
-                log.Tracef("%s dom %s\n", pred, succ);
-            } else log.Tracef("%s has no idom\n", succ);
-        });
+        else {
+            idom.forEach(IRBasicBlock::setIdom);
+            idom.forEach((succ, pred) -> {
+                if (pred != null) {
+                    pred.addDominatorTreeSuccessor(succ);
+                    log.Tracef("%s dom %s\n", pred, succ);
+                } else log.Tracef("%s has no idom\n", succ);
+            });
+        }
     }
 
     private void calculateDominatorFrontier() {

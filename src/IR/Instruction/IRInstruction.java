@@ -4,13 +4,16 @@ import FrontEnd.IRVisitor;
 import IR.IRBasicBlock;
 import IR.Operand.IROperand;
 import IR.Operand.IRRegister;
-import Utility.CloneManager;
+import MiddleEnd.Utils.CloneManager;
+import Utility.error.OptimizeError;
 
 import java.util.LinkedHashSet;
 import java.util.function.Consumer;
 
 abstract public class IRInstruction {
     private static final boolean useAlign = true;
+
+    private static final LinkedHashSet<IRInstruction> removed = new LinkedHashSet<>();
 
     private String comment = null;
     private IRBasicBlock parentBlock;
@@ -35,6 +38,7 @@ abstract public class IRInstruction {
             parentBlock.getAllocas().remove(this);
         }
         if (this instanceof IRPhiInstruction) parentBlock.getPhis().remove(this);
+        else removed.add(this);
         uses.forEach(usedOperand -> usedOperand.removeUser(this));
     }
 
@@ -70,6 +74,18 @@ abstract public class IRInstruction {
     abstract public IRInstruction cloneMySelf(CloneManager m);
 
     abstract public IRRegister getDef();
+
+    public static void checkRemoved() {
+        removed.forEach(inst -> {
+            if (inst.getDef() != null) {
+                if (!inst.getDef().getUsers().isEmpty()) {
+                    inst.getDef().getUsers().forEach(user -> {
+                        if (!removed.contains(user)) throw new OptimizeError("removed inst with users :" + inst + " " + inst.getDef().getUsers());
+                    });
+                }
+            }
+        });
+    }
 
     public static boolean useAlign() {
         return useAlign;

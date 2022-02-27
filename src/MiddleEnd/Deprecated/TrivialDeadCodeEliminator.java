@@ -1,4 +1,4 @@
-package MiddleEnd;
+package MiddleEnd.Deprecated;
 
 import IR.IRFunction;
 import IR.Instruction.IRInstruction;

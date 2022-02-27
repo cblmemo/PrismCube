@@ -3,6 +3,7 @@ package IR;
 import FrontEnd.IRVisitor;
 import IR.Instruction.*;
 import IR.Operand.IRLabel;
+import MiddleEnd.Utils.CopyInterfereGraph;
 
 import java.util.ArrayList;
 
@@ -19,7 +20,10 @@ public class IRBasicBlock {
     private final ArrayList<IRBasicBlock> predecessors = new ArrayList<>();
     private final ArrayList<IRBasicBlock> successors = new ArrayList<>();
     private final ArrayList<IRBasicBlock> dominatorTreeSuccessors = new ArrayList<>();
+    private IRBasicBlock idom = null;
     private IRBasicBlock postIdom = null;
+    private boolean insideLoop = false;
+    private final CopyInterfereGraph graph = new CopyInterfereGraph();
 
     private boolean hasFinished = false;
 
@@ -126,13 +130,12 @@ public class IRBasicBlock {
         else assert false : "replaceControlFlowTarget for return block";
         successors.remove(oldBlock);
         successors.add(newBlock);
+        newBlock.addPredecessor(this);
     }
 
     public void insertInstructionBeforeEscape(IRInstruction inst) {
         assert instructions.get(instructions.size() - 1) == escapeInstruction;
-        instructions.remove(escapeInstruction);
-        instructions.add(inst);
-        instructions.add(escapeInstruction);
+        instructions.add(instructions.size() - 1, inst);
     }
 
     public void addPhi(IRPhiInstruction phi) {
@@ -225,12 +228,34 @@ public class IRBasicBlock {
         return builder.toString();
     }
 
+    public void setIdom(IRBasicBlock idom) {
+        this.idom = idom;
+    }
+
     public void setPostIdom(IRBasicBlock postIdom) {
         this.postIdom = postIdom;
     }
 
     public IRBasicBlock getPostIdom() {
         return postIdom;
+    }
+
+    public boolean dominatedBy(IRBasicBlock suspiciousAncestor) {
+        if (idom == suspiciousAncestor) return true;
+        if (idom == null) return false;
+        return idom.dominatedBy(suspiciousAncestor);
+    }
+
+    public boolean isInsideLoop() {
+        return insideLoop;
+    }
+
+    public void setInsideLoop(boolean insideLoop) {
+        this.insideLoop = insideLoop;
+    }
+
+    public CopyInterfereGraph getGraph() {
+        return graph;
     }
 
     @Override

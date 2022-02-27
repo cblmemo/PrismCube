@@ -6,8 +6,7 @@ import FrontEnd.IRVisitor;
 import IR.Operand.IROperand;
 import IR.Operand.IRRegister;
 import IR.TypeSystem.IRTypeSystem;
-import Utility.CloneManager;
-import Utility.error.OptimizeError;
+import MiddleEnd.Utils.CloneManager;
 
 import java.util.ArrayList;
 import java.util.Objects;

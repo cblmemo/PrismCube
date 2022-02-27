@@ -9,7 +9,7 @@ import IR.Operand.IROperand;
 import IR.Operand.IRRegister;
 import Memory.Memory;
 import MiddleEnd.Pass.IRFunctionPass;
-import Utility.CloneManager;
+import MiddleEnd.Utils.CloneManager;
 import Utility.error.OptimizeError;
 
 import java.util.*;
@@ -17,7 +17,7 @@ import java.util.*;
 import static Debug.MemoLog.log;
 
 public class FunctionInliner implements IRFunctionPass {
-    static private final int INSTRUCTION_LIMITATION = 1000, BLOCK_LIMITATION = 100, FORCE_INLINE_CNT_LIMITATION = 3;
+    static private final int INSTRUCTION_LIMITATION = 1000, BLOCK_LIMITATION = 100, FORCE_INLINE_CNT_LIMITATION = 2;
     static private int cnt = 0;
     static private boolean force = false;
 

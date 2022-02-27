@@ -6,6 +6,7 @@ import IR.Instruction.*;
 import IR.Operand.IRLabel;
 import Memory.Memory;
 import MiddleEnd.Pass.IRFunctionPass;
+import MiddleEnd.Utils.DominatorTreeBuilder;
 
 import java.util.*;
 
