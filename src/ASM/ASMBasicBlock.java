@@ -1,9 +1,7 @@
 package ASM;
 
 import ASM.Instruction.ASMInstruction;
-import ASM.Operand.ASMImmediate;
 import ASM.Operand.ASMLabel;
-import ASM.Operand.ASMOperand;
 import ASM.Operand.ASMRegister;
 
 import java.util.ArrayList;
@@ -98,7 +96,7 @@ public class ASMBasicBlock {
         return instructions.size() == 1 && instructions.get(0).isJump();
     }
 
-    public ASMBasicBlock getJumpTarget() {
+    public ASMBasicBlock getDirectlyJumpTarget() {
         assert isDirectlyJumpBlock();
         return ((ASMLabel) instructions.get(0).getOperands().get(0)).belongTo();
     }
@@ -120,6 +118,20 @@ public class ASMBasicBlock {
         }
         assert instructions.get(instructions.size() - 1).isJump() : instructions.get(instructions.size() - 1);
         return !instructions.get(instructions.size() - 2).isBranch();
+    }
+
+    public boolean endWithJump() {
+        return instructions.get(instructions.size() - 1).isJump();
+    }
+
+    public ASMBasicBlock getJumpTarget() {
+        assert endWithJump();
+        return ((ASMLabel) instructions.get(instructions.size() - 1).getOperands().get(0)).belongTo();
+    }
+
+    public void removeTailJump() {
+        assert endWithJump();
+        instructions.remove(instructions.size() - 1);
     }
 
     public void replacePredecessor(ASMBasicBlock oldBlock, ASMBasicBlock newBlock) {

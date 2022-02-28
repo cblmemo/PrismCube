@@ -52,7 +52,7 @@ public class ControlFlowSimplifyer implements ASMFunctionPass {
     private void convertDirectlyJump() {
         LinkedHashMap<ASMBasicBlock, ASMBasicBlock> directlyJumpBlocks = new LinkedHashMap<>();
         function.getBlocks().forEach(block -> {
-            if (block.isDirectlyJumpBlock()) directlyJumpBlocks.put(block, block.getJumpTarget());
+            if (block.isDirectlyJumpBlock()) directlyJumpBlocks.put(block, block.getDirectlyJumpTarget());
         });
         for (ASMBasicBlock block : function.getBlocks()) {
             ArrayList<ASMInstruction> instructions = new ArrayList<>(block.getInstructions());

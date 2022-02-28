@@ -13,7 +13,7 @@ import static Debug.MemoLog.log;
 
 public class ASMFunction {
     private final String functionName;
-    private final ArrayList<ASMBasicBlock> blocks = new ArrayList<>();
+    private ArrayList<ASMBasicBlock> blocks = new ArrayList<>();
     private final LinkedHashMap<IRBasicBlock, ASMBasicBlock> blockMap = new LinkedHashMap<>();
     private final ASMBasicBlock entryBlock;
     private final LinkedHashMap<ASMPhysicalRegister, ASMVirtualRegister> calleeSaves = new LinkedHashMap<>();
@@ -148,5 +148,13 @@ public class ASMFunction {
             }
         }
         return ret;
+    }
+
+    public void setBlocks(ArrayList<ASMBasicBlock> blocks) {
+        this.blocks = blocks;
+    }
+
+    public ASMBasicBlock getReturnBlock() {
+        return blocks.get(blocks.size() - 1);
     }
 }
