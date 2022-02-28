@@ -156,6 +156,8 @@ abstract public class ASMInstruction {
         this.parentBlock = parentBlock;
     }
 
+    abstract public boolean useless();
+
     @Override
     public String toString() {
         StringBuilder builder = new StringBuilder();

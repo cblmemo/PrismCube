@@ -14,4 +14,9 @@ public class ASMMemoryInstruction extends ASMInstruction {
         addOperand(register);
         addOperand(address);
     }
+
+    @Override
+    public boolean useless() {
+        return false;
+    }
 }

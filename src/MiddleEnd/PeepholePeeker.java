@@ -115,6 +115,13 @@ public class PeepholePeeker implements ASMFunctionPass {
         }
     }
 
+    private void removeUselessCode(ASMBasicBlock block) {
+        ArrayList<ASMInstruction> instructions = new ArrayList<>(block.getInstructions());
+        instructions.forEach(inst -> {
+            if (inst.useless()) block.getInstructions().remove(inst);
+        });
+    }
+
     private void controlFlowOptimize() {
         LinkedHashMap<ASMBasicBlock, ASMBasicBlock> directlyJumpBlocks = new LinkedHashMap<>();
         function.getBlocks().forEach(block -> {
@@ -170,6 +177,7 @@ public class PeepholePeeker implements ASMFunctionPass {
             function.getBlocks().forEach(this::removeRedundantLoadStore);
             function.getBlocks().forEach(this::convertConstRegisterBranchToJump);
             function.getBlocks().forEach(this::removeUnreachableCode);
+            function.getBlocks().forEach(this::removeUselessCode);
             controlFlowOptimize();
             fuse();
             if (!changed) break;

@@ -1,8 +1,11 @@
 package ASM.Instruction;
 
 import ASM.ASMBasicBlock;
+import ASM.Operand.ASMImmediate;
 
 public class ASMArithmeticInstruction extends ASMInstruction {
+    private final InstType type;
+
     public enum InstType {
         lui, auipc,
         sub,
@@ -47,5 +50,19 @@ public class ASMArithmeticInstruction extends ASMInstruction {
 
     public ASMArithmeticInstruction(ASMBasicBlock parentBlock, InstType type) {
         super(parentBlock, type.toString());
+        this.type = type;
+    }
+
+    @Override
+    public boolean useless() {
+        switch (type) {
+            case addi, slli, xori, srli, srai -> {
+                assert getOperands().get(2) instanceof ASMImmediate;
+                return ((ASMImmediate) getOperands().get(2)).getImm() == 0;
+            }
+            default -> {
+                return false;
+            }
+        }
     }
 }
