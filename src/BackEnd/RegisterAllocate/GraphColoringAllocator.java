@@ -82,6 +82,13 @@ public class GraphColoringAllocator {
         log.Tracef("clear finished.\n");
     }
 
+    // return 10^b
+    private static int powOf10(int b) {
+        int ret = 1;
+        for (int i = 0; i < b; i++) ret *= 10;
+        return ret;
+    }
+
     private void initialize() {
         // clear all
         clear();
@@ -116,11 +123,11 @@ public class GraphColoringAllocator {
 
         // calculate spill cost
         // spill cost = def + use / degree
-        // todo loop analysis
         function.getBlocks().forEach(block -> block.getInstructions().forEach(inst -> {
             if (inst == null) return;
+            int weight = powOf10(block.getLoopDepth());
             inst.getDefsAndUses().forEach(reg -> {
-                if (!preColored.contains(reg)) spillCost.replace(reg, spillCost.get(reg) + 1);
+                if (!preColored.contains(reg)) spillCost.replace(reg, spillCost.get(reg) + weight);
             });
         }));
     }

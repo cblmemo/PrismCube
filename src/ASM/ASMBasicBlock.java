@@ -18,13 +18,14 @@ public class ASMBasicBlock {
     private final ArrayList<ASMBasicBlock> predecessors = new ArrayList<>();
     private final ArrayList<ASMBasicBlock> successors = new ArrayList<>();
     private LinkedHashSet<ASMRegister> liveOut;
+    private final int loopDepth;
 
     private static int cnt = 0;
     private static int functionCnt = 0;
     private static final LinkedHashMap<ASMFunction, Integer> functionId = new LinkedHashMap<>();
     private static final LinkedHashMap<Integer, Integer> functionLabelCnt = new LinkedHashMap<>();
 
-    public ASMBasicBlock(ASMFunction parentFunction, String label) {
+    public ASMBasicBlock(ASMFunction parentFunction, String label, int loopDepth) {
         String labelName;
         if (printLabelName) labelName = ".LBB_" + parentFunction.getFunctionName() + "_" + label + "_" + (++cnt);
         else {
@@ -38,6 +39,7 @@ public class ASMBasicBlock {
             functionLabelCnt.put(funcId, blockId + 1);
         }
         this.label = new ASMLabel(labelName, this);
+        this.loopDepth = loopDepth;
     }
 
     public void appendInstruction(ASMInstruction inst) {
@@ -136,6 +138,10 @@ public class ASMBasicBlock {
             if (!successors.contains(succSucc)) successors.add(succSucc);
             succSucc.replacePredecessor(successor, this);
         });
+    }
+
+    public int getLoopDepth() {
+        return loopDepth;
     }
 
     @Override

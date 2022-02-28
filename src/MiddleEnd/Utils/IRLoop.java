@@ -77,6 +77,9 @@ public class IRLoop {
 
     public void setDepth(int depth) {
         this.depth = Math.max(this.depth, depth);
+        nodes.forEach(node -> {
+            if (node.getLoopDepth() < depth) node.setLoopDepth(depth);
+        });
     }
 
     public void simplifyLoopNestTree() {

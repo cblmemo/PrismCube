@@ -70,15 +70,16 @@ public class LoopExtractor {
 
     public void extract(IRFunction function) {
         this.function = function;
+        function.getBlocks().forEach(block -> block.setLoopDepth(0));
         new DominatorTreeBuilder().build(function, false);
         findBackEdge();
         backEdge.forEach(this::findNaturalLoop);
         constructLoopNestTree();
         function.getTopLoops().forEach(topLoop -> {
-            setDepth(topLoop, 0);
+            setDepth(topLoop, 1);
             topLoop.simplifyLoopNestTree();
             log.Tracef(" -------- start print loop -------- \n");
-            print(topLoop, 0);
+            print(topLoop, 1);
             log.Tracef(" -------- print loop end -------- \n");
         });
     }

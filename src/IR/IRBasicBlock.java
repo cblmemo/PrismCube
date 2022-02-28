@@ -23,7 +23,7 @@ public class IRBasicBlock {
     private final ArrayList<IRBasicBlock> dominatorTreeSuccessors = new ArrayList<>();
     private IRBasicBlock idom = null;
     private IRBasicBlock postIdom = null;
-    private boolean insideLoop = false;
+    private int loopDepth = 0;
     private final CopyInterfereGraph graph = new CopyInterfereGraph();
 
     private boolean hasFinished = false;
@@ -256,16 +256,16 @@ public class IRBasicBlock {
         return idom.dominatedBy(suspiciousAncestor);
     }
 
-    public boolean isInsideLoop() {
-        return insideLoop;
-    }
-
-    public void setInsideLoop(boolean insideLoop) {
-        this.insideLoop = insideLoop;
-    }
-
     public CopyInterfereGraph getGraph() {
         return graph;
+    }
+
+    public void setLoopDepth(int loopDepth) {
+        this.loopDepth = loopDepth;
+    }
+
+    public int getLoopDepth() {
+        return loopDepth;
     }
 
     @Override

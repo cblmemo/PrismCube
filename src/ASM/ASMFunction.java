@@ -23,7 +23,7 @@ public class ASMFunction {
     public ASMFunction(IRFunction function) {
         this.functionName = function.getFunctionName();
         function.getBlocks().forEach(irBlock -> {
-            ASMBasicBlock asmBlock = new ASMBasicBlock(this, irBlock.getLabelName());
+            ASMBasicBlock asmBlock = new ASMBasicBlock(this, irBlock.getLabelName(), irBlock.getLoopDepth());
             blockMap.put(irBlock, asmBlock);
             blocks.add(asmBlock);
         });
@@ -123,10 +123,9 @@ public class ASMFunction {
 
     private final ArrayList<ASMBasicBlock> reachable = new ArrayList<>();
 
-    public ArrayList<ASMBasicBlock> reachableBlocks() {
+    public void calculateReachableBlocks() {
         reachable.clear();
         dfs(entryBlock);
-        return reachable;
     }
 
     private void dfs(ASMBasicBlock current) {
@@ -138,7 +137,7 @@ public class ASMFunction {
 
     public boolean removeUnreachableBlocks() {
         boolean ret = false;
-        reachableBlocks();
+        calculateReachableBlocks();
         ArrayList<ASMBasicBlock> blockBackup = new ArrayList<>(blocks);
         for (ASMBasicBlock block : blockBackup) {
             if (!reachable.contains(block)) {
