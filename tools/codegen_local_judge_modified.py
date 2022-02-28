@@ -108,6 +108,7 @@ def main():
     print("total {}, passed {}, ratio {}%".format(total, passed, passed / total * 100))
     if len(failed_cases) > 0:
         print("failed cases (name, src code size):", failed_cases)
+        exit(1)
 
 
 if __name__ == '__main__':
