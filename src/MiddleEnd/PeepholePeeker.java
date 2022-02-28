@@ -10,7 +10,10 @@ import MiddleEnd.Pass.ASMFunctionPass;
 
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.Objects;
+
+import static Debug.MemoLog.log;
 
 public class PeepholePeeker implements ASMFunctionPass {
     static private final int rounds = 20;
@@ -137,6 +140,25 @@ public class PeepholePeeker implements ASMFunctionPass {
         changed |= function.removeUnreachableBlocks();
     }
 
+    private void fuse() {
+        ArrayList<ASMBasicBlock> blocks = new ArrayList<>(function.getBlocks());
+        LinkedHashSet<ASMBasicBlock> deleted = new LinkedHashSet<>();
+        blocks.forEach(pred -> {
+            if (!deleted.contains(pred) && pred.withJumpEscapeInstruction()) {
+                assert pred.getSuccessors().size() == 1;
+                ASMBasicBlock succ = pred.getSuccessors().get(0);
+                if (succ.getPredecessors().size() == 1) {
+                    assert succ.getPredecessors().get(0) == pred;
+                    pred.fuse(succ);
+                    function.getBlocks().remove(succ);
+                    deleted.add(succ);
+                    changed = true;
+                }
+            }
+        });
+        log.Debugf("deleted blocks: %s\n", deleted);
+    }
+
     @Override
     public void visit(ASMFunction function) {
         this.function = function;
@@ -149,6 +171,7 @@ public class PeepholePeeker implements ASMFunctionPass {
             function.getBlocks().forEach(this::convertConstRegisterBranchToJump);
             function.getBlocks().forEach(this::removeUnreachableCode);
             controlFlowOptimize();
+            fuse();
             if (!changed) break;
         }
     }

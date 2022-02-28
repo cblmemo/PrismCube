@@ -12,6 +12,7 @@ import java.util.LinkedHashSet;
 
 public class ASMBasicBlock {
     private static final boolean printLabelName = false;
+
     private final ASMLabel label;
     private ArrayList<ASMInstruction> instructions = new ArrayList<>();
     private final ArrayList<ASMBasicBlock> predecessors = new ArrayList<>();
@@ -98,6 +99,43 @@ public class ASMBasicBlock {
     public ASMBasicBlock getJumpTarget() {
         assert isDirectlyJumpBlock();
         return ((ASMLabel) instructions.get(0).getOperands().get(0)).belongTo();
+    }
+
+    public String getPredecessorsStr() {
+        if (predecessors.isEmpty()) return "[ ]";
+        StringBuilder builder = new StringBuilder("[ ").append(predecessors.get(0));
+        for (int i = 1; i < predecessors.size(); i++) builder.append(", ").append(predecessors.get(i));
+        builder.append(" ]");
+        return builder.toString();
+    }
+
+    public boolean withJumpEscapeInstruction() {
+        assert instructions.size() > 0 : this;
+        if (instructions.get(instructions.size() - 1).isRet()) return false;
+        if (instructions.size() == 1) {
+            assert instructions.get(0).isJump() : instructions.get(0);
+            return true;
+        }
+        assert instructions.get(instructions.size() - 1).isJump() : instructions.get(instructions.size() - 1);
+        return !instructions.get(instructions.size() - 2).isBranch();
+    }
+
+    public void replacePredecessor(ASMBasicBlock oldBlock, ASMBasicBlock newBlock) {
+        assert predecessors.contains(oldBlock) : this + " " + predecessors + " " + oldBlock + " " + newBlock;
+        predecessors.remove(oldBlock);
+        if (!predecessors.contains(newBlock)) predecessors.add(newBlock);
+    }
+
+    public void fuse(ASMBasicBlock successor) {
+        assert withJumpEscapeInstruction();
+        instructions.remove(instructions.size() - 1);
+        instructions.addAll(successor.getInstructions());
+        successor.getInstructions().forEach(inst -> inst.setParentBlock(this));
+        successors.clear();
+        successor.getSuccessors().forEach(succSucc -> {
+            if (!successors.contains(succSucc)) successors.add(succSucc);
+            succSucc.replacePredecessor(successor, this);
+        });
     }
 
     @Override

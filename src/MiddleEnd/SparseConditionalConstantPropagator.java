@@ -121,9 +121,8 @@ public class SparseConditionalConstantPropagator implements IRFunctionPass {
                             if (!executed.contains(c) && ((IRPhiInstruction) inst).getBlocks().size() > 1) ((IRPhiInstruction) inst).removeCandidate(c);
                         });
                         if (((IRPhiInstruction) inst).getBlocks().size() == 1) {
-                            IRMoveInstruction move = new IRMoveInstruction(block, ((IRPhiInstruction) inst).getResultRegister(), ((IRPhiInstruction) inst).getValues().get(0));
-                            block.replaceInstructions(inst, move);
-                            ((IRPhiInstruction) inst).removeCandidate(((IRPhiInstruction) inst).getBlocks().get(0));
+                            inst.replaceAllUseWithValue(((IRPhiInstruction) inst).getValues().get(0));
+                            inst.removeFromParentBlock();
                         }
                     }
                 }

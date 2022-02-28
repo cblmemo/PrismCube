@@ -31,16 +31,16 @@ public class IRBlockFuser implements IRFunctionPass {
         // fuse blocks
         ArrayList<IRBasicBlock> blocks = new ArrayList<>(function.getBlocks());
         LinkedHashSet<IRBasicBlock> deleted = new LinkedHashSet<>();
-        blocks.forEach(block -> {
-            if (!deleted.contains(block) && block.getEscapeInstruction() instanceof IRJumpInstruction) {
-                assert block.getSuccessors().size() == 1 : "jump: [" + block.getEscapeInstruction() + "], succ: [" + block.getSuccessors() + "]";
-                IRBasicBlock succ = block.getSuccessors().get(0);
+        blocks.forEach(pred -> {
+            if (!deleted.contains(pred) && pred.getEscapeInstruction() instanceof IRJumpInstruction) {
+                assert pred.getSuccessors().size() == 1 : "jump: [" + pred.getEscapeInstruction() + "], succ: [" + pred.getSuccessors() + "]";
+                IRBasicBlock succ = pred.getSuccessors().get(0);
                 if (succ.getPredecessors().size() == 1) {
-                    assert succ.getPredecessors().get(0) == block;
-                    block.fuse(succ);
+                    assert succ.getPredecessors().get(0) == pred;
+                    pred.fuse(succ);
                     function.getBlocks().remove(succ);
                     // ensure return block is the last element of blocks
-                    if (block.isReturnBlock()) function.relocateReturnBlock(block);
+                    if (pred.isReturnBlock()) function.relocateReturnBlock(pred);
                     deleted.add(succ);
                     changed = true;
                 }

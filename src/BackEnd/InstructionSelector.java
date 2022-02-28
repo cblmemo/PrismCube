@@ -31,7 +31,7 @@ import java.util.Map;
 /**
  * This class select appropriate instruction in
  * rv32i instructions (and pseudo instructions).
- * For all pseudo instruction used,
+ * <br>For all pseudo instruction used,
  *
  * @author rainy memory
  * @version 1.0.0
@@ -153,8 +153,16 @@ public class InstructionSelector implements IRVisitor {
             rs1V = toRegister(rs2);
             rs2V = toOperand(rs1);
             newType = rs2V instanceof ASMImmediate ? type.toImmediateType() : type;
+            if ((type.isAdd() || type.isXor()) && rs2V instanceof ASMImmediate && ((ASMImmediate) rs2V).getImm() == 0) {
+                appendPseudoInst(ASMPseudoInstruction.InstType.mv, rd, rs1V);
+                return;
+            }
         } else {
             if (type.isMul() && rs2 instanceof IRConstNumber && isPowerOf2(((IRConstNumber) rs2).getIntValue())) {
+                if (((IRConstNumber) rs2).getIntValue() == 1) {
+                    appendPseudoInst(ASMPseudoInstruction.InstType.mv, rd, toRegister(rs1));
+                    return;
+                }
                 int logRS2 = log2(((IRConstNumber) rs2).getIntValue());
                 type = ASMArithmeticInstruction.InstType.sll;
                 rs2 = new IRConstInt(IRModule.intType, logRS2);

@@ -64,7 +64,7 @@ public class LoopExtractor {
     }
 
     private void print(IRLoop cur, int depth) {
-        log.Infof("depth: %d, loop: %s\n", depth, cur);
+        log.Tracef("depth: %d, loop: %s\n", depth, cur);
         cur.forEachInnerLoop(loop -> print(loop, depth + 1));
     }
 
@@ -77,9 +77,9 @@ public class LoopExtractor {
         function.getTopLoops().forEach(topLoop -> {
             setDepth(topLoop, 0);
             topLoop.simplifyLoopNestTree();
-            log.Infof(" -------- start print loop -------- \n");
+            log.Tracef(" -------- start print loop -------- \n");
             print(topLoop, 0);
-            log.Infof(" -------- print loop end -------- \n");
+            log.Tracef(" -------- print loop end -------- \n");
         });
     }
 }

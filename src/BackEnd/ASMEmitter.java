@@ -135,7 +135,7 @@ public class ASMEmitter {
         appendWithIndent(name + ":");
         indentCnt++;
         if (symbol instanceof ASMGlobalBoolean) {
-            appendWithIndent(formatComment(formatPseudoOptions("byte",symbol.getValue()), " 0x" + symbol.getHexValue()));
+            appendWithIndent(formatComment(formatPseudoOptions("byte", symbol.getValue()), " 0x" + symbol.getHexValue()));
             appendWithIndent(formatPseudoOptions("size", symbol.getSymbolName() + ", 1"));
         } else if (symbol instanceof ASMGlobalInteger) {
             appendWithIndent(formatComment(formatPseudoOptions("word", symbol.getValue()), " 0x" + symbol.getHexValue()));
@@ -181,7 +181,7 @@ public class ASMEmitter {
     }
 
     private void emit(ASMBasicBlock block) {
-        appendWithIndent(block.getLabel() + ":");
+        appendWithIndent(formatComment(block.getLabel() + ":", " preds: " + block.getPredecessorsStr()));
         indentCnt++;
         block.getInstructions().forEach(this::emit);
         indentCnt--;

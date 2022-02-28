@@ -39,7 +39,10 @@ public class IROptimizer extends Optimize {
             new ControlFlowGraphChecker("after fuse in round " + cnt).check(memory);
 
             new IREmitter().emitDebug(memory, String.format("./bin/opt-%soptimize-after-%d.ll", msg, cnt));
-            if (!changed) break;
+            if (!changed) {
+                log.Infof("No changed has made in this turn.\n");
+                break;
+            }
         }
     }
 

@@ -14,7 +14,7 @@ abstract public class ASMInstruction {
         return inst + " ".repeat(ASMEmitter.getAlignLength() - inst.length());
     }
 
-    private final ASMBasicBlock parentBlock;
+    private ASMBasicBlock parentBlock;
     private final String instStr;
     private final ArrayList<ASMOperand> operands = new ArrayList<>();
     private final ArrayList<ASMRegister> defs = new ArrayList<>();
@@ -114,6 +114,10 @@ abstract public class ASMInstruction {
         return Objects.equals(instStr, "addi");
     }
 
+    public boolean isRet() {
+        return Objects.equals(instStr, "ret");
+    }
+
     private void replaceDef(int index, ASMVirtualRegister oldReg, ASMRegister newReg) {
         if (getOperands().get(index) == oldReg) {
             setOperand(index, newReg);
@@ -146,6 +150,10 @@ abstract public class ASMInstruction {
                 addUse(newReg);
             }
         }
+    }
+
+    public void setParentBlock(ASMBasicBlock parentBlock) {
+        this.parentBlock = parentBlock;
     }
 
     @Override
