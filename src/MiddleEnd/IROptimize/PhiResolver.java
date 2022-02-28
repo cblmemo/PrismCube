@@ -1,4 +1,4 @@
-package MiddleEnd;
+package MiddleEnd.IROptimize;
 
 import IR.IRBasicBlock;
 import IR.IRFunction;

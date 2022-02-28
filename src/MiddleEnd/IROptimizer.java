@@ -3,6 +3,7 @@ package MiddleEnd;
 import FrontEnd.IREmitter;
 import IR.Instruction.IRInstruction;
 import Memory.Memory;
+import MiddleEnd.IROptimize.*;
 
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -15,7 +16,7 @@ public class IROptimizer extends Optimize {
         int cnt = 0;
         boolean changed;
         while (cnt++ < rounds) {
-            log.Infof("Optimize %sround %d\n", msg, cnt);
+            log.Infof("IR Optimize %sround %d\n", msg, cnt);
             changed = false;
 
             new IREmitter().emitDebug(memory, String.format("./bin/opt-%s%s-before-%d.ll", msg, "adce", cnt));

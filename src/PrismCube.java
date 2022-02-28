@@ -32,7 +32,7 @@ public class PrismCube {
             new InstructionSelector().select(memory);
             new RegisterAllocator().allocate(memory);
             // asm optimize
-            new PeepholePeeker().peek(memory);
+            new ASMOptimizer().invoke(memory);
             // emit
             new ASMEmitter().emit(memory);
         } catch (error err) {
