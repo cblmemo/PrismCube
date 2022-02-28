@@ -27,7 +27,7 @@ public class IROptimizer extends Optimize {
             new ControlFlowGraphChecker("after sccp in round " + cnt).check(memory);
 
             new IREmitter().emitDebug(memory, String.format("./bin/opt-%s%s-before-%d.ll", msg, "loop", cnt));
-            changed |= new LoopStrengthReductor().reduce(memory);
+            changed |= new LoopOptimizer().doi(memory);
             new ControlFlowGraphChecker("after loop in round " + cnt).check(memory);
 
             new IREmitter().emitDebug(memory, String.format("./bin/opt-%s%s-before-%d.ll", msg, "inline", cnt));
@@ -65,9 +65,9 @@ public class IROptimizer extends Optimize {
 
         AtomicInteger num = new AtomicInteger();
         memory.getIRModule().getFunctions().values().forEach(function -> {
-            log.Debugf("block size (%s): %d\n", function, function.getBlocks().size());
+            log.Tracef("block size (%s): %d\n", function, function.getBlocks().size());
             num.addAndGet(function.getBlocks().size());
         });
-        log.Infof("block size (in total): %d\n", num.get());
+        log.Tracef("block size (in total): %d\n", num.get());
     }
 }

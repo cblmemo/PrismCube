@@ -2,6 +2,7 @@ package IR.Instruction;
 
 import FrontEnd.IRVisitor;
 import IR.IRBasicBlock;
+import IR.Operand.IRConstNumber;
 import IR.Operand.IROperand;
 import IR.Operand.IRRegister;
 import MiddleEnd.Utils.CloneManager;
@@ -50,6 +51,14 @@ public class IRBinaryInstruction extends IRInstruction {
 
     public boolean isLogicBinary() {
         return isLogicBinary;
+    }
+
+    public Integer getConstOtherThan(IROperand operand) {
+        if (lhs == operand && rhs != operand)
+            return rhs instanceof IRConstNumber ? ((IRConstNumber) rhs).getIntValue() : null;
+        if (lhs != operand && rhs == operand)
+            return lhs instanceof IRConstNumber ? ((IRConstNumber) lhs).getIntValue() : null;
+        return null;
     }
 
     @Override

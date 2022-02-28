@@ -1,6 +1,8 @@
 package MiddleEnd.Utils;
 
 import IR.IRBasicBlock;
+import IR.Instruction.IRInstruction;
+import IR.Operand.*;
 
 import java.util.LinkedHashSet;
 import java.util.function.Consumer;
@@ -42,18 +44,31 @@ public class IRLoop {
         return true;
     }
 
-    public void removeInnerLoop(IRLoop loop) {
-        innerLoops.remove(loop);
+    public IRBasicBlock getHeader() {
+        return header;
     }
 
-    public LinkedHashSet<IRLoop> getInnerLoops() {
-        return innerLoops;
+    public boolean containsNode(IRBasicBlock node) {
+        return nodes.contains(node);
+    }
+
+    public boolean invariantInThisLoop(IROperand operand) {
+        return operand instanceof IRConstNumber;
+    }
+
+    public int extractInvariantOperand(IROperand operand) {
+        assert operand instanceof IRConstNumber;
+        return ((IRConstNumber) operand).getIntValue();
     }
 
     public void forEachNonHeaderNode(Consumer<IRBasicBlock> consumer) {
         nodes.forEach(node -> {
             if (node != header) consumer.accept(node);
         });
+    }
+
+    public void forEachLoopInstruction(Consumer<IRInstruction> consumer) {
+        nodes.forEach(node -> node.forEachInstruction(consumer));
     }
 
     public void forEachInnerLoop(Consumer<IRLoop> consumer) {

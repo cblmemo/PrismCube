@@ -17,6 +17,7 @@ public class IRBlockFuser implements IRFunctionPass {
     public boolean fuse(Memory memory) {
         memory.getIRModule().getFunctions().values().forEach(this::visit);
         memory.getIRModule().getFunctions().values().forEach(this::visit);
+        memory.getIRModule().removeUnusedFunction();
         if (changed) log.Infof("Program changed in fuse.\n");
         return changed;
     }

@@ -6,6 +6,7 @@ import IR.Operand.IRLabel;
 import MiddleEnd.Utils.CopyInterfereGraph;
 
 import java.util.ArrayList;
+import java.util.function.Consumer;
 
 public class IRBasicBlock {
     private final IRFunction parentFunction;
@@ -138,6 +139,11 @@ public class IRBasicBlock {
         instructions.add(instructions.size() - 1, inst);
     }
 
+    public void insertPhiInstruction(IRPhiInstruction phi) {
+        instructions.add(phis.size(), phi);
+        phis.add(phi);
+    }
+
     public void addPhi(IRPhiInstruction phi) {
         phis.add(phi);
     }
@@ -148,6 +154,10 @@ public class IRBasicBlock {
 
     public ArrayList<IRInstruction> getInstructions() {
         return instructions;
+    }
+
+    public void forEachInstruction(Consumer<IRInstruction> consumer) {
+        instructions.forEach(consumer);
     }
 
     public ArrayList<IRAllocaInstruction> getAllocas() {

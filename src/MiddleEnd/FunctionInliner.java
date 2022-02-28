@@ -55,7 +55,6 @@ public class FunctionInliner implements IRFunctionPass {
         })));
         log.Tracef("toBeOptimized: %s\n", toBeOptimized);
         toBeOptimized.forEach(this::inlineFunction);
-        module.removeUnusedFunction();
         if (changed) log.Infof("Program changed in inline.\n");
         return changed;
     }

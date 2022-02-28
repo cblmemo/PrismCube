@@ -51,15 +51,16 @@ public class LoopExtractor {
     }
 
     private void constructLoopNestTree() {
+        function.getTopLoops().clear();
         while (true) if (!tryAgain()) break;
         loops.values().forEach(loop -> {
             if (loop.getParentLoop() == null) function.addTopLoop(loop);
         });
     }
 
-    private void dfs(IRLoop cur, int depth) {
+    private void setDepth(IRLoop cur, int depth) {
         cur.setDepth(depth);
-        cur.forEachInnerLoop(loop -> dfs(loop, depth + 1));
+        cur.forEachInnerLoop(loop -> setDepth(loop, depth + 1));
     }
 
     private void print(IRLoop cur, int depth) {
@@ -74,8 +75,11 @@ public class LoopExtractor {
         backEdge.forEach(this::findNaturalLoop);
         constructLoopNestTree();
         function.getTopLoops().forEach(topLoop -> {
-            dfs(topLoop, 0);
+            setDepth(topLoop, 0);
             topLoop.simplifyLoopNestTree();
+            log.Infof(" -------- start print loop -------- \n");
+            print(topLoop, 0);
+            log.Infof(" -------- print loop end -------- \n");
         });
     }
 }
