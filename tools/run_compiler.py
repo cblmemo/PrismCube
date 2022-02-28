@@ -9,16 +9,6 @@ def exe(cmd):
     os.system(cmd)
 
 
-def clear(case):
-    if case == 1:
-        exe("rm ./bin/b.ll")
-        exe("rm ./bin/t.ll")
-        exe("rm ./bin/a.out")
-    elif case == 2:
-        exe("rm t.s")
-        exe("rm b.s")
-
-
 def build():
     if os.path.exists("myout"):
         exe("rm -rf myout")
@@ -176,10 +166,8 @@ def run():
     if case == 1:
         ir_gen_executable()
         run_executable()
-        clear(case)
     elif case == 2:
         run_asm(asm_debug)
-        clear(case)
     elif case == 3:
         gen_riscv_asm()
     elif case == 4:
