@@ -96,6 +96,11 @@ public class InstructionSelector implements IRVisitor {
         return builtinFunctions.get(functionName).getLabel();
     }
 
+    private ASMConstString parseConstString(IROperand string) {
+        assert string instanceof IRConstString;
+        return asmModule.getConstString(getIRConstStringName((IRConstString) string));
+    }
+
     private ASMRegister toRegister(IROperand operand) {
         if (operand instanceof IRRegister) {
             if (!lr2r.containsKey((IRRegister) operand)) lr2r.put((IRRegister) operand, new ASMVirtualRegister(((IRRegister) operand).getName()));
@@ -103,7 +108,7 @@ public class InstructionSelector implements IRVisitor {
         }
         if (operand instanceof IRConstString) {
             ASMVirtualRegister string = new ASMVirtualRegister("address");
-            appendPseudoInst(ASMPseudoInstruction.InstType.la, string, asmModule.getConstString(getIRConstStringName((IRConstString) operand)));
+            appendPseudoInst(ASMPseudoInstruction.InstType.la, string, parseConstString(operand));
             return string;
         }
         assert operand instanceof IRConstNumber;
@@ -119,7 +124,7 @@ public class InstructionSelector implements IRVisitor {
     }
 
     private ASMOperand toOperand(IROperand operand) {
-        if (operand instanceof IRRegister) return toRegister(operand);
+        if (operand instanceof IRRegister || operand instanceof IRConstString) return toRegister(operand);
         assert operand instanceof IRConstNumber : operand;
         int value = ((IRConstNumber) operand).getIntValue();
         if (value == 0) return ASMPhysicalRegister.getPhysicalRegister(ASMPhysicalRegister.PhysicalRegisterName.zero);
@@ -280,7 +285,13 @@ public class InstructionSelector implements IRVisitor {
 
     @Override
     public void visit(IRMoveInstruction inst) {
-        appendPseudoInst(ASMPseudoInstruction.InstType.mv, toRegister(inst.getResultRegister()), toRegister(inst.getValue()));
+        if (inst.getValue() instanceof IRConstString) {
+            appendPseudoInst(ASMPseudoInstruction.InstType.la, toRegister(inst.getResultRegister()), parseConstString(inst.getValue()));
+            return;
+        }
+        ASMOperand val = toOperand(inst.getValue());
+        if (val instanceof ASMImmediate) appendPseudoInst(ASMPseudoInstruction.InstType.li, toRegister(inst.getResultRegister()), val);
+        else appendPseudoInst(ASMPseudoInstruction.InstType.mv, toRegister(inst.getResultRegister()), val);
     }
 
     @Override
