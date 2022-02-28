@@ -7,14 +7,14 @@ import Utility.Entity.VariableEntity;
 import Utility.Type.Type;
 import Utility.error.SemanticError;
 
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 
 abstract public class Scope {
-    private final HashMap<String, VariableEntity> variables = new HashMap<>();
-    private final HashMap<String, FunctionEntity> functions = new HashMap<>();
+    private final LinkedHashMap<String, VariableEntity> variables = new LinkedHashMap<>();
+    private final LinkedHashMap<String, FunctionEntity> functions = new LinkedHashMap<>();
     private final Scope parentScope;
     private int blockScopeCnt = 0;
-    private final HashMap<Integer, BlockScope> blockScopes = new HashMap<>();
+    private final LinkedHashMap<Integer, BlockScope> blockScopes = new LinkedHashMap<>();
 
     public Scope(Scope parentScope) {
         this.parentScope = parentScope;
@@ -62,11 +62,11 @@ abstract public class Scope {
         return parentScope;
     }
 
-    public HashMap<String, VariableEntity> getVariables() {
+    public LinkedHashMap<String, VariableEntity> getVariables() {
         return variables;
     }
 
-    public HashMap<String, FunctionEntity> getFunctions() {
+    public LinkedHashMap<String, FunctionEntity> getFunctions() {
         return functions;
     }
 

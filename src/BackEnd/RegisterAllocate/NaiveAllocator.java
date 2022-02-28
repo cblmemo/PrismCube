@@ -10,7 +10,7 @@ import ASM.Operand.*;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 
 import static Debug.MemoLog.log;
 
@@ -31,7 +31,7 @@ public class NaiveAllocator {
     ));
 
     private final ASMFunction function;
-    private final HashMap<ASMVirtualRegister, ASMAddress> vr2addr = new HashMap<>();
+    private final LinkedHashMap<ASMVirtualRegister, ASMAddress> vr2addr = new LinkedHashMap<>();
     private ASMBasicBlock block;
     private ArrayList<ASMInstruction> newList;
 

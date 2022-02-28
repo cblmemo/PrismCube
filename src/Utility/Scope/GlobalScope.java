@@ -6,10 +6,10 @@ import Utility.Entity.VariableEntity;
 import Utility.Type.ClassType;
 import Utility.error.SyntaxError;
 
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 
 public class GlobalScope extends Scope {
-    private final HashMap<String, ClassType> classes = new HashMap<>();
+    private final LinkedHashMap<String, ClassType> classes = new LinkedHashMap<>();
 
     public GlobalScope(Scope parentScope) {
         super(parentScope);
@@ -72,7 +72,7 @@ public class GlobalScope extends Scope {
         classes.put(typeName, type);
     }
 
-    public HashMap<String, ClassType> getClasses() {
+    public LinkedHashMap<String, ClassType> getClasses() {
         return classes;
     }
 

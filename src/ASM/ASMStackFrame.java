@@ -9,7 +9,7 @@ package ASM;
 import IR.Instruction.IRAllocaInstruction;
 import IR.Operand.IRRegister;
 
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 
 import static Debug.MemoLog.log;
 
@@ -18,7 +18,7 @@ public class ASMStackFrame {
     private int argumentSize = 0;
     private int allocaSize = 0;
     private int spillSize = 0;
-    private final HashMap<IRRegister, Integer> alloca2offset = new HashMap<>();
+    private final LinkedHashMap<IRRegister, Integer> alloca2offset = new LinkedHashMap<>();
 
     public void updateMaxArgumentNumber(int num) {
         maxArgumentNumber = Integer.max(maxArgumentNumber, num);

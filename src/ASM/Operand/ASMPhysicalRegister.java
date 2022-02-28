@@ -1,7 +1,7 @@
 package ASM.Operand;
 
 import java.util.ArrayList;
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 
 public class ASMPhysicalRegister extends ASMRegister {
     public enum PhysicalRegisterName {
@@ -33,7 +33,7 @@ public class ASMPhysicalRegister extends ASMRegister {
         }
     }
 
-    static private final HashMap<PhysicalRegisterName, ASMPhysicalRegister> PhysicalRegisters = new HashMap<>();
+    static private final LinkedHashMap<PhysicalRegisterName, ASMPhysicalRegister> PhysicalRegisters = new LinkedHashMap<>();
     static private final ArrayList<ASMPhysicalRegister> PhysicalRegistersList = new ArrayList<>();
     static private final ArrayList<ASMPhysicalRegister> CallerSaveRegisters = new ArrayList<>();
     static private final ArrayList<ASMPhysicalRegister> CalleeSaveRegisters = new ArrayList<>();
