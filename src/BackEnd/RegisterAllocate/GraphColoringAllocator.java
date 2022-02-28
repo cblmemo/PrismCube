@@ -320,7 +320,7 @@ public class GraphColoringAllocator {
             if (addEdge(t, u)) decrementDegreeWithoutCheck(t);
         });
         if (degree.get(u) >= K && freezeWorkList.contains(u)) {
-            log.Tracef("transfer [%s] from freezeWorkList to spillWorkList due to combine node\n");
+            log.Tracef("transfer [%s] from freezeWorkList to spillWorkList due to combine node\n", u);
             freezeWorkList.remove(u);
             spillWorkList.add(u);
         }

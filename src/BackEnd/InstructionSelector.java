@@ -17,6 +17,7 @@ import IR.IRGlobalDefine;
 import IR.IRModule;
 import IR.Instruction.*;
 import IR.Operand.*;
+import IR.TypeSystem.IRNullType;
 import IR.TypeSystem.IRStructureType;
 import IR.TypeSystem.IRTypeSystem;
 import Memory.Memory;
@@ -418,11 +419,13 @@ public class InstructionSelector implements IRVisitor {
                 appendArithmeticInst(ASMArithmeticInstruction.InstType.add, result, toRegister(inst.getPtrValue()), offsetRegister);
             }
             case 2 -> { // member access
-                assert inst.getPtrValue() instanceof IRRegister;
-                assert inst.getElementType() instanceof IRStructureType;
-                assert inst.getIndices().get(0) instanceof IRConstInt;
-                assert ((IRConstInt) inst.getIndices().get(0)).getIntValue() == 0;
-                assert inst.getIndices().get(1) instanceof IRConstInt;
+                if (!(inst.getPtrValue().getIRType() instanceof IRNullType)) {
+                    assert inst.getPtrValue() instanceof IRRegister;
+                    assert inst.getElementType() instanceof IRStructureType;
+                    assert inst.getIndices().get(0) instanceof IRConstInt;
+                    assert ((IRConstInt) inst.getIndices().get(0)).getIntValue() == 0;
+                    assert inst.getIndices().get(1) instanceof IRConstInt;
+                }
                 int index = ((IRConstInt) inst.getIndices().get(1)).getIntValue();
                 IRStructureType classType = (IRStructureType) inst.getElementType();
                 int offset = classType.getMemberOffset(index);
