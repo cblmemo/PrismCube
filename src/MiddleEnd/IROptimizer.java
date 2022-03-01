@@ -61,11 +61,11 @@ public class IROptimizer extends Optimize {
             ssaOptimize(memory, "force-inline-");
         }
 
-        new IREmitter().emitDebug(memory, "./bin/opt-phiResolve-before.ll");
+        new IREmitter().emitOpt(memory);
         new PhiResolver().resolve(memory);
 
         IRInstruction.checkRemoved();
-        new IREmitter().emitOpt(memory);
+        new IREmitter().emitDebug(memory, "./bin/opt-phiResolve-after.ll");
 
         AtomicInteger num = new AtomicInteger();
         memory.getIRModule().getFunctions().values().forEach(function -> {

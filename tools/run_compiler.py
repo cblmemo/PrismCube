@@ -30,7 +30,7 @@ def run_asm(debug):
     exe("rm ./bin/*.s")
     exe("rm ./bin/*.ll")
     if debug:
-        exe("java -ea -cp ./lib/antlr-4.9.1-complete.jar:./myout PrismCube -i ./bin/test.mx -o ./bin/test.s -emit-asm -emit-llvm ./bin/test.ll -log-o ./bin/log.txt -log-level debug -printV ./bin/virtual.s -O2 -printO2IR ./bin/opt.ll -print-reg-name -arch x86_32 -printInnerIR")
+        exe("java -ea -cp ./lib/antlr-4.9.1-complete.jar:./myout PrismCube -i ./bin/test.mx -o ./bin/test.s -emit-asm -emit-llvm ./bin/test.ll -log-o ./bin/log.txt -log-level debug -printV ./bin/virtual.s -O2 -printO2IR ./bin/opt.ll -arch x86_32 -printInnerIR")
     else:
         exe("java -cp ./lib/antlr-4.9.1-complete.jar:./myout PrismCube -i ./bin/test.mx -o ./bin/test.s -emit-asm -arch x86_32")
     exe("scp ./builtin/builtin.s ./bin/b.s")
