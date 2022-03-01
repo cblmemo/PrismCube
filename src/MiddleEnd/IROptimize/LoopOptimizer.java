@@ -20,6 +20,8 @@ import java.util.Objects;
 import static Debug.MemoLog.log;
 
 public class LoopOptimizer implements IRFunctionPass {
+    private final static int UNROLLING_BLOCK_THRESHOLD = 5;
+
     private static class BasicInductionVariable {
         private final int initVal, stepVal;
         private final IRBasicBlock initBlock, stepBlock;

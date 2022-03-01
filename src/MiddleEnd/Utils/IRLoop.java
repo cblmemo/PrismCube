@@ -87,6 +87,10 @@ public class IRLoop {
         innerLoops.forEach(IRLoop::simplifyLoopNestTree);
     }
 
+    public int getNodesSize() {
+        return nodes.size();
+    }
+
     @Override
     public String toString() {
         return "IRLoop: { header: " + header + ", nodes: " + nodes + ", terminals: " + terminals + " }";

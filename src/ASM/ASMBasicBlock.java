@@ -124,9 +124,33 @@ public class ASMBasicBlock {
         return instructions.get(instructions.size() - 1).isJump();
     }
 
+    public boolean isPullableReturnBlock() {
+        return instructions.get(instructions.size() - 1).isRet();
+    }
+
     public ASMBasicBlock getJumpTarget() {
-        assert endWithJump();
+        if (!endWithJump()) return null;
         return ((ASMLabel) instructions.get(instructions.size() - 1).getOperands().get(0)).belongTo();
+    }
+
+    public ASMBasicBlock getTailBranchTarget() {
+        if (!endWithJump()) return null;
+        if (instructions.size() <= 1) return null;
+        if (instructions.get(instructions.size() - 2).isBranch())
+            return ((ASMLabel) instructions.get(instructions.size() - 2).getOperands().get(1)).belongTo();
+        return null;
+    }
+
+    // beqz reg, L1   ->   bnez reg, L2
+    // j    L2        j    L1
+    public void swapTailBranch() {
+        assert getTailBranchTarget() != null;
+        ASMInstruction brInst = instructions.get(instructions.size() - 2), jInst = instructions.get(instructions.size() - 1);
+        assert brInst.getOperands().get(1) instanceof ASMLabel && jInst.getOperands().get(0) instanceof ASMLabel;
+        ASMLabel brLabel = (ASMLabel) brInst.getOperands().get(1);
+        brInst.getOperands().set(1, jInst.getOperands().get(0));
+        jInst.getOperands().set(0, brLabel);
+        brInst.swapBranch();
     }
 
     public void removeTailJump() {

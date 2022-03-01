@@ -11,11 +11,14 @@ import MiddleEnd.Pass.ASMFunctionPass;
 import java.util.ArrayList;
 import java.util.Objects;
 
+import static Debug.MemoLog.log;
+
 public class PeepholePeeker implements ASMFunctionPass {
     private boolean changed = false;
 
     public boolean peek(Memory memory) {
         memory.getAsmModule().getFunctions().values().forEach(this::visit);
+        log.Infof("program changed in peephole.\n");
         return changed;
     }
 

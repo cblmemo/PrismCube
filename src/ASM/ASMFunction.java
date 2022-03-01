@@ -5,6 +5,7 @@ import ASM.Operand.ASMPhysicalRegister;
 import ASM.Operand.ASMVirtualRegister;
 import IR.IRBasicBlock;
 import IR.IRFunction;
+import Utility.error.OptimizeError;
 
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -155,6 +156,8 @@ public class ASMFunction {
     }
 
     public ASMBasicBlock getReturnBlock() {
-        return blocks.get(blocks.size() - 1);
+        for (ASMBasicBlock block : blocks)
+            if (block.getInstructions().get(block.getInstructions().size() - 1).isRet()) return block;
+        throw new OptimizeError("return block of " + this + " not found");
     }
 }

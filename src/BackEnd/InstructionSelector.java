@@ -266,15 +266,21 @@ public class InstructionSelector implements IRVisitor {
 
     @Override
     public void visit(IRBrInstruction inst) {
-        // br %0 l1 l2   -> beqz %0 l2
-        //                  j l1
-        appendPseudoInst(ASMPseudoInstruction.InstType.beqz, toRegister(inst.getCondition()), currentFunction.getBasicBlockLabel(inst.getElseBlock()));
-        appendPseudoInst(ASMPseudoInstruction.InstType.j, currentFunction.getBasicBlockLabel(inst.getThenBlock()));
+        // br %0 l1 l2   ->   beqz %0 l2   or    bnez %0 l1
+        //                    j l1               j l2
+        // make sure use jump to return block in order to optimize in ASMOptimize.CodePuller
+        if (inst.getElseBlock().isReturnBlock()) {
+            appendPseudoInst(ASMPseudoInstruction.InstType.bnez, toRegister(inst.getCondition()), currentFunction.getBasicBlockLabel(inst.getThenBlock()));
+            appendPseudoInst(ASMPseudoInstruction.InstType.j, currentFunction.getBasicBlockLabel(inst.getElseBlock()));
+        } else {
+            appendPseudoInst(ASMPseudoInstruction.InstType.beqz, toRegister(inst.getCondition()), currentFunction.getBasicBlockLabel(inst.getElseBlock()));
+            appendPseudoInst(ASMPseudoInstruction.InstType.j, currentFunction.getBasicBlockLabel(inst.getThenBlock()));
+        }
     }
 
     @Override
     public void visit(IRJumpInstruction inst) {
-        // br l1         -> j l1
+        // br l1         ->   j l1
         appendPseudoInst(ASMPseudoInstruction.InstType.j, currentFunction.getBasicBlockLabel(inst.getTargetBlock()));
     }
 

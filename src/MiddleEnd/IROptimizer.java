@@ -53,7 +53,7 @@ public class IROptimizer extends Optimize {
         new IREmitter().emitDebug(memory, "./bin/opt-mem2reg-before.ll");
         new MemoryToRegisterPromoter().promote(memory);
 
-        if (level == OptimizeLevel.O2) {
+        if (level != OptimizeLevel.O1) {
             FunctionInliner.disableForceInline();
             ssaOptimize(memory, "");
 

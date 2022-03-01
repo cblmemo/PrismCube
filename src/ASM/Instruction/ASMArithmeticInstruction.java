@@ -53,6 +53,11 @@ public class ASMArithmeticInstruction extends ASMInstruction {
         this.type = type;
     }
 
+    public ASMArithmeticInstruction(ASMBasicBlock parentBlock, String op) {
+        super(parentBlock, op);
+        this.type = null;
+    }
+
     public InstType getImmediateType() {
         assert haveImmediateType();
         return type.toImmediateType();

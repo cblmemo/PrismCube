@@ -17,7 +17,7 @@ if len(sys.argv) > 1:
     test_cases_dir = './testcases/' + sys.argv[1] + '/'
 
 compile_cmd = "bash ./build.bash"
-execute_cmd = "java -ea -cp lib/antlr-4.9.1-complete.jar:./myout PrismCube -emit-asm -i ./bin/test_codegen.mx -o ./bin/test.s -arch x86_64 -O2"
+execute_cmd = "java -ea -cp lib/antlr-4.9.1-complete.jar:./myout PrismCube -emit-asm -i ./bin/test_codegen.mx -o ./bin/test.s -arch x86_64 -O3"
 excluded_test_cases = ["foo.mx"]
 ravel_path = "./lib/ravel --enable-cache"
 builtin_path = "./builtin/builtin.s"

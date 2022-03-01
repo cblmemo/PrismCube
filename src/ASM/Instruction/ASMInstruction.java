@@ -15,7 +15,7 @@ abstract public class ASMInstruction {
     }
 
     private ASMBasicBlock parentBlock;
-    private final String instStr;
+    private String instStr;
     private final ArrayList<ASMOperand> operands = new ArrayList<>();
     private final ArrayList<ASMRegister> defs = new ArrayList<>();
     private final ArrayList<ASMRegister> uses = new ArrayList<>();
@@ -24,6 +24,18 @@ abstract public class ASMInstruction {
         this.parentBlock = parentBlock;
         this.instStr = instStr;
         if (Objects.equals(instStr, "call")) ASMPhysicalRegister.getCallerSaveRegisters().forEach(this::addDef);
+    }
+
+    public ASMInstruction cloneMySelf() {
+        ASMInstruction ret = new ASMCloneInstruction(parentBlock, instStr);
+        operands.forEach(ret::addOperand);
+        return ret;
+    }
+
+    public void swapBranch() {
+        assert isBranch();
+        if (Objects.equals(instStr, "beqz")) instStr = "bnez";
+        else instStr = "beqz";
     }
 
     public void removeFromParentBlock() {
@@ -115,7 +127,7 @@ abstract public class ASMInstruction {
     }
 
     public boolean isBranch() {
-        return Objects.equals(instStr, "beqz")||Objects.equals(instStr, "bnez");
+        return Objects.equals(instStr, "beqz") || Objects.equals(instStr, "bnez");
     }
 
     public boolean isAddi() {

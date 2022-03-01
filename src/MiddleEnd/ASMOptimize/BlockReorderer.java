@@ -3,11 +3,12 @@ package MiddleEnd.ASMOptimize;
 import ASM.ASMBasicBlock;
 import ASM.ASMFunction;
 import Memory.Memory;
+import MiddleEnd.Optimize;
 import MiddleEnd.Pass.ASMFunctionPass;
 
 import java.util.ArrayList;
 
-public class BlockReorderer implements ASMFunctionPass {
+public class BlockReorderer extends Optimize implements ASMFunctionPass {
     private ASMFunction function;
     private final ArrayList<ASMBasicBlock> brandNewOrder = new ArrayList<>();
 
@@ -16,15 +17,21 @@ public class BlockReorderer implements ASMFunctionPass {
     }
 
     private void addToBrandNewOrder(ASMBasicBlock block) {
-        if (brandNewOrder.contains(block) || !block.endWithJump()) return;
-        brandNewOrder.add(block);
-        addToBrandNewOrder(block.getJumpTarget());
+        if (level == OptimizeLevel.O3) {
+            if (brandNewOrder.contains(block)) return;
+            brandNewOrder.add(block);
+            if (block.endWithJump()) addToBrandNewOrder(block.getJumpTarget());
+        } else {
+            if (brandNewOrder.contains(block) || !block.endWithJump()) return;
+            brandNewOrder.add(block);
+            addToBrandNewOrder(block.getJumpTarget());
+        }
     }
 
     private void naiveReorder() {
         function.getBlocks().forEach(this::addToBrandNewOrder);
         // only return block end with ret ( not jump )
-        brandNewOrder.add(function.getReturnBlock());
+        if (level != OptimizeLevel.O3) brandNewOrder.add(function.getReturnBlock());
         assert function.getBlocks().size() == brandNewOrder.size();
     }
 

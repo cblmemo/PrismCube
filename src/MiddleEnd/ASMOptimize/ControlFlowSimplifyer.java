@@ -21,6 +21,7 @@ public class ControlFlowSimplifyer implements ASMFunctionPass {
 
     public boolean simplify(Memory memory) {
         memory.getAsmModule().getFunctions().values().forEach(this::visit);
+        log.Infof("program changed in control flow simplify.\n");
         return changed;
     }
 
@@ -97,7 +98,6 @@ public class ControlFlowSimplifyer implements ASMFunctionPass {
     public void visit(ASMFunction function) {
         this.function = function;
         function.getBlocks().forEach(this::convertConstRegisterBranchToJump);
-        convertDirectlyJump();
         fuseBlock();
     }
 }

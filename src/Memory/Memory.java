@@ -119,6 +119,7 @@ public class Memory {
                 case "-O0" -> Optimize.setLevel(Optimize.OptimizeLevel.O0);
                 case "-O1" -> Optimize.setLevel(Optimize.OptimizeLevel.O1);
                 case "-O2" -> Optimize.setLevel(Optimize.OptimizeLevel.O2);
+                case "-O3" -> Optimize.setLevel(Optimize.OptimizeLevel.O3);
                 case "-printV" -> {
                     String arg = (i + 1 < args.length && args[i + 1].charAt(0) != '-') ? args[++i] : "./bin/virtual.s";
                     PrintStream virtualStream = new PrintStream(arg);

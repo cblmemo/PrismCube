@@ -84,7 +84,7 @@ def asm_test(dir):
         f.write(in_txt)
     with open("./bin/std.out", "w") as f:
         f.write(out_txt)
-    exe("java -ea -cp ./lib/antlr-4.9.1-complete.jar:./myout PrismCube -i ./bin/test.mx -o ./bin/test.s -emit-asm -log-o ./bin/log.txt -log-level trace -O2 -printO2IR ./bin/opt.ll -emit-llvm ./bin/test.ll -arch x86_32 -printInnerIR")
+    exe("java -ea -cp ./lib/antlr-4.9.1-complete.jar:./myout PrismCube -i ./bin/test.mx -o ./bin/test.s -emit-asm -log-o ./bin/log.txt -log-level trace -O3 -print-reg-name -printO2IR ./bin/opt.ll -emit-llvm ./bin/test.ll -arch x86_32 -printInnerIR")
     exe("scp ./builtin/builtin.s ./bin/b.s")
     exe("{} ./bin/test.s ./bin/b.s --input-file=./bin/std.in".format(ravel_path))
     # exe("code ./bin/std.out")

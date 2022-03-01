@@ -8,11 +8,14 @@ import MiddleEnd.Pass.ASMFunctionPass;
 
 import java.util.ArrayList;
 
+import static Debug.MemoLog.log;
+
 public class CodeEliminator implements ASMFunctionPass {
     private boolean changed = false;
 
     public boolean eliminate(Memory memory) {
         memory.getAsmModule().getFunctions().values().forEach(this::visit);
+        log.Infof("program changed in code eliminate.\n");
         return changed;
     }
 

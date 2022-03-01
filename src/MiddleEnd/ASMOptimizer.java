@@ -1,10 +1,7 @@
 package MiddleEnd;
 
 import Memory.Memory;
-import MiddleEnd.ASMOptimize.BlockReorderer;
-import MiddleEnd.ASMOptimize.CodeEliminator;
-import MiddleEnd.ASMOptimize.ControlFlowSimplifyer;
-import MiddleEnd.ASMOptimize.PeepholePeeker;
+import MiddleEnd.ASMOptimize.*;
 
 import static Debug.MemoLog.log;
 
@@ -34,6 +31,8 @@ public class ASMOptimizer extends Optimize {
 
             changed |= new ControlFlowSimplifyer().simplify(memory);
         }
+
+        if (level == OptimizeLevel.O3) new CodePuller().pull(memory);
 
         new BlockReorderer().reorder(memory);
     }
