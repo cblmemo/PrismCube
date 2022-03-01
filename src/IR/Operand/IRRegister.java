@@ -3,7 +3,7 @@ package IR.Operand;
 import IR.TypeSystem.IRTypeSystem;
 
 public class IRRegister extends IROperand {
-    private final int id;
+    private int id;
     private final String name;
     private boolean isAlloca = false;
 
@@ -42,6 +42,11 @@ public class IRRegister extends IROperand {
 
     public static void printRegisterName() {
         printName = true;
+        IRLabel.printLabelName();
+    }
+
+    public void setId(int id) {
+        this.id = id;
     }
 
     @Override

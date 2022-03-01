@@ -8,7 +8,6 @@ import Memory.Memory;
 
 import java.io.FileNotFoundException;
 import java.io.PrintStream;
-import java.util.Objects;
 
 /**
  * This class print llvm ir to output file,
@@ -90,8 +89,18 @@ public class IREmitter implements IRVisitor {
         }
     }
 
+    private void refactorRegisterId(IRFunction function) {
+        int cnt = 0;
+        for (IRBasicBlock block : function.getBlocks()) {
+            block.getLabel().setId(cnt++);
+            for (IRInstruction inst : block.getInstructions())
+                if (inst.getDef() != null) inst.getDef().setId(cnt++);
+        }
+    }
+
     @Override
     public void visit(IRModule module) {
+        module.getFunctions().values().forEach(this::refactorRegisterId);
         ps.println(IRModule.getLLVMDetails());
         module.getBuiltinFunctions().forEach((name, func) -> {
             if (func.hasCalled()) func.accept(this);
