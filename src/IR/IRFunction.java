@@ -40,7 +40,7 @@ public class IRFunction {
         this.functionName = functionName;
         this.declare = false;
         entryBlock = new IRBasicBlock(this, "entry");
-        entryBlock.markAsEntryBlock();
+        entryBlock.initializeAllocas();
         returnBlock = new IRBasicBlock(this, "return");
         returnBlock.markReturnBlock(true);
     }
@@ -49,7 +49,7 @@ public class IRFunction {
         this.functionName = functionName;
         this.declare = declare;
         entryBlock = new IRBasicBlock(this, "entry");
-        entryBlock.markAsEntryBlock();
+        entryBlock.initializeAllocas();
         returnBlock = new IRBasicBlock(this, "return");
         returnBlock.markReturnBlock(true);
     }

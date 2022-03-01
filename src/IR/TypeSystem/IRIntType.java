@@ -1,6 +1,5 @@
 package IR.TypeSystem;
 
-import IR.IRModule;
 import IR.Operand.*;
 
 public class IRIntType extends IRTypeSystem {
@@ -21,20 +20,20 @@ public class IRIntType extends IRTypeSystem {
 
     @Override
     public IROperand getDefaultValue() {
-        return new IRConstInt(this, 0);
+        return new IRConstInt(0);
     }
 
     @Override
     public IRConstNumber getCorrespondingConstOperandType() {
         switch (bandWidth) {
             case 1 -> {
-                return new IRConstBool(IRModule.boolType, true);
+                return new IRConstBool(true);
             }
             case 8 -> {
-                return new IRConstChar(IRModule.charType, 0);
+                return new IRConstChar(0);
             }
             case 32 -> {
-                return new IRConstInt(IRModule.intType, 0);
+                return new IRConstInt(0);
             }
             default -> {
                 return null;

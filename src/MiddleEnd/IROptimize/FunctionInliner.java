@@ -16,6 +16,14 @@ import java.util.*;
 
 import static Debug.MemoLog.log;
 
+/**
+ * This class inline functions to have a better performance.
+ * <br>No reference used.
+ *
+ * @author rainy memory
+ * @version 1.0.0
+ */
+
 public class FunctionInliner implements IRFunctionPass {
     static private final int INSTRUCTION_LIMITATION = 1000, BLOCK_LIMITATION = 100, FORCE_INLINE_CNT_LIMITATION = 2;
     static private int cnt = 0;

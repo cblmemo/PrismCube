@@ -28,12 +28,12 @@ public class ASMModule {
         return globals.get(name);
     }
 
-    public ASMConstString getConstString(String name){
+    public ASMConstString getConstString(String name) {
         assert strings.containsKey(name);
         return strings.get(name);
     }
 
-    public void addConstString(String name, ASMConstString string){
+    public void addConstString(String name, ASMConstString string) {
         strings.put(name, string);
     }
 

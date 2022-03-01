@@ -13,6 +13,6 @@ abstract public class IRConstNumber extends IRConst {
 
     @Override
     public IROperand toIROperand() {
-        return new IRConstInt(null, getIntValue());
+        return new IRConstInt(getIntValue());
     }
 }

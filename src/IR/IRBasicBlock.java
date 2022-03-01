@@ -16,7 +16,6 @@ public class IRBasicBlock {
     private ArrayList<IRAllocaInstruction> allocas;
     private final ArrayList<IRPhiInstruction> phis = new ArrayList<>();
     private IRInstruction escapeInstruction = null;
-    private boolean isEntryBlock = false;
     private boolean isReturnBlock = false;
     private final ArrayList<IRBasicBlock> predecessors = new ArrayList<>();
     private final ArrayList<IRBasicBlock> successors = new ArrayList<>();
@@ -89,12 +88,6 @@ public class IRBasicBlock {
 
     public IRInstruction getEscapeInstruction() {
         return escapeInstruction;
-    }
-
-    public void removeFromParentFunction() {
-        parentFunction.getBlocks().remove(this);
-        predecessors.forEach(pred -> removeSuccessor(this));
-        successors.forEach(succ -> removePredecessor(this));
     }
 
     public void fuse(IRBasicBlock successor) {
@@ -172,13 +165,8 @@ public class IRBasicBlock {
         return isReturnBlock;
     }
 
-    public void markAsEntryBlock() {
-        isEntryBlock = true;
+    public void initializeAllocas() {
         allocas = new ArrayList<>();
-    }
-
-    public boolean isEntryBlock() {
-        return isEntryBlock;
     }
 
     public boolean isEmpty() {

@@ -1,7 +1,7 @@
 package ASM.Operand;
 
 public class ASMImmediate extends ASMOperand {
-    int imm;
+    private final int imm;
 
     public ASMImmediate(int imm) {
         this.imm = imm;

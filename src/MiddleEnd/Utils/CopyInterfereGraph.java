@@ -7,6 +7,14 @@ import IR.Operand.IRRegister;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 
+/**
+ * This class store copy interfere graph for PhiResolver.
+ *
+ * @see MiddleEnd.IROptimize.PhiResolver
+ * @author rainy memory
+ * @version 1.0.0
+ */
+
 public class CopyInterfereGraph {
     public static class Edge {
         private final IRPhiInstruction parentPhi;

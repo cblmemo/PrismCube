@@ -14,6 +14,17 @@ import java.util.*;
 
 import static Debug.MemoLog.log;
 
+/**
+ * This class convert allocas and following load/stores to registers
+ * using phi function. Notice this pass is same with SSA construct,
+ * just all instruction need to consider is alloca, load and store.
+ * <br>Algorithm: Tiger Book, Chapter 19.1
+ *
+ * @see DominatorTreeBuilder
+ * @author rainy memory
+ * @version 1.0.0
+ */
+
 public class MemoryToRegisterPromoter implements IRFunctionPass {
     private IRFunction function;
     private final LinkedHashSet<IRAllocaInstruction> allocas = new LinkedHashSet<>();

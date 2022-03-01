@@ -17,6 +17,14 @@ import java.util.concurrent.atomic.AtomicReference;
 
 import static Debug.MemoLog.log;
 
+/**
+ * This class implements SCCP algorithm to propagate constant.
+ * <br>Algorithm: Tiger Book, Chapter 19.3
+ *
+ * @author rainy memory
+ * @version 1.0.0
+ */
+
 public class SparseConditionalConstantPropagator implements IRFunctionPass {
     private IRFunction function;
     private final LinkedHashMap<IRRegister, LatticeType> constType = new LinkedHashMap<>();
@@ -54,7 +62,7 @@ public class SparseConditionalConstantPropagator implements IRFunctionPass {
     }
 
     private void putValue(IRRegister reg, int val) {
-        constValue.put(reg, new IRConstInt(null, val));
+        constValue.put(reg, new IRConstInt(val));
     }
 
     private void initialize() {

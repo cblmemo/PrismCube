@@ -78,10 +78,10 @@ abstract public class Type {
             }
             return temp;
         }
-        if (isInt()) return module.getIRType("int");
-        if (isBool()) return module.getIRType("bool");
-        if (isString()) return module.getIRType("string");
-        if (isVoid()) return module.getIRType("void");
+        if (isInt()) return IRModule.intType;
+        if (isBool()) return IRModule.boolType;
+        if (isString()) return IRModule.stringType;
+        if (isVoid()) return IRModule.voidType;
         // store class with class pointer
         return new IRPointerType(module.getIRType(typeName));
     }

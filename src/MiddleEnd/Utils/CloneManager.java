@@ -5,6 +5,14 @@ import IR.Operand.IROperand;
 
 import java.util.LinkedHashMap;
 
+/**
+ * This class manage instruction clone in FunctionInliner.
+ *
+ * @see MiddleEnd.IROptimize.FunctionInliner
+ * @author rainy memory
+ * @version 1.0.0
+ */
+
 public class CloneManager {
     private final LinkedHashMap<IROperand, IROperand> operandClone;
     private final LinkedHashMap<IRBasicBlock, IRBasicBlock> blockClone;

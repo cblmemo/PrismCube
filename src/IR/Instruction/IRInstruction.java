@@ -15,7 +15,6 @@ abstract public class IRInstruction {
 
     private static final LinkedHashSet<IRInstruction> removed = new LinkedHashSet<>();
 
-    private String comment = null;
     private IRBasicBlock parentBlock;
     private final LinkedHashSet<IROperand> uses = new LinkedHashSet<>();
 
@@ -89,14 +88,6 @@ abstract public class IRInstruction {
 
     public static boolean useAlign() {
         return useAlign;
-    }
-
-    public void setComment(String comment) {
-        this.comment = comment;
-    }
-
-    public String getComment() {
-        return comment == null ? "" : "; " + comment;
     }
 
     abstract public boolean noUsersAndSafeToRemove();

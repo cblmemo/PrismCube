@@ -11,6 +11,14 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 import static Debug.MemoLog.log;
 
+/**
+ * This class extract loops from IR.
+ * <br>Algorithm: Tiger Book, Chapter 18
+ *
+ * @author rainy memory
+ * @version 1.0.0
+ */
+
 public class LoopExtractor {
     private IRFunction function;
     // header -> terminal

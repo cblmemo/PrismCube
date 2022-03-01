@@ -8,7 +8,16 @@ import Memory.Memory;
 import MiddleEnd.Pass.ASMFunctionPass;
 
 import java.util.LinkedHashSet;
-import java.util.Objects;
+
+/**
+ * This class pull code in return block to their
+ * predecessors, therefore a direct jump was saved.
+ * <br>Notice that this pass will expand code size,
+ * therefore a threshold is set to avoid it.
+ *
+ * @author rainy memory
+ * @version 1.0.0
+ */
 
 public class CodePuller implements ASMFunctionPass {
     private static final int rounds = 10;

@@ -13,6 +13,14 @@ import MiddleEnd.Utils.CopyInterfereGraph;
 import java.util.ArrayList;
 import java.util.LinkedHashSet;
 
+/**
+ * This class eliminate dead code using an aggressive strategy.
+ * <br>Algorithm: Tiger Book, Chapter 19.3
+ *
+ * @author rainy memory
+ * @version 1.0.0
+ */
+
 public class PhiResolver implements IRFunctionPass {
     private IRFunction function;
 
@@ -40,7 +48,23 @@ public class PhiResolver implements IRFunctionPass {
         function.addAllNewBlocks(newBlocks);
     }
 
-    private void replacePhiWithMove() {
+    /**
+     * Naive implementations for phi resolve.
+     * <br>This implementation will encounter bugs when
+     * <pre> {@code
+     *      %0 = phi [%1, B1], [v2, B2]
+     *      %1 = phi [%0, B1], [V2, B2]
+     * } </pre>
+     * This implementation will produce
+     * <pre> {@code
+     *      %0 = move %1
+     *      %1 = move %0
+     * } </pre>
+     * in B1, this overlapping results in bugs.
+     *
+     * @deprecated
+     */
+    private void naiveImplementation() {
         function.getBlocks().forEach(block -> {
             ArrayList<IRPhiInstruction> phis = new ArrayList<>(block.getPhis());
             phis.forEach(phi -> {

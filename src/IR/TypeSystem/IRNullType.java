@@ -1,6 +1,5 @@
 package IR.TypeSystem;
 
-import IR.IRModule;
 import IR.Operand.IRConstNumber;
 import IR.Operand.IRNull;
 import IR.Operand.IROperand;
@@ -18,7 +17,7 @@ public class IRNullType extends IRTypeSystem {
 
     @Override
     public IRConstNumber getCorrespondingConstOperandType() {
-        return new IRNull(IRModule.nullType);
+        return new IRNull();
     }
 
     @Override

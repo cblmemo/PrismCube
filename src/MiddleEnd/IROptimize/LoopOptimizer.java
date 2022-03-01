@@ -19,9 +19,15 @@ import java.util.Objects;
 
 import static Debug.MemoLog.log;
 
-public class LoopOptimizer implements IRFunctionPass {
-    private final static int UNROLLING_BLOCK_THRESHOLD = 5;
+/**
+ * This class implements strength reduction to have a better performance on loop.
+ * <br>Algorithm: Tiger Book, Chapter 18.3.2
+ *
+ * @author rainy memory
+ * @version 1.0.0
+ */
 
+public class LoopOptimizer implements IRFunctionPass {
     private static class BasicInductionVariable {
         private final int initVal, stepVal;
         private final IRBasicBlock initBlock, stepBlock;
@@ -165,9 +171,9 @@ public class LoopOptimizer implements IRFunctionPass {
             }
             IRRegister alias = new IRRegister(IRModule.intType, reg.getName() + "_alias");
             IRPhiInstruction newPhi = new IRPhiInstruction(loop.getHeader(), alias, IRModule.intType);
-            newPhi.addCandidate(new IRConstInt(IRModule.intType, div.getB() * family.getInitVal()), family.getInitBlock());
+            newPhi.addCandidate(new IRConstInt(div.getB() * family.getInitVal()), family.getInitBlock());
             IRRegister stepVal = new IRRegister(IRModule.intType, "strength_reduction_step_val");
-            IRBinaryInstruction calcStep = new IRBinaryInstruction(family.getStepBlock(), "add", stepVal, alias, new IRConstInt(IRModule.intType, div.getB() * family.getStepVal()));
+            IRBinaryInstruction calcStep = new IRBinaryInstruction(family.getStepBlock(), "add", stepVal, alias, new IRConstInt(div.getB() * family.getStepVal()));
             family.getStepBlock().insertInstructionBeforeEscape(calcStep);
             newPhi.addCandidate(stepVal, family.getStepBlock());
             loop.getHeader().insertPhiInstruction(newPhi);

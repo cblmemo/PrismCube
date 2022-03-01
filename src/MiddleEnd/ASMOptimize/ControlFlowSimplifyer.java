@@ -15,6 +15,13 @@ import java.util.LinkedHashSet;
 
 import static Debug.MemoLog.log;
 
+/**
+ * This class simplify control flows inside asm blocks.
+ *
+ * @author rainy memory
+ * @version 1.0.0
+ */
+
 public class ControlFlowSimplifyer implements ASMFunctionPass {
     private boolean changed = false;
     private ASMFunction function;
@@ -50,6 +57,12 @@ public class ControlFlowSimplifyer implements ASMFunctionPass {
         }
     }
 
+    /**
+     * Deprecated because interfere with CodePuller.
+     *
+     * @see CodePuller
+     * @deprecated
+     */
     private void convertDirectlyJump() {
         LinkedHashMap<ASMBasicBlock, ASMBasicBlock> directlyJumpBlocks = new LinkedHashMap<>();
         function.getBlocks().forEach(block -> {

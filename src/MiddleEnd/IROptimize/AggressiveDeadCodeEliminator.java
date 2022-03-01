@@ -12,6 +12,16 @@ import java.util.*;
 
 import static Debug.MemoLog.log;
 
+/**
+ * This class eliminate dead code using an aggressive strategy.
+ * <br>Rely on Dominator Tree.
+ * <br>Algorithm: Tiger Book, Chapter 19.3
+ *
+ * @see DominatorTreeBuilder
+ * @author rainy memory
+ * @version 1.0.0
+ */
+
 public class AggressiveDeadCodeEliminator implements IRFunctionPass {
     private LinkedHashMap<String, IRFunction> functions;
     private LinkedHashMap<String, IRFunction> builtins;

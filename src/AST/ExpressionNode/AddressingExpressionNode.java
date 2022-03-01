@@ -1,7 +1,6 @@
 package AST.ExpressionNode;
 
 import AST.ASTVisitor;
-import IR.Operand.IRRegister;
 import Utility.Cursor;
 
 public class AddressingExpressionNode extends LeftValueExpressionNode {

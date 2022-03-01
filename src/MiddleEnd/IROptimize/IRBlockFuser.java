@@ -11,6 +11,13 @@ import java.util.LinkedHashSet;
 
 import static Debug.MemoLog.log;
 
+/**
+ * This class fuse directly linked blocks and remove unreachable blocks.
+ *
+ * @author rainy memory
+ * @version 1.0.0
+ */
+
 public class IRBlockFuser implements IRFunctionPass {
     private boolean changed = false;
 

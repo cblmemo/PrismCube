@@ -12,6 +12,16 @@ import MiddleEnd.Pass.IRFunctionPass;
 
 import java.util.ArrayList;
 
+/**
+ * This class eliminate global initialize function.
+ * <br>Now deprecated.
+ *
+ * @deprecated
+ * @see MiddleEnd.IROptimize.FunctionInliner
+ * @author rainy memory
+ * @version 1.0.0
+ */
+
 public class IRGlobalInitializeEliminator implements IRFunctionPass {
     private IRModule module;
 

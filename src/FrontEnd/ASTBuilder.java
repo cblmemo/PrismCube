@@ -367,7 +367,7 @@ public class ASTBuilder extends MxStarBaseVisitor<ASTNode> {
     public ASTNode visitBinaryExpression(MxStarParser.BinaryExpressionContext ctx) {
         ExpressionNode lhs = (ExpressionNode) visit(ctx.leftExpression);
         ExpressionNode rhs = (ExpressionNode) visit(ctx.rightExpression);
-        return new BinaryExpressionNode(lhs, rhs, ctx.op.getText(), ctx.getText(), new Cursor(ctx));
+        return new BinaryExpressionNode(lhs, rhs, ctx.op.getText(), new Cursor(ctx));
     }
 
     @Override

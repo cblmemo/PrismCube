@@ -13,6 +13,14 @@ import java.util.ArrayList;
 
 import static Debug.MemoLog.log;
 
+/**
+ * This class check CFG for IRFunction.
+ * <br>Only used to debug.
+ *
+ * @author rainy memory
+ * @version 1.0.0
+ */
+
 public class ControlFlowGraphChecker implements IRFunctionPass {
     private final String errorMessage;
 

@@ -1,10 +1,10 @@
 package IR.Operand;
 
-import IR.TypeSystem.IRTypeSystem;
+import IR.IRModule;
 
 public class IRNull extends IRConstNumber {
-    public IRNull(IRTypeSystem irType) {
-        super(irType);
+    public IRNull() {
+        super(IRModule.nullType);
     }
 
     @Override
@@ -15,7 +15,7 @@ public class IRNull extends IRConstNumber {
     @Override
     public IRConstNumber cloneFromIntValue(int value) {
         assert value == 0;
-        return new IRNull(this.getIRType());
+        return new IRNull();
     }
 
     @Override

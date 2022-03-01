@@ -23,7 +23,6 @@ import java.io.FileNotFoundException;
 import java.io.InputStream;
 import java.io.PrintStream;
 import java.util.Objects;
-import java.util.Optional;
 
 import static Debug.MemoLog.log;
 
@@ -60,10 +59,6 @@ public class Memory {
     }
 
     private static Mode mode = Mode.NONE;
-
-    public static boolean codegen() {
-        return mode == Mode.CODEGEN;
-    }
 
     public enum Architecture {
         x86_64, x86_32

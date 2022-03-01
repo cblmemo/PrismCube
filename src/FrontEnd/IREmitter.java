@@ -10,15 +10,13 @@ import java.io.FileNotFoundException;
 import java.io.PrintStream;
 
 /**
- * This class print llvm ir to output file,
- * and could run by the following command:
+ * This class print llvm ir to output file, and could run by the following command:
  * <br>----------------------------------------
  * <br>$ clang test.ll builtin.ll -o a.out
  * <br>$ ./a.out
  * <br>----------------------------------------
  * <br>or:
- * (not recommend since lli has some bug
- * when encounter malloc)
+ * (not recommend since lli has some bugs when encounter malloc)
  * <br>----------------------------------------
  * <br>$ llvm-link test.ll builtin.ll -o link.ll
  * v$ lli link.ll
@@ -158,91 +156,76 @@ public class IREmitter implements IRVisitor {
 
     @Override
     public void visit(IRBrInstruction inst) {
-        ps.print(inst.toString());
-        ps.println(inst.getComment());
+        ps.println(inst.toString());
     }
 
     @Override
     public void visit(IRJumpInstruction inst) {
-        ps.print(inst.toString());
-        ps.println(inst.getComment());
+        ps.println(inst.toString());
     }
 
     @Override
     public void visit(IRPhiInstruction inst) {
-        ps.print(inst.toString());
-        ps.println(inst.getComment());
+        ps.println(inst.toString());
     }
 
     @Override
     public void visit(IRMoveInstruction inst) {
-        ps.print(inst.toString());
-        ps.println(inst.getComment());
+        ps.println(inst.toString());
     }
 
     @Override
     public void visit(IRCallInstruction inst) {
-        ps.print(inst.toString());
-        ps.println(inst.getComment());
+        ps.println(inst.toString());
     }
 
     @Override
     public void visit(IRLoadInstruction inst) {
-        ps.print(inst.toString());
-        ps.println(inst.getComment());
+        ps.println(inst.toString());
     }
 
     @Override
     public void visit(IRReturnInstruction inst) {
-        ps.print(inst.toString());
-        ps.println(inst.getComment());
+        ps.println(inst.toString());
     }
 
     @Override
     public void visit(IRAllocaInstruction inst) {
-        ps.print(inst.toString());
-        ps.println(inst.getComment());
+        ps.println(inst.toString());
     }
 
     @Override
     public void visit(IRStoreInstruction inst) {
-        ps.print(inst.toString());
-        ps.println(inst.getComment());
+        ps.println(inst.toString());
     }
 
     @Override
     public void visit(IRBinaryInstruction inst) {
-        ps.print(inst.toString());
-        ps.println(inst.getComment());
+        ps.println(inst.toString());
     }
 
     @Override
     public void visit(IRIcmpInstruction inst) {
-        ps.print(inst.toString());
-        ps.println(inst.getComment());
+        ps.println(inst.toString());
     }
 
     @Override
     public void visit(IRTruncInstruction inst) {
-        ps.print(inst.toString());
-        ps.println(inst.getComment());
+        ps.println(inst.toString());
     }
 
     @Override
     public void visit(IRZextInstruction inst) {
-        ps.print(inst.toString());
-        ps.println(inst.getComment());
+        ps.println(inst.toString());
     }
 
     @Override
     public void visit(IRGetelementptrInstruction inst) {
-        ps.print(inst.toString());
-        ps.println(inst.getComment());
+        ps.println(inst.toString());
     }
 
     @Override
     public void visit(IRBitcastInstruction inst) {
-        ps.print(inst.toString());
-        ps.println(inst.getComment());
+        ps.println(inst.toString());
     }
 }

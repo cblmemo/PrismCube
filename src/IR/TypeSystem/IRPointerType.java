@@ -29,12 +29,12 @@ public class IRPointerType extends IRTypeSystem {
 
     @Override
     public IROperand getDefaultValue() {
-        return new IRNull(IRModule.nullType);
+        return new IRNull();
     }
 
     @Override
     public IRConstNumber getCorrespondingConstOperandType() {
-        return new IRNull(null);
+        return new IRNull();
     }
 
     @Override

@@ -45,11 +45,11 @@ abstract public class TypeNode extends ASTNode {
         // store class with class pointer
         if (this instanceof ClassTypeNode) return new IRPointerType(module.getIRType(typeName));
         if (this instanceof BuiltinTypeNode) {
-            if (Objects.equals(getTypeName(), "int")) return module.getIRType("int");
-            if (Objects.equals(getTypeName(), "bool")) return module.getIRType("bool");
-            if (Objects.equals(getTypeName(), "string")) return module.getIRType("string");
+            if (Objects.equals(getTypeName(), "int")) return IRModule.intType;
+            if (Objects.equals(getTypeName(), "bool")) return IRModule.boolType;
+            if (Objects.equals(getTypeName(), "string")) return IRModule.stringType;
             assert false;
         }
-        return module.getIRType("void");
+        return IRModule.voidType;
     }
 }

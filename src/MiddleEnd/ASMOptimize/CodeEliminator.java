@@ -10,6 +10,13 @@ import java.util.ArrayList;
 
 import static Debug.MemoLog.log;
 
+/**
+ * This class eliminate useless asm instructions.
+ *
+ * @author rainy memory
+ * @version 1.0.0
+ */
+
 public class CodeEliminator implements ASMFunctionPass {
     private boolean changed = false;
 

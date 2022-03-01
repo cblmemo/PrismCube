@@ -1,13 +1,13 @@
 package IR.Operand;
 
-import IR.TypeSystem.IRTypeSystem;
+import IR.IRModule;
 import Utility.error.OptimizeError;
 
 public class IRConstBool extends IRConstNumber {
     private final boolean value;
 
-    public IRConstBool(IRTypeSystem irType, boolean value) {
-        super(irType);
+    public IRConstBool(boolean value) {
+        super(IRModule.boolType);
         this.value = value;
     }
 
@@ -24,10 +24,10 @@ public class IRConstBool extends IRConstNumber {
     public IRConstNumber cloneFromIntValue(int value) {
         switch (value) {
             case 0 -> {
-                return new IRConstBool(this.getIRType(), false);
+                return new IRConstBool(false);
             }
             case 1 -> {
-                return new IRConstBool(this.getIRType(), true);
+                return new IRConstBool(true);
             }
             default -> throw new OptimizeError("clone const bool with value " + value);
         }

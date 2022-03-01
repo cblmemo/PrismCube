@@ -13,6 +13,13 @@ import java.util.Objects;
 
 import static Debug.MemoLog.log;
 
+/**
+ * This class handled all peephole optimize in asm.
+ *
+ * @author rainy memory
+ * @version 1.0.0
+ */
+
 public class PeepholePeeker implements ASMFunctionPass {
     private boolean changed = false;
 
@@ -26,6 +33,7 @@ public class PeepholePeeker implements ASMFunctionPass {
         return mv0.getRd() == mv1.getRd() && mv0.getRs() == mv1.getRs();
     }
 
+    // mv reg, reg <- could remove
     private void foldMove(ASMBasicBlock block) {
         ArrayList<ASMInstruction> insts = new ArrayList<>(block.getInstructions());
         for (int i = 0; i < insts.size() - 1; i++) {
@@ -45,6 +53,9 @@ public class PeepholePeeker implements ASMFunctionPass {
         return addi0.getOperands().get(0) == addi1.getOperands().get(0);
     }
 
+    //    addi reg, reg, 1
+    //    addi reg, reg, 1
+    // -> addi reg, reg, 2
     private void foldAddi(ASMBasicBlock block) {
         ArrayList<ASMInstruction> insts = new ArrayList<>(block.getInstructions());
         for (int i = 0; i < insts.size() - 1; i++) {
@@ -59,6 +70,8 @@ public class PeepholePeeker implements ASMFunctionPass {
         }
     }
 
+    // load  reg, addr
+    // store reg, addr <- could remove
     private void removeRedundantLoadStore(ASMBasicBlock block) {
         for (int i = 1; i < block.getInstructions().size(); i++) {
             ASMInstruction pre = block.getInstructions().get(i - 1), now = block.getInstructions().get(i);

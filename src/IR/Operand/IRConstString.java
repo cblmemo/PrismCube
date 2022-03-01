@@ -1,7 +1,7 @@
 package IR.Operand;
 
 import FrontEnd.IRVisitor;
-import IR.TypeSystem.IRTypeSystem;
+import IR.IRModule;
 
 public class IRConstString extends IRConst {
     private final String value;
@@ -9,8 +9,8 @@ public class IRConstString extends IRConst {
     private final int id;
     private final int length;
 
-    public IRConstString(IRTypeSystem irType, String value, int id) {
-        super(irType);
+    public IRConstString(String value, int id) {
+        super(IRModule.stringType);
         String converted = convert(value);
         this.length = converted.length();
         this.value = convertToPlain(converted);

@@ -1,12 +1,12 @@
 package IR.Operand;
 
-import IR.TypeSystem.IRTypeSystem;
+import IR.IRModule;
 
 public class IRConstChar extends IRConstNumber {
     private final int value;
 
-    public IRConstChar(IRTypeSystem irType, int value) {
-        super(irType);
+    public IRConstChar(int value) {
+        super(IRModule.charType);
         this.value = value;
     }
 
@@ -17,7 +17,7 @@ public class IRConstChar extends IRConstNumber {
 
     @Override
     public IRConstNumber cloneFromIntValue(int value) {
-        return new IRConstChar(this.getIRType(), value);
+        return new IRConstChar(value);
     }
 
     @Override

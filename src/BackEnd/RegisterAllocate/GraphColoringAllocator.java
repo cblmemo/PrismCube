@@ -101,8 +101,8 @@ public class GraphColoringAllocator {
             initial.addAll(inst.getUses());
         }));
         ASMPhysicalRegister.getPreColoredRegisters().forEach(initial::remove);
-        log.Tracef("initial registers (%d): %s\n", initial.size(), initial.toString());
-        log.Tracef("preColored registers (%d): %s\n", preColored.size(), preColored.toString());
+        log.Debugf("initial registers (%d): %s\n", initial.size(), initial.toString());
+        log.Debugf("preColored registers (%d): %s\n", preColored.size(), preColored.toString());
 
         // initialize other LinkedHashSet
         initial.forEach(reg -> {
@@ -179,7 +179,7 @@ public class GraphColoringAllocator {
         graphString.append(String.format("Interference Graph (%d):\n", adjacentSet.size()));
         adjacentSet.forEach(edge -> graphString.append(String.format("edge: [%s]" + " ".repeat(Integer.max(1, 40 - edge.a.toString().length())) + "[%s]\n", edge.a, edge.b)));
         graphString.append("------------------------------------------------------------------------------------------\n");
-        log.Tracef("%s", graphString.toString());
+        log.Debugf("%s", graphString.toString());
     }
 
     private LinkedHashSet<ASMMoveInstruction> nodeMoves(ASMRegister n) {
@@ -237,7 +237,7 @@ public class GraphColoringAllocator {
             enableMoves(nodes);
             assert spillWorkList.contains(m) : m + " is not in spillWorkList";
             spillWorkList.remove(m);
-            log.Tracef("remove [%s] to spillWorkList due to decrement degree\n", m);
+            log.Debugf("remove [%s] to spillWorkList due to decrement degree\n", m);
             if (moveRelated(m)) freezeWorkList.add(m);
             else simplifyWorkList.add(m);
         }
@@ -313,7 +313,7 @@ public class GraphColoringAllocator {
     }
 
     private void combine(ASMRegister u, ASMRegister v) {
-        log.Tracef("combine u:[%s] with v:[%s]\n", u, v);
+        log.Debugf("combine u:[%s] with v:[%s]\n", u, v);
         // execute coalesce means all nodes in simplifyWorkList have been simplified and remove from it
         // therefore u, v either in freezeWorkList or in spillWorkList
         if (freezeWorkList.contains(v)) freezeWorkList.remove(v);
@@ -327,7 +327,7 @@ public class GraphColoringAllocator {
             if (addEdge(t, u)) decrementDegreeWithoutCheck(t);
         });
         if (degree.get(u) >= K && freezeWorkList.contains(u)) {
-            log.Tracef("transfer [%s] from freezeWorkList to spillWorkList due to combine node\n", u);
+            log.Debugf("transfer [%s] from freezeWorkList to spillWorkList due to combine node\n", u);
             freezeWorkList.remove(u);
             spillWorkList.add(u);
         }
@@ -400,7 +400,7 @@ public class GraphColoringAllocator {
 
     private void selectSpill() {
         ASMRegister m = selectRegisterToSpill();
-        log.Tracef("select [%s] to spill\n", m);
+        log.Debugf("select [%s] to spill\n", m);
         spillWorkList.remove(m);
         simplifyWorkList.add(m);
         freezeMoves(m);
@@ -475,7 +475,7 @@ public class GraphColoringAllocator {
 
     private void rewriteProgram() {
         log.Tracef("start rewrite program.\n");
-        log.Tracef("spilledNodes: %s\n", spilledNodes.toString());
+        log.Debugf("spilledNodes: %s\n", spilledNodes.toString());
         spilledNodes.forEach(v -> {
             int loc = function.getStackFrame().spillToStack();
             memoryLocation.put(v, loc);
@@ -486,10 +486,10 @@ public class GraphColoringAllocator {
     }
 
     private void logCurrentFunction(String message) {
-        log.Tracef("------------------------------------------------------------------------------------------\n");
-        log.Tracef(message);
-        log.Tracef("%s", new ASMEmitter().emitFunctionToString(function));
-        log.Tracef("------------------------------------------------------------------------------------------\n");
+        log.Debugf("------------------------------------------------------------------------------------------\n");
+        log.Debugf(message);
+        log.Debugf("%s", new ASMEmitter().emitFunctionToString(function));
+        log.Debugf("------------------------------------------------------------------------------------------\n");
     }
 
     private void coloring() {

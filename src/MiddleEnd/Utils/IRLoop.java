@@ -7,6 +7,14 @@ import IR.Operand.*;
 import java.util.LinkedHashSet;
 import java.util.function.Consumer;
 
+/**
+ * This class store IRLoop defined in tiger book.
+ * <br>To see define of natural loop, see Page 410.
+ *
+ * @author rainy memory
+ * @version 1.0.0
+ */
+
 public class IRLoop {
     private final IRBasicBlock header;
     private IRLoop parentLoop = null;

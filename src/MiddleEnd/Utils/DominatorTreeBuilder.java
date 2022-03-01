@@ -9,6 +9,16 @@ import java.util.LinkedHashSet;
 
 import static Debug.MemoLog.log;
 
+/**
+ * This class build dominator tree for graph of IRBasicBlock.
+ *
+ * @see MiddleEnd.IROptimize.MemoryToRegisterPromoter
+ * @see MiddleEnd.IROptimize.AggressiveDeadCodeEliminator
+ * @see LoopExtractor
+ * @author rainy memory
+ * @version 1.0.0
+ */
+
 public class DominatorTreeBuilder {
     private IRFunction function;
     private boolean reverse;

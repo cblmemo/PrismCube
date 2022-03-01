@@ -20,7 +20,6 @@ public class IRStoreInstruction extends IRInstruction {
         super(parentBlock);
         assert storeAddress.getIRType() instanceof IRPointerType;
         assert Objects.equals(storeType, ((IRPointerType) storeAddress.getIRType()).getBaseType());
-        assert Objects.equals(storeType, storeValue.getIRType());
         this.storeType = storeType;
         this.storeAddress = storeAddress;
         this.storeValue = storeValue;

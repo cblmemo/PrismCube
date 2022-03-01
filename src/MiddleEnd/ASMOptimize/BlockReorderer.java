@@ -8,6 +8,14 @@ import MiddleEnd.Pass.ASMFunctionPass;
 
 import java.util.ArrayList;
 
+/**
+ * This class reorder asm blocks in order to
+ * eliminate jump between neighbour blocks.
+ *
+ * @author rainy memory
+ * @version 1.0.0
+ */
+
 public class BlockReorderer extends Optimize implements ASMFunctionPass {
     private ASMFunction function;
     private final ArrayList<ASMBasicBlock> brandNewOrder = new ArrayList<>();

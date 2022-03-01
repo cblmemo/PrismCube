@@ -7,8 +7,7 @@ import java.io.FileOutputStream;
 import java.io.PrintStream;
 
 /**
- * This class implements a simple log
- * with level.
+ * This class implements a simple log with verbose.
  *
  * @author rainy memory
  * @version 1.0.0
