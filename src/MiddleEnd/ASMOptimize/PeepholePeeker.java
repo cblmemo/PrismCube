@@ -92,6 +92,10 @@ public class PeepholePeeker implements ASMFunctionPass {
         }
     }
 
+    private boolean isValidImm(int imm) {
+        return -2048 <= imm && imm <= 2047;
+    }
+
     //    li   reg0, 100
     //    add  reg0, reg1, reg0
     // -> addi reg0, reg1, 100
@@ -99,6 +103,8 @@ public class PeepholePeeker implements ASMFunctionPass {
         for (int i = 0; i < block.getInstructions().size() - 1; i++) {
             ASMInstruction inst0 = block.getInstructions().get(i), inst1 = block.getInstructions().get(i + 1);
             if (inst0.isLi() && inst1.haveImmediateType()) {
+                assert inst0.getOperands().get(1) instanceof ASMImmediate;
+                if (!isValidImm(((ASMImmediate) inst0.getOperands().get(1)).getImm())) continue;
                 if (inst0.getOperands().get(0) == inst1.getOperands().get(0) && inst1.getOperands().get(0) == inst1.getOperands().get(2)) {
                     if (inst1.getOperands().get(0) != inst1.getOperands().get(1)) {
                         block.getInstructions().remove(inst0);
