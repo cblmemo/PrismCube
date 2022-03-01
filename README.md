@@ -4,7 +4,10 @@
 
 PrismCube, a toy Mx* compiler with java implementation.
 
+Fun fact: To learn more about project name, click [here](https://www.youtube.com/watch?v=CV3nAHhopRY).
+
 ![](https://img.shields.io/badge/version-1.0.0-green.svg)
+![](https://img.shields.io/badge/all_testcases-passed-green.svg)
 ![](https://img.shields.io/badge/JDK_version-17-orange.svg)
 [![](https://img.shields.io/badge/source_language-Mx*-yellow.svg)](https://github.com/ACMClassCourses/Compiler-Design-Implementation)
 ![](https://img.shields.io/github/last-commit/Rainy-Memory/PrismCube)
@@ -34,7 +37,7 @@ Mx* is a simplified language from the mix of Standard C++ and Java. Details of M
  - [x] NaiveAllocator
  - [x] GraphColoringAllocator
  - [x] ASMPrinter
- - [ ] Optimize (working on...)
+ - [x] Optimize
 
 ## File Structure
 
@@ -43,6 +46,7 @@ Mx* is a simplified language from the mix of Standard C++ and Java. Details of M
  ┣ 📂ASM
  ┃ ┣ 📂Instruction
  ┃ ┃ ┣ 📜ASMArithmeticInstruction.java
+ ┃ ┃ ┣ 📜ASMCloneInstruction.java
  ┃ ┃ ┣ 📜ASMInstruction.java
  ┃ ┃ ┣ 📜ASMMemoryInstruction.java
  ┃ ┃ ┣ 📜ASMMoveInstruction.java
@@ -146,12 +150,16 @@ Mx* is a simplified language from the mix of Standard C++ and Java. Details of M
  ┃ ┃ ┣ 📜IRGetelementptrInstruction.java
  ┃ ┃ ┣ 📜IRIcmpInstruction.java
  ┃ ┃ ┣ 📜IRInstruction.java
+ ┃ ┃ ┣ 📜IRJumpInstruction.java
  ┃ ┃ ┣ 📜IRLoadInstruction.java
+ ┃ ┃ ┣ 📜IRMoveInstruction.java
+ ┃ ┃ ┣ 📜IRPhiInstruction.java
  ┃ ┃ ┣ 📜IRReturnInstruction.java
  ┃ ┃ ┣ 📜IRStoreInstruction.java
  ┃ ┃ ┣ 📜IRTruncInstruction.java
  ┃ ┃ ┗ 📜IRZextInstruction.java
  ┃ ┣ 📂Operand
+ ┃ ┃ ┣ 📜IRConst.java
  ┃ ┃ ┣ 📜IRConstBool.java
  ┃ ┃ ┣ 📜IRConstChar.java
  ┃ ┃ ┣ 📜IRConstInt.java
@@ -176,6 +184,37 @@ Mx* is a simplified language from the mix of Standard C++ and Java. Details of M
  ┃ ┗ 📜IRModule.java
  ┣ 📂Memory
  ┃ ┗ 📜Memory.java
+ ┣ 📂MiddleEnd
+ ┃ ┣ 📂ASMOptimize
+ ┃ ┃ ┣ 📜BlockReorderer.java
+ ┃ ┃ ┣ 📜CodeEliminator.java
+ ┃ ┃ ┣ 📜CodePuller.java
+ ┃ ┃ ┣ 📜ControlFlowSimplifyer.java
+ ┃ ┃ ┗ 📜PeepholePeeker.java
+ ┃ ┣ 📂Deprecated
+ ┃ ┃ ┣ 📜IRGlobalInitializeEliminator.java
+ ┃ ┃ ┗ 📜TrivialDeadCodeEliminator.java
+ ┃ ┣ 📂IROptimize
+ ┃ ┃ ┣ 📜AggressiveDeadCodeEliminator.java
+ ┃ ┃ ┣ 📜ControlFlowGraphChecker.java
+ ┃ ┃ ┣ 📜FunctionInliner.java
+ ┃ ┃ ┣ 📜IRBlockFuser.java
+ ┃ ┃ ┣ 📜LoopOptimizer.java
+ ┃ ┃ ┣ 📜MemoryToRegisterPromoter.java
+ ┃ ┃ ┣ 📜PhiResolver.java
+ ┃ ┃ ┗ 📜SparseConditionalConstantPropagator.java
+ ┃ ┣ 📂Pass
+ ┃ ┃ ┣ 📜ASMFunctionPass.java
+ ┃ ┃ ┗ 📜IRFunctionPass.java
+ ┃ ┣ 📂Utils
+ ┃ ┃ ┣ 📜CloneManager.java
+ ┃ ┃ ┣ 📜CopyInterfereGraph.java
+ ┃ ┃ ┣ 📜DominatorTreeBuilder.java
+ ┃ ┃ ┣ 📜IRLoop.java
+ ┃ ┃ ┗ 📜LoopExtractor.java
+ ┃ ┣ 📜ASMOptimizer.java
+ ┃ ┣ 📜IROptimizer.java
+ ┃ ┗ 📜Optimize.java
  ┣ 📂Parser
  ┃ ┣ 📜MxStar.g4
  ┃ ┣ 📜MxStar.interp
@@ -215,6 +254,7 @@ Mx* is a simplified language from the mix of Standard C++ and Java. Details of M
  ┃ ┃ ┣ 📜ArgumentParseError.java
  ┃ ┃ ┣ 📜IRError.java
  ┃ ┃ ┣ 📜LogError.java
+ ┃ ┃ ┣ 📜OptimizeError.java
  ┃ ┃ ┣ 📜SemanticError.java
  ┃ ┃ ┣ 📜SyntaxError.java
  ┃ ┃ ┗ 📜error.java
