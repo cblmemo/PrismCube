@@ -19,4 +19,9 @@ public class ASMMemoryInstruction extends ASMInstruction {
     public boolean useless() {
         return false;
     }
+
+    @Override
+    public boolean haveImmediateType() {
+        return false;
+    }
 }

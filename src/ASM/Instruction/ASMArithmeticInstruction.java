@@ -53,6 +53,11 @@ public class ASMArithmeticInstruction extends ASMInstruction {
         this.type = type;
     }
 
+    public InstType getImmediateType() {
+        assert haveImmediateType();
+        return type.toImmediateType();
+    }
+
     @Override
     public boolean useless() {
         switch (type) {
@@ -64,5 +69,10 @@ public class ASMArithmeticInstruction extends ASMInstruction {
                 return false;
             }
         }
+    }
+
+    @Override
+    public boolean haveImmediateType() {
+        return type.haveImmediateType();
     }
 }

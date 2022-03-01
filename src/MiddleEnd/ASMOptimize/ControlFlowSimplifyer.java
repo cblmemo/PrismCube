@@ -28,7 +28,7 @@ public class ControlFlowSimplifyer implements ASMFunctionPass {
         ArrayList<ASMInstruction> instructions = new ArrayList<>(block.getInstructions());
         for (int i = 1; i < instructions.size(); i++) {
             ASMInstruction pre = instructions.get(i - 1), now = instructions.get(i);
-            if (pre.isLi() && now.isBranch()) {
+            if (pre.isLi() && now.isBeqz()) {
                 if (pre.getOperands().get(0) == now.getOperands().get(0)) {
                     assert pre.getOperands().get(1) instanceof ASMImmediate;
                     int branchTarget = ((ASMImmediate) pre.getOperands().get(1)).getImm();

@@ -7,7 +7,7 @@ public class ASMPseudoInstruction extends ASMInstruction {
 
     public enum InstType {
         li, mv, call, ret, j, la,
-        beqz, seqz, snez;
+        beqz, bnez, seqz, snez;
 
         public boolean isMove() {
             return this.ordinal() == mv.ordinal();
@@ -22,6 +22,11 @@ public class ASMPseudoInstruction extends ASMInstruction {
     @Override
     public boolean useless() {
         if (type == InstType.mv) return getOperands().get(0) == getOperands().get(1);
+        return false;
+    }
+
+    @Override
+    public boolean haveImmediateType() {
         return false;
     }
 }

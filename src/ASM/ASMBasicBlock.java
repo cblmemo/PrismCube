@@ -49,11 +49,11 @@ public class ASMBasicBlock {
     }
 
     public void addPredecessor(ASMBasicBlock pred) {
-        predecessors.add(pred);
+        if (!predecessors.contains(pred)) predecessors.add(pred);
     }
 
-    public void addSuccessor(ASMBasicBlock pred) {
-        successors.add(pred);
+    public void addSuccessor(ASMBasicBlock succ) {
+        if (!successors.contains(succ)) successors.add(succ);
     }
 
     public void removePredecessor(ASMBasicBlock pred) {
@@ -154,6 +154,14 @@ public class ASMBasicBlock {
 
     public int getLoopDepth() {
         return loopDepth;
+    }
+
+    public boolean definedBeforeUse(ASMRegister reg) {
+        for (ASMInstruction inst : instructions) {
+            if (inst.isCall() || inst.getUses().contains(reg)) return false;
+            if (inst.getDefs().contains(reg)) return true;
+        }
+        return false;
     }
 
     @Override

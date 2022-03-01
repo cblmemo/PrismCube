@@ -106,12 +106,28 @@ abstract public class ASMInstruction {
         return Objects.equals(instStr, "sb") || Objects.equals(instStr, "sw");
     }
 
-    public boolean isBranch() {
+    public boolean isSeqz() {
+        return Objects.equals(instStr, "seqz");
+    }
+
+    public boolean isBeqz() {
         return Objects.equals(instStr, "beqz");
+    }
+
+    public boolean isBranch() {
+        return Objects.equals(instStr, "beqz")||Objects.equals(instStr, "bnez");
     }
 
     public boolean isAddi() {
         return Objects.equals(instStr, "addi");
+    }
+
+    public boolean isAdd() {
+        return Objects.equals(instStr, "add");
+    }
+
+    public boolean isCall() {
+        return Objects.equals(instStr, "call");
     }
 
     public boolean isRet() {
@@ -157,6 +173,8 @@ abstract public class ASMInstruction {
     }
 
     abstract public boolean useless();
+
+    abstract public boolean haveImmediateType();
 
     @Override
     public String toString() {
